@@ -1,0 +1,191 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\controllers\\studentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\controllers\\studentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\models\\student.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\models\\student.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\views\\student\\delete.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\views\\student\\delete.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\views\\student\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\views\\student\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\views\\student\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\views\\student\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\views\\student\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\views\\student\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|c:\\users\\saies\\source\\repos\\crudappusingaspcoreproject\\crudappusingaspcoreproject\\views\\student\\edit.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{79A10AE0-659B-4A5A-8CFC-65372D3FD4C1}|CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject.csproj|solutionrelative:crudappusingaspcoreproject\\views\\student\\edit.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Program.cs",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Program.cs",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Program.cs",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Program.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAA4AAAACAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-12T05:44:40.134Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ErrorViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Models\\ErrorViewModel.cs",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Models\\ErrorViewModel.cs",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Models\\ErrorViewModel.cs",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Models\\ErrorViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-12T11:08:44.95Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\appsettings.json",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\appsettings.json",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\appsettings.json",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-07-12T09:53:52.638Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Delete.cshtml",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Delete.cshtml",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Views\\Student\\Delete.cshtml",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Delete.cshtml",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Views\\Student\\Delete.cshtml",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACUAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-07-12T07:01:10.497Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "StudentController.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Controllers\\StudentController.cs",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Controllers\\StudentController.cs",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Controllers\\StudentController.cs",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Controllers\\StudentController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-12T05:25:48.812Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Student.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Models\\Student.cs",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Models\\Student.cs",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Models\\Student.cs",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Models\\Student.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-12T05:13:47.386Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Details.cshtml",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Details.cshtml",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Views\\Student\\Details.cshtml",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Details.cshtml",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Views\\Student\\Details.cshtml",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAACoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-07-12T06:44:03.766Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Edit.cshtml",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Edit.cshtml",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Views\\Student\\Edit.cshtml",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Edit.cshtml",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Views\\Student\\Edit.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-07-12T06:12:57.576Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Create.cshtml",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Create.cshtml",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Views\\Student\\Create.cshtml",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Create.cshtml",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Views\\Student\\Create.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-07-12T05:50:44.618Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Index.cshtml",
+              "RelativeDocumentMoniker": "CRUDAppUsingASPCoreProject\\Views\\Student\\Index.cshtml",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\CRUDAppUsingASPCoreProject\\CRUDAppUsingASPCoreProject\\Views\\Student\\Index.cshtml",
+              "RelativeToolTip": "CRUDAppUsingASPCoreProject\\Views\\Student\\Index.cshtml",
+              "ViewState": "AgIAAAoAAAAAAAAAAADwvxUAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-07-12T05:43:22.41Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
