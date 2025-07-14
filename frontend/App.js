@@ -7,6 +7,7 @@ import NoteDetailScreen from './screens/NoteDetailScreen';
 import DeletedNotesScreen from './screens/DeletedNotesScreen';
 import RemindersScreen from './screens/RemindersScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import HelpFeedbackScreen from './screens/HelpFeedbackScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function App() {
         <Stack.Screen name="DeletedNotes" component={DeletedNotesScreen} />
         <Stack.Screen name="Reminders" component={RemindersScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="HelpFeedback" component={HelpFeedbackScreen} options={{ title: 'Help & Feedback' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

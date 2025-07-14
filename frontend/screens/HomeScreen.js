@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, StyleSheet, FlatList, Pressable,
   SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,33 +8,35 @@ import { Ionicons } from '@expo/vector-icons';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function HomeScreen({ navigation }) {
-  const [note, setNote] = useState('');
   const [notesList, setNotesList] = useState([]);
-  const [editId, setEditId] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
-  const handleSaveNote = () => {
-    if (note.trim() === '') {
-      Alert.alert('Empty Note', 'Please write something!');
-      return;
-    }
-
-    if (editId) {
-      setNotesList(notesList.map(n =>
-        n.id === editId ? { ...n, text: note, updatedAt: new Date().toISOString() } : n
-      ));
-      setEditId(null);
-    } else {
-      const newNote = {
-        id: Date.now().toString(),
-        text: note,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setNotesList([newNote, ...notesList]);
-    }
-    setNote('');
+  const handleAddNote = () => {
+    const newNote = {
+      id: Date.now().toString(),
+      title: '',
+      text: '',
+      checklistItems: [],
+      drawings: [],
+      fontSize: 16,
+      fontFamily: 'System',
+      isBold: false,
+      isItalic: false,
+      textAlign: 'left',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    // Navigate to NoteDetail screen with the new note
+    navigation.navigate('NoteDetail', { 
+      note: newNote, 
+      isNewNote: true,
+      onSave: (updatedNote) => {
+        // Add the new note to the list
+        setNotesList([updatedNote, ...notesList]);
+      }
+    });
   };
 
   const handleDeleteNote = id => {
@@ -45,13 +47,22 @@ export default function HomeScreen({ navigation }) {
         style: 'destructive',
         onPress: () => {
           setNotesList(notesList.filter(note => note.id !== id));
-          if (editId === id) {
-            setEditId(null);
-            setNote('');
-          }
         },
       },
     ]);
+  };
+
+  const handleEditNote = (note) => {
+    navigation.navigate('NoteDetail', { 
+      note: note,
+      isNewNote: false,
+      onSave: (updatedNote) => {
+        // Update the existing note in the list
+        setNotesList(notesList.map(n => 
+          n.id === updatedNote.id ? updatedNote : n
+        ));
+      }
+    });
   };
 
   const formatDate = dateStr => {
@@ -83,6 +94,33 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
+  const getPreviewText = (note) => {
+    if (note.title && note.title.trim()) {
+      return note.title;
+    }
+    if (note.text && note.text.trim()) {
+      return note.text;
+    }
+    if (note.checklistItems && note.checklistItems.length > 0) {
+      const firstItem = note.checklistItems[0];
+      return `☑️ ${firstItem.text || 'Checklist item'}`;
+    }
+    if (note.drawings && note.drawings.length > 0) {
+      return '🎨 Drawing';
+    }
+    return 'Empty note';
+  };
+
+  const getNoteTypeIcon = (note) => {
+    if (note.drawings && note.drawings.length > 0) {
+      return 'brush';
+    }
+    if (note.checklistItems && note.checklistItems.length > 0) {
+      return 'checkbox';
+    }
+    return 'document-text';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#4a5568" />
@@ -98,52 +136,85 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Note Input */}
-      <View style={styles.inputBox}>
-        <TextInput
-          placeholder="Write your note..."
-          multiline
-          maxLength={500}
-          value={note}
-          onChangeText={setNote}
-          style={styles.input}
-          placeholderTextColor="#999"
-        />
-        <Pressable
-          onPress={handleSaveNote}
-          disabled={!note.trim()}
-          style={[styles.saveBtn, !note.trim() && styles.saveBtnDisabled]}
-        >
-          <Text style={styles.saveBtnText}>{editId ? '✏️ Update' : '➕ Save'}</Text>
-        </Pressable>
+      {/* Add Note Button */}
+      <View style={styles.addNoteContainer}>
+        <TouchableOpacity style={styles.addNoteButton} onPress={handleAddNote}>
+          <Ionicons name="add" size={24} color="#fff" />
+          <Text style={styles.addNoteText}>Add Note</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Notes List */}
       <FlatList
         data={notesList}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ padding: 20 }}
-        ListEmptyComponent={<Text style={styles.emptyText}>📝 No notes yet</Text>}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={64} color="#cbd5e0" />
+            <Text style={styles.emptyText}>No notes yet</Text>
+            <Text style={styles.emptySubText}>Tap the "Add Note" button to create your first note</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => navigation.navigate('NoteDetail', { note: item })}
+            onPress={() => handleEditNote(item)}
             style={styles.noteCard}
           >
-            <View style={styles.noteRow}>
-              <Text style={styles.noteDate}>{formatDate(item.updatedAt)}</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable onPress={() => {
-                  setEditId(item.id);
-                  setNote(item.text);
-                }}>
-                  <Ionicons name="create" size={18} color="#333" />
+            <View style={styles.noteHeader}>
+              <View style={styles.noteInfo}>
+                <Ionicons 
+                  name={getNoteTypeIcon(item)} 
+                  size={16} 
+                  color="#4a5568" 
+                  style={styles.noteIcon}
+                />
+                <Text style={styles.noteDate}>{formatDate(item.updatedAt)}</Text>
+              </View>
+              <View style={styles.noteActions}>
+                <Pressable 
+                  onPress={() => handleEditNote(item)}
+                  style={styles.actionButton}
+                >
+                  <Ionicons name="create" size={18} color="#4a5568" />
                 </Pressable>
-                <Pressable onPress={() => handleDeleteNote(item.id)}>
+                <Pressable 
+                  onPress={() => handleDeleteNote(item.id)}
+                  style={styles.actionButton}
+                >
                   <Ionicons name="trash" size={18} color="#d11a2a" />
                 </Pressable>
               </View>
             </View>
-            <Text style={styles.noteText} numberOfLines={3}>{item.text}</Text>
+            
+            <Text style={styles.notePreview} numberOfLines={3}>
+              {getPreviewText(item)}
+            </Text>
+            
+            {/* Show content indicators */}
+            <View style={styles.contentIndicators}>
+              {item.text && item.text.trim() && (
+                <View style={styles.indicator}>
+                  <Ionicons name="document-text" size={12} color="#718096" />
+                  <Text style={styles.indicatorText}>Text</Text>
+                </View>
+              )}
+              {item.checklistItems && item.checklistItems.length > 0 && (
+                <View style={styles.indicator}>
+                  <Ionicons name="checkbox" size={12} color="#718096" />
+                  <Text style={styles.indicatorText}>
+                    {item.checklistItems.length} items
+                  </Text>
+                </View>
+              )}
+              {item.drawings && item.drawings.length > 0 && (
+                <View style={styles.indicator}>
+                  <Ionicons name="brush" size={12} color="#718096" />
+                  <Text style={styles.indicatorText}>Drawing</Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -173,6 +244,12 @@ export default function HomeScreen({ navigation }) {
             }}>
               <Text style={styles.drawerItem}>⚙️ Settings</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              closeDrawer();
+              navigation.navigate('HelpFeedback');
+            }}>
+              <Text style={styles.drawerItem}>❓ Help & Feedback</Text>
+            </TouchableOpacity>
           </Animated.View>
         </>
       )}
@@ -181,7 +258,10 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#edf2f7' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#edf2f7' 
+  },
   header: {
     backgroundColor: '#4a5568',
     padding: 16,
@@ -201,34 +281,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
-  inputBox: {
-    backgroundColor: '#fff',
-    margin: 16,
+  addNoteContainer: {
     padding: 16,
-    borderRadius: 12,
+    alignItems: 'center',
+  },
+  addNoteButton: {
+    backgroundColor: '#4a5568',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { height: 2 },
+    elevation: 3,
   },
-  input: {
-    fontSize: 16,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    color: '#333',
-  },
-  saveBtn: {
-    marginTop: 10,
-    padding: 12,
-    backgroundColor: '#4a5568',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  saveBtnDisabled: {
-    backgroundColor: '#ccc',
-  },
-  saveBtnText: {
+  addNoteText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
+  },
+  listContainer: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#4a5568',
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#718096',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
   noteCard: {
     backgroundColor: '#fff',
@@ -238,28 +333,59 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowOffset: { height: 1 },
+    elevation: 2,
   },
-  noteRow: {
+  noteHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  noteInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  noteIcon: {
+    marginRight: 6,
   },
   noteDate: {
     fontSize: 12,
-    color: '#888',
+    color: '#718096',
   },
-  noteText: {
+  noteActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  notePreview: {
     fontSize: 16,
     color: '#2d3748',
+    lineHeight: 22,
+    marginBottom: 8,
   },
-  emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    marginTop: 30,
+  contentIndicators: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  indicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  indicatorText: {
+    fontSize: 10,
+    color: '#718096',
   },
   overlay: {
     position: 'absolute',
-    top: 0, bottom: 0, left: 0, right: 0,
+    top: 0, 
+    bottom: 0, 
+    left: 0, 
+    right: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   drawer: {
