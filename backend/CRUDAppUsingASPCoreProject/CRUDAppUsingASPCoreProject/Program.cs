@@ -12,14 +12,14 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.Urls.Add("http://0.0.0.0:7020");
+//app.Urls.Add("http://0.0.0.0:7020");
 
 app.MapControllerRoute(
     name: "default",
