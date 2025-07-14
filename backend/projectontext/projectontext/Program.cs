@@ -22,12 +22,12 @@ if (app.Environment.IsDevelopment())
 }
 
 // Commented out HTTPS redirection to allow mobile HTTP access
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 // ? Set URL BEFORE app.Run()
-app.Urls.Add("http://0.0.0.0:7019");
+//app.Urls.Add("http://0.0.0.0:7019");
 
 app.MapControllers();
 
