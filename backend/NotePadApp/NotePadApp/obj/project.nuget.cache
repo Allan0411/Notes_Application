@@ -1,8 +1,46 @@
 {
   "version": 2,
-  "dgSpecHash": "YHGRjHdyFK0=",
-  "success": true,
+  "dgSpecHash": "LThS8zkV4xw=",
+  "success": false,
   "projectFilePath": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
-  "expectedPackageFiles": [],
-  "logs": []
+  "expectedPackageFiles": [
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.aspnetcore.identity.ui\\9.0.7\\microsoft.aspnetcore.identity.ui.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.data.sqlite.core\\9.0.7\\microsoft.data.sqlite.core.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite\\9.0.7\\microsoft.entityframeworkcore.sqlite.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite.core\\9.0.7\\microsoft.entityframeworkcore.sqlite.core.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\9.0.7\\microsoft.extensions.caching.abstractions.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.caching.memory\\9.0.7\\microsoft.extensions.caching.memory.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\9.0.7\\microsoft.extensions.configuration.abstractions.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\9.0.7\\microsoft.extensions.dependencyinjection.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\9.0.7\\microsoft.extensions.dependencyinjection.abstractions.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.dependencymodel\\9.0.7\\microsoft.extensions.dependencymodel.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.logging\\9.0.7\\microsoft.extensions.logging.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\9.0.7\\microsoft.extensions.logging.abstractions.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.options\\9.0.7\\microsoft.extensions.options.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\microsoft.extensions.primitives\\9.0.7\\microsoft.extensions.primitives.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\mysqlconnector\\2.3.5\\mysqlconnector.2.3.5.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\pomelo.entityframeworkcore.mysql\\8.0.3\\pomelo.entityframeworkcore.mysql.8.0.3.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.10\\sqlitepclraw.bundle_e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\sqlitepclraw.core\\2.1.10\\sqlitepclraw.core.2.1.10.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.10\\sqlitepclraw.lib.e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.10\\sqlitepclraw.provider.e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\system.diagnostics.diagnosticsource\\9.0.7\\system.diagnostics.diagnosticsource.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\system.io.pipelines\\9.0.7\\system.io.pipelines.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\system.text.encodings.web\\9.0.7\\system.text.encodings.web.9.0.7.nupkg.sha512",
+    "C:\\Users\\saies\\.nuget\\packages\\system.text.json\\9.0.7\\system.text.json.9.0.7.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1107",
+      "level": "Error",
+      "message": "Version conflict detected for Microsoft.EntityFrameworkCore.Relational. Install/reference Microsoft.EntityFrameworkCore.Relational 9.0.7 directly to project NotePadApp to resolve this issue. \r\n NotePadApp -> Microsoft.EntityFrameworkCore.Sqlite 9.0.7 -> Microsoft.EntityFrameworkCore.Sqlite.Core 9.0.7 -> Microsoft.EntityFrameworkCore.Relational (>= 9.0.7) \r\n NotePadApp -> Pomelo.EntityFrameworkCore.MySql 8.0.3 -> Microsoft.EntityFrameworkCore.Relational (>= 8.0.13 && <= 8.0.999).",
+      "projectPath": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
+      "filePath": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
+      "libraryId": "Microsoft.EntityFrameworkCore.Relational",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }

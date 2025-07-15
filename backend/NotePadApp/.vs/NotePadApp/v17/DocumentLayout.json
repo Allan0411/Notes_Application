@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\saies\\source\\repos\\NotePadApp\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\notepadapp.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|solutionrelative:notepadapp\\notepadapp.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\controllers\\notepadcontroller1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|solutionrelative:notepadapp\\controllers\\notepadcontroller1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\notepadapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|solutionrelative:notepadapp\\notepadapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\views\\notepad\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|solutionrelative:notepadapp\\views\\notepad\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\notepadapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|solutionrelative:notepadapp\\notepadapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C9835788-007E-4F93-847A-52529441F520}|NotePadApp\\NotePadApp.csproj|c:\\users\\saies\\source\\repos\\notepadapp\\notepadapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -26,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,20 +38,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "NotePadApp",
               "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
               "RelativeDocumentMoniker": "NotePadApp\\NotePadApp.csproj",
               "ToolTip": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
               "RelativeToolTip": "NotePadApp\\NotePadApp.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-07-15T08:38:15.836Z",
+              "WhenOpened": "2025-07-15T09:14:34.674Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\Program.cs",
               "RelativeDocumentMoniker": "NotePadApp\\Program.cs",
@@ -55,8 +58,7 @@
               "RelativeToolTip": "NotePadApp\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T08:30:15.113Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-07-15T08:30:15.113Z"
             },
             {
               "$type": "Document",
@@ -66,23 +68,35 @@
               "RelativeDocumentMoniker": "NotePadApp\\Views\\NotePad\\Index.cshtml",
               "ToolTip": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\Views\\NotePad\\Index.cshtml",
               "RelativeToolTip": "NotePadApp\\Views\\NotePad\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAACEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-07-15T08:29:40.507Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "NotePadController1.cs",
               "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\Controllers\\NotePadController1.cs",
               "RelativeDocumentMoniker": "NotePadApp\\Controllers\\NotePadController1.cs",
               "ToolTip": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\Controllers\\NotePadController1.cs",
               "RelativeToolTip": "NotePadApp\\Controllers\\NotePadController1.cs",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAwBoAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-15T08:27:33.416Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "NotePadApp.csproj",
+              "DocumentMoniker": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
+              "RelativeDocumentMoniker": "NotePadApp\\NotePadApp.csproj",
+              "ToolTip": "C:\\Users\\saies\\source\\repos\\NotePadApp\\NotePadApp\\NotePadApp.csproj",
+              "RelativeToolTip": "NotePadApp\\NotePadApp.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-07-15T08:38:15.836Z"
             }
           ]
         }
