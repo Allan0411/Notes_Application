@@ -248,7 +248,13 @@ export default function HomeScreen({ navigation }) {
               closeDrawer();
               navigation.navigate('HelpFeedback');
             }}>
-              <Text style={styles.drawerItem}>❓ Help & Feedback</Text>
+              <Text style={styles.drawerItem}>❓Help & Feedback</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              closeDrawer();
+              navigation.navigate('LogoutScreen');
+            }}>
+              <Text style={styles.drawerItem}> ⍈ Logout </Text>
             </TouchableOpacity>
           </Animated.View>
         </>
@@ -391,7 +397,7 @@ const styles = StyleSheet.create({
   drawer: {
     position: 'absolute',
     top: 0,
-    width: SCREEN_WIDTH / 2,
+    width: SCREEN_WIDTH + 1 / 2,
     height: '100%',
     backgroundColor: '#fff',
     paddingTop: 60,
