@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Simple Notepad";
+}
+
+<h2>Simple Notepad</h2>
+
+@if (ViewBag.Message != null)
+{
+    <div style="color: green;">@ViewBag.Message</div>
+}
+
+<form asp-action="Save" method="post">
+    <textarea name="noteText" rows="20" cols="80">@ViewBag.TextData</textarea><br /><br />
+    <button type="submit">Save</button>
+</form>
