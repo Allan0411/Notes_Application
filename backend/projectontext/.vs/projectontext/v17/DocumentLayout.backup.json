@@ -1,0 +1,138 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\models\\handwritingappcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\models\\handwritingappcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\models\\note.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\models\\note.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\controllers\\studenttextcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\controllers\\studenttextcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|c:\\users\\saies\\onedrive\\documents\\intership\\projectontext\\projectontext\\projectontext.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{CF19FD51-9E85-4739-8FE1-E35DD9CDAD4B}|projectontext\\projectontext.csproj|solutionrelative:projectontext\\projectontext.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\appsettings.json",
+              "RelativeDocumentMoniker": "projectontext\\appsettings.json",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\appsettings.json",
+              "RelativeToolTip": "projectontext\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-07-11T06:49:21.666Z",
+              "IsPinned": true
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\User.cs",
+              "RelativeDocumentMoniker": "projectontext\\Models\\User.cs",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\User.cs",
+              "RelativeToolTip": "projectontext\\Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-12T15:47:04.942Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Note.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\Note.cs",
+              "RelativeDocumentMoniker": "projectontext\\Models\\Note.cs",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\Note.cs",
+              "RelativeToolTip": "projectontext\\Models\\Note.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAQwAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-11T06:52:02.486Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HandwritingappContext.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\HandwritingappContext.cs",
+              "RelativeDocumentMoniker": "projectontext\\Models\\HandwritingappContext.cs",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Models\\HandwritingappContext.cs",
+              "RelativeToolTip": "projectontext\\Models\\HandwritingappContext.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAgwCcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-11T06:47:31.309Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Program.cs",
+              "RelativeDocumentMoniker": "projectontext\\Program.cs",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Program.cs",
+              "RelativeToolTip": "projectontext\\Program.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAqwBgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-11T06:54:14.155Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "StudentTextController.cs",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Controllers\\StudentTextController.cs",
+              "RelativeDocumentMoniker": "projectontext\\Controllers\\StudentTextController.cs",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\Controllers\\StudentTextController.cs",
+              "RelativeToolTip": "projectontext\\Controllers\\StudentTextController.cs",
+              "ViewState": "AgIAAFMAAAAAAAAAAAAswA4AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-11T06:33:34.978Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "projectontext.csproj",
+              "DocumentMoniker": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\projectontext.csproj",
+              "RelativeDocumentMoniker": "projectontext\\projectontext.csproj",
+              "ToolTip": "C:\\Users\\saies\\OneDrive\\Documents\\intership\\projectontext\\projectontext\\projectontext.csproj",
+              "RelativeToolTip": "projectontext\\projectontext.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-07-11T06:46:31.727Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
