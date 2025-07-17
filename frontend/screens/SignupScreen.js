@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#b2b8c2ff', // Light background
+    backgroundColor: '#9ba5d1ff', // Light background
   },
   title: {
     fontSize: 28,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#4e4ea1ff', // Gray button for consistent style
+    backgroundColor: '#8932acff', // Gray button for consistent style
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -106,8 +106,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   linkBold: {
-    color: '#4e4ea1ff',
+    color: '#8932acff',
     fontWeight: 'bold',
   },
 });
-
