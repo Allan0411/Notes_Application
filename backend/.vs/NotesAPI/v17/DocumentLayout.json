@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notes_application\\backend\\notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|solutionrelative:notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\appsettings.json",
+              "RelativeDocumentMoniker": "NotesAPI\\appsettings.json",
+              "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\appsettings.json",
+              "RelativeToolTip": "NotesAPI\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-07-17T05:24:11.724Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
