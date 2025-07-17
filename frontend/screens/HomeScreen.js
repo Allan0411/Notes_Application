@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
-  SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback
+  SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -10,6 +10,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 export default function HomeScreen({ navigation }) {
   const [notesList, setNotesList] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
   const handleAddNote = () => {
@@ -121,6 +122,18 @@ export default function HomeScreen({ navigation }) {
     return 'document-text';
   };
 
+  // Filter notes based on search query
+  const filteredNotes = notesList.filter(note => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      (note.title && note.title.toLowerCase().includes(searchLower)) ||
+      (note.text && note.text.toLowerCase().includes(searchLower)) ||
+      (note.checklistItems && note.checklistItems.some(item => 
+        item.text && item.text.toLowerCase().includes(searchLower)
+      ))
+    );
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#4a5568" />
@@ -136,25 +149,43 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Add Note Button */}
-      <View style={styles.addNoteContainer}>
-        <TouchableOpacity style={styles.addNoteButton} onPress={handleAddNote}>
-          <Ionicons name="add" size={24} color="#fff" />
-          <Text style={styles.addNoteText}>Add Note</Text>
-        </TouchableOpacity>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#718096" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#a0aec0"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#718096" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Notes List */}
       <FlatList
-        data={notesList}
+        data={filteredNotes}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={64} color="#cbd5e0" />
-            <Text style={styles.emptyText}>No notes yet</Text>
-            <Text style={styles.emptySubText}>Tap the "Add Note" button to create your first note</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery ? 'No notes found' : 'No notes yet'}
+            </Text>
+            <Text style={styles.emptySubText}>
+              {searchQuery 
+                ? 'Try searching for something else' 
+                : 'Tap the "+" button to create your first note'
+              }
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -218,6 +249,11 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
+
+      {/* Floating Add Note Button - Bottom Right */}
+      <TouchableOpacity style={styles.fabButton} onPress={handleAddNote}>
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
 
       {/* Right-side slide drawer */}
       {drawerVisible && (
@@ -287,31 +323,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
-  addNoteContainer: {
+  searchContainer: {
     padding: 16,
-    alignItems: 'center',
+    backgroundColor: '#edf2f7',
   },
-  addNoteButton: {
-    backgroundColor: '#4a5568',
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 25,
-    gap: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { height: 2 },
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowOffset: { height: 1 },
+    elevation: 2,
   },
-  addNoteText: {
-    color: '#fff',
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    color: '#2d3748',
   },
   listContainer: {
     padding: 16,
     paddingTop: 0,
+    paddingBottom: 80, // Add bottom padding to avoid overlap with FAB
   },
   emptyContainer: {
     alignItems: 'center',
@@ -385,6 +424,22 @@ const styles = StyleSheet.create({
   indicatorText: {
     fontSize: 10,
     color: '#718096',
+  },
+  fabButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#4a5568',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { height: 4 },
+    shadowRadius: 6,
+    elevation: 8,
   },
   overlay: {
     position: 'absolute',

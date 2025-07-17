@@ -407,11 +407,11 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    padding: 16,
+    padding: 10,
   },
   titleInput: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 4,
     padding: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -420,9 +420,9 @@ const styles = StyleSheet.create({
   },
   textInput: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 4,
     padding: 12,
-    minHeight: 400,
+    minHeight: 570,
     textAlignVertical: 'top',
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    minHeight: 400,
+    minHeight: 570,
   },
   checklistItem: {
     flexDirection: 'row',
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   drawingArea: {
-    height: 300,
+    height: 500,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 8,
