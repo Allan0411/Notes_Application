@@ -7,17 +7,20 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// Enable external access (for Ngrok, etc.)
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
+
+// Add services
 builder.Services.AddControllers();
 
-// Get connection string
+// 🔌 MySQL DB Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<NotesDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// ✅ Add JWT Authentication
+// 🔐 JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -35,12 +38,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ✅ Configure Swagger to support JWT
+// 🌐 CORS (for React Native, Ngrok, etc.)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// 📘 Swagger with JWT
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Notes API", Version = "v1" });
 
-    // Add JWT Auth definition
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -51,7 +64,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter 'Bearer' followed by a space and your token."
     });
 
-    // Apply JWT to all endpoints
     options.AddSecurityRequirement(new OpenApiSecurityRequirement {
         {
             new OpenApiSecurityScheme {
@@ -67,17 +79,18 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Middleware pipeline
+// 🚀 Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// 🔐 Order matters: UseAuthentication BEFORE UseAuthorization
 app.UseHttpsRedirection();
-app.UseAuthentication();
+app.UseCors("AllowAll");         // 🌐 CORS
+app.UseAuthentication();         // 🔐 Auth before Authorization
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.Run();

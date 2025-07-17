@@ -1659,11 +1659,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
+      "projectUniqueName": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
       "projectName": "NotesAPI",
-      "projectPath": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
+      "projectPath": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
       "packagesPath": "C:\\Users\\allan\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\obj\\",
+      "outputPath": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\NotesAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
