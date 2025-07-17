@@ -3,10 +3,6 @@
   "WorkspaceRootPath": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notesapi\\notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|solutionrelative:notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notesapi\\notesapi\\models\\note.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|solutionrelative:notesapi\\models\\note.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -25,6 +21,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notesapi\\notesapi\\controllers\\notesapicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|solutionrelative:notesapi\\controllers\\notesapicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notesapi\\notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|solutionrelative:notesapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{F16E0B4E-9D78-41D2-A2D0-F428A5A491C7}|NotesAPI\\NotesAPI.csproj|c:\\users\\allan\\onedrive\\desktop\\notesapi\\notesapi\\data\\notesdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -46,11 +46,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Models\\User.cs",
+              "RelativeDocumentMoniker": "NotesAPI\\Models\\User.cs",
+              "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Models\\User.cs",
+              "RelativeToolTip": "NotesAPI\\Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-15T12:54:08.707Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
               "Title": "Note.cs",
               "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Models\\Note.cs",
               "RelativeDocumentMoniker": "NotesAPI\\Models\\Note.cs",
@@ -63,6 +76,19 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Program.cs",
+              "RelativeDocumentMoniker": "NotesAPI\\Program.cs",
+              "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Program.cs",
+              "RelativeToolTip": "NotesAPI\\Program.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAADwv1MAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-15T10:31:47.205Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 6,
               "Title": "NotesDbContext.cs",
               "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Data\\NotesDbContext.cs",
@@ -71,44 +97,21 @@
               "RelativeToolTip": "NotesAPI\\Data\\NotesDbContext.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T10:07:08.851Z"
+              "WhenOpened": "2025-07-15T10:07:08.851Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 5,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\appsettings.json",
               "RelativeDocumentMoniker": "NotesAPI\\appsettings.json",
               "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\appsettings.json",
               "RelativeToolTip": "NotesAPI\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAADAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2025-07-15T10:18:12.619Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Program.cs",
-              "RelativeDocumentMoniker": "NotesAPI\\Program.cs",
-              "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Program.cs",
-              "RelativeToolTip": "NotesAPI\\Program.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAADwv1MAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T10:31:47.205Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Models\\User.cs",
-              "RelativeDocumentMoniker": "NotesAPI\\Models\\User.cs",
-              "ToolTip": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Models\\User.cs",
-              "RelativeToolTip": "NotesAPI\\Models\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T12:54:08.707Z"
             },
             {
               "$type": "Document",
@@ -123,7 +126,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 4,
               "Title": "NotesAPIController.cs",
               "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Controllers\\NotesAPIController.cs",
               "RelativeDocumentMoniker": "NotesAPI\\Controllers\\NotesAPIController.cs",
@@ -131,7 +134,8 @@
               "RelativeToolTip": "NotesAPI\\Controllers\\NotesAPIController.cs",
               "ViewState": "AgIAAEYAAAAAAAAAAADwv2sAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T09:50:24.301Z"
+              "WhenOpened": "2025-07-15T09:50:24.301Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -147,7 +151,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "AuthController.cs",
               "DocumentMoniker": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\Controllers\\AuthController.cs",
               "RelativeDocumentMoniker": "NotesAPI\\Controllers\\AuthController.cs",
@@ -155,7 +159,8 @@
               "RelativeToolTip": "NotesAPI\\Controllers\\AuthController.cs",
               "ViewState": "AgIAACkAAAAAAAAAAAA3wCgAAAAHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-15T12:47:28.109Z"
+              "WhenOpened": "2025-07-15T12:47:28.109Z",
+              "EditorCaption": ""
             }
           ]
         }

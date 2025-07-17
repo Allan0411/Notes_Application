@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\NotesAPI"
   ],
-  "SelectedNode": "\\Program.cs",
+  "SelectedNode": "\\NotesAPI\\Program.cs",
   "PreviewInSolutionExplorer": false
 }
