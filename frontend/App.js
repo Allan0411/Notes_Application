@@ -9,6 +9,8 @@ import RemindersScreen from './screens/RemindersScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import HelpFeedbackScreen from './screens/HelpFeedbackScreen';
 import LogoutScreen from './screens/LogoutScreen'; 
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +24,9 @@ export default function App() {
         <Stack.Screen name="Reminders" component={RemindersScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="HelpFeedback" component={HelpFeedbackScreen} options={{ title: 'Help & Feedback' }} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login' }} />
         <Stack.Screen name="LogoutScreen" component={LogoutScreen} options={{ title: 'Logout' }} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

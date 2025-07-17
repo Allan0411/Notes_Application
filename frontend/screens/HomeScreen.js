@@ -4,6 +4,7 @@ import {
   SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {LoginScreen} from './LoginScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -292,6 +293,14 @@ export default function HomeScreen({ navigation }) {
             }}>
               <Text style={styles.drawerItem}> ⍈ Logout </Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              closeDrawer();
+              navigation.navigate('Login');
+            }}>
+              <Text style={styles.drawerItem}>🔐 Login</Text>
+            </TouchableOpacity>
+
+            
           </Animated.View>
         </>
       )}
