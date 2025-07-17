@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "sA8kRYs0cVk=",
+  "dgSpecHash": "JFobwAHctZY=",
   "success": true,
-  "projectFilePath": "C:\\Users\\allan\\OneDrive\\Desktop\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
+  "projectFilePath": "C:\\Users\\allan\\OneDrive\\Desktop\\Notes_Application\\backend\\NotesAPI\\NotesAPI\\NotesAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\allan\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\allan\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\6.0.0\\microsoft.aspnetcore.authentication.jwtbearer.6.0.0.nupkg.sha512",

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NotesAPI.Data;
@@ -23,20 +24,28 @@ namespace NotesAPI.Controllers
             _context = context;
             _config = config;
         }
-
+        [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register(User user)
+        public async Task<IActionResult> Register([FromBody] User user)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == user.Email || u.Username == user.Username))
-                return BadRequest("User already exists");
+            if (string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.PasswordHash))
+                return BadRequest(new { message = "Missing required fields" });
+
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == user.Email || u.Username == user.Username);
+
+            if (existingUser != null)
+                return Conflict(new { message = "User already exists with this email or username" });
 
             user.PasswordHash = HashPassword(user.PasswordHash);
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok("Registered successfully");
+            return Ok(new { message = "User registered successfully" });
         }
+
+        [AllowAnonymous]
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO login)
