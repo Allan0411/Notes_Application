@@ -1,9 +1,7 @@
-// screens/DeletedNotesScreen.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 export default function DeletedNotesScreen() {
-  console.log('DeletedNotesScreen loaded'); // ✅ Debug log
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🗑️ Deleted Notes</Text>

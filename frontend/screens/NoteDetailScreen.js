@@ -4,7 +4,8 @@ import {
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
