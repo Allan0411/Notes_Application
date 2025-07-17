@@ -8,11 +8,54 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { API_BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function LoginScreen({ navigation }) {
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const handleLogin=async()=>{
+    if(!email||!password)
+    {
+      alert("please enter both email and password");
+      return;
+    }
+
+    try{
+      const response=await fetch(API_BASE_URL+"/Auth/login",{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+        },
+        body:JSON.stringify(
+          {
+            email:email,
+            password:password,
+          }
+        )
+      });
+
+      const data=await response.json();
+
+       if (response.ok) {
+        await AsyncStorage.setItem('authToken', data.token);
+      console.log("Token:", data.token);  // ✅ Only printing token
+      alert("Login successful");
+      navigation.navigate('Home');
+    } else {
+      console.error("Login error:", data);
+      alert('Login failed');
+    }
+
+    }
+    catch(err){
+      console.error("Login error: ",err);
+      alert('Login failed');
+    }
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -41,7 +84,7 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.replace('Home')}
+        onPress={handleLogin}
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>

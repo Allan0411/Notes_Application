@@ -9,11 +9,50 @@ import {
   Platform,
 } from 'react-native';
 
+import { API_BASE_URL } from '../config';
+
 export default function SignupScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const handleSignup=async()=>{
+    if(!name||!email||!password)
+    {
+      alert("please enter all fields");
+      return;
+    }
+    try{
+      const response=await fetch(API_BASE_URL+"/Auth/register",{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+        },
+        body:JSON.stringify(
+          {
+            username:name,
+            email:email,
+            passwordHash:password,
+          }
+        )
+      });
+
+      const data=await response.json();
+
+      if (response.ok) {
+        alert("Signup successful");
+        navigation.navigate('Login');
+      } else {
+        console.error("Signup error:", data);
+        alert('Signup failed');
+      }
+      
+    }
+    catch(err){
+      console.error("Signup error: ",err);
+      alert('Signup failed');
+    }
+  }
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -51,7 +90,7 @@ export default function SignupScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.replace('Home')}
+        onPress={handleSignup}
       >
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>

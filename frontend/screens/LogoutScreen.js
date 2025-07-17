@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 export default function LogoutScreen() {
+  const navigation = useNavigation();
   const handleLogout = () => {
     Alert.alert(
       'Confirm Logout',
@@ -19,6 +21,10 @@ export default function LogoutScreen() {
             console.log('User logged out');
             // Example: navigation.navigate('LoginScreen');
             // Example: AsyncStorage.removeItem('userToken');
+             navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
           },
         },
       ]
