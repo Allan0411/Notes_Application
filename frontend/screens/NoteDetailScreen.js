@@ -4,8 +4,7 @@ import {
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
-
+import Svg, { Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -171,10 +170,10 @@ export default function NoteDetailScreen({ route, navigation }) {
       
       {/* Header */}
       <View style={styles.header}>
-        {/* <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Note</Text> */}
+        <Text style={styles.headerTitle}>Note Detail</Text>
         <TouchableOpacity onPress={saveNote}>
           <Text style={styles.saveText}>Save</Text>
         </TouchableOpacity>
@@ -404,7 +403,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4a5568',
     fontWeight: '600',
-    paddingLeft : 340,
+    paddingLeft : 12,
   },
   contentContainer: {
     flex: 1,
