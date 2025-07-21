@@ -80,7 +80,7 @@ export default function HomeScreen({ navigation }) {
   const openDrawer = () => {
     setDrawerVisible(true);
     Animated.timing(slideAnim, {
-      toValue: SCREEN_WIDTH / 2,
+      toValue: SCREEN_WIDTH * 0.35, // Increased width - showing more of the drawer
       duration: 250,
       useNativeDriver: false,
     }).start();
@@ -263,40 +263,120 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.overlay} />
           </TouchableWithoutFeedback>
           <Animated.View style={[styles.drawer, { left: slideAnim }]}>
-            <TouchableOpacity onPress={() => {
-              closeDrawer();
-              navigation.navigate('DeletedNotes');
-            }}>
-              <Text style={styles.drawerItem}>🗑️ Deleted Notes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
-              closeDrawer();
-              navigation.navigate('Reminders');
-            }}>
-              <Text style={styles.drawerItem}>⏰ Reminders</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
-              closeDrawer();
-              navigation.navigate('Settings');
-            }}>
-              <Text style={styles.drawerItem}>⚙️ Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
-              closeDrawer();
-              navigation.navigate('HelpFeedback');
-            }}>
-              <Text style={styles.drawerItem}>❓Help & Feedback</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
-              closeDrawer();
-              navigation.navigate('LogoutScreen');
-            }}>
-              <Text style={styles.drawerItem}> ⍈ Logout </Text>
-            </TouchableOpacity>
-           
-                
+            {/* Enhanced Drawer Header */}
+            <View style={styles.drawerHeader}>
+              <View style={styles.drawerTitleSection}>
+                <Ionicons name="book" size={24} color="#4a5568" />
+                <Text style={styles.drawerTitle}>Notes</Text>
+              </View>
+              
+              {/* User Profile Section */}
+              <TouchableOpacity 
+                style={styles.userProfile}
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('UserProfile');
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.profileImageContainer}>
+                  <View style={styles.profileImage}>
+                    <Ionicons name="person" size={20} color="#fff" />
+                  </View>
+                  <View style={styles.onlineIndicator} />
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>User </Text>
+                  <Text style={styles.userEmail}>user122@email.com</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+              </TouchableOpacity>
+              
+              {/* Close Button */}
+              <TouchableOpacity onPress={closeDrawer} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color="#718096" />
+              </TouchableOpacity>
+            </View>
 
-            
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            {/* Drawer Menu Items */}
+            <View style={styles.drawerContent}>
+              <TouchableOpacity 
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('DeletedNotes');
+                }}
+                style={styles.drawerMenuItem}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="trash-outline" size={20} color="#718096" />
+                </View>
+                <Text style={styles.drawerItemText}>Deleted Notes</Text>
+                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('Reminders');
+                }}
+                style={styles.drawerMenuItem}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="alarm-outline" size={20} color="#718096" />
+                </View>
+                <Text style={styles.drawerItemText}>Reminders</Text>
+                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('Settings');
+                }}
+                style={styles.drawerMenuItem}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="settings-outline" size={20} color="#718096" />
+                </View>
+                <Text style={styles.drawerItemText}>Settings</Text>
+                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('HelpFeedback');
+                }}
+                style={styles.drawerMenuItem}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="help-circle-outline" size={20} color="#718096" />
+                </View>
+                <Text style={styles.drawerItemText}>Help & Feedback</Text>
+                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+              </TouchableOpacity>
+
+              {/* Spacer */}
+              <View style={styles.menuSpacer} />
+
+              {/* Logout with different styling */}
+              <TouchableOpacity 
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate('LogoutScreen');
+                }}
+                style={[styles.drawerMenuItem, styles.logoutMenuItem]}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
+                </View>
+                <Text style={[styles.drawerItemText, styles.logoutText]}>Logout</Text>
+                <Ionicons name="chevron-forward" size={16} color="#e53e3e" />
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         </>
       )}
@@ -355,7 +435,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
     paddingTop: 0,
-    paddingBottom: 80, // Add bottom padding to avoid overlap with FAB
+    paddingBottom: 80, 
   },
   emptyContainer: {
     alignItems: 'center',
@@ -457,19 +537,127 @@ const styles = StyleSheet.create({
   drawer: {
     position: 'absolute',
     top: 0,
-    width: SCREEN_WIDTH + 1 / 2,
+    width: SCREEN_WIDTH * 0.65, // Increased width to 65%
     height: '100%',
     backgroundColor: '#fff',
-    paddingTop: 60,
-    paddingHorizontal: 20,
     elevation: 10,
-    borderLeftWidth: 1,
-    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: -2, height: 0 },
+    shadowRadius: 8,
   },
-  drawerItem: {
-    fontSize: 18,
-    paddingVertical: 16,
-    borderBottomColor: '#eee',
+  // Enhanced Drawer Styles
+  drawerHeader: {
+    paddingTop: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  drawerTitleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  drawerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginLeft: 8,
+  },
+  userProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { height: 1 },
+    elevation: 2,
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  profileImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#4a5568',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#38a169',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2d3748',
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: '#718096',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+    padding: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 20,
+  },
+  drawerContent: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  drawerMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f7fafc',
+  },
+  menuIconContainer: {
+    width: 32,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  drawerItemText: {
+    fontSize: 16,
+    color: '#2d3748',
+    flex: 1,
+    fontWeight: '500',
+  },
+  menuSpacer: {
+    flex: 1,
+    minHeight: 20,
+  },
+  logoutMenuItem: {
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    marginTop: 10,
+  },
+  logoutText: {
+    color: '#e53e3e',
   },
 });

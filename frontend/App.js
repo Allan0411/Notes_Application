@@ -13,6 +13,7 @@ import HelpFeedbackScreen from './screens/HelpFeedbackScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
+import UserProfile from './screens/UserProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +44,7 @@ const isDark = currentTheme === 'dark';
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="HelpFeedback" component={HelpFeedbackScreen} />
           <Stack.Screen name="LogoutScreen" component={LogoutScreen} />
+          <Stack.Screen name="UserProfile" component={UserProfile} />
         </Stack.Navigator>
       </NavigationContainer>
     </>
