@@ -1,11 +1,14 @@
-//./screens/HelpFeedbackScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAreaView, StatusBar,
+import React, { useState, useContext } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAreaView, StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../ThemeContext';
 
-export default function HelpFeedbackScreen ({ navigation }) {
+export default function HelpFeedbackScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeTheme } = useContext(ThemeContext);
+  const isDark = activeTheme === 'dark';
 
   const helpResources = [
     {
@@ -43,42 +46,43 @@ export default function HelpFeedbackScreen ({ navigation }) {
 
   const handleResourcePress = (resource) => {
     console.log(`Selected: ${resource.title}`);
-    // Navigate to specific help content or open external link
   };
 
   const handleSearch = () => {
     console.log(`Searching for: ${searchQuery}`);
-    // Implement search functionality
   };
 
   const handleHelpCommunity = () => {
     console.log('Opening Help Community');
-    // Navigate to help community or open external link
   };
 
   const handleSendFeedback = () => {
     console.log('Opening Send Feedback');
-    // Navigate to feedback form or open external link
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#4a5568"/>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#121212' : '#ffffff' }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={isDark ? '#1e1e1e' : '#4a5568'}
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: isDark ? '#333' : '#e8eaed' }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Ionicons name="arrow-back" size={24} color="#202124" />
+          <Ionicons name="arrow-back" size={24} color={isDark ? '#ffffff' : '#202124'} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Feedback</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#202124' }]}>
+          Help & Feedback
+        </Text>
         <View style={styles.menuButton} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Popular help resources */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular help resources</Text>
-          
+          <Text style={[styles.sectionTitle, { color: isDark ? '#9aa0a6' : '#5f6368' }]}>
+            Popular help resources
+          </Text>
+
           {helpResources.map((resource) => (
             <TouchableOpacity
               key={resource.id}
@@ -88,19 +92,31 @@ export default function HelpFeedbackScreen ({ navigation }) {
               <View style={[styles.iconContainer, { backgroundColor: resource.color }]}>
                 <Ionicons name={resource.icon} size={20} color="#ffffff" />
               </View>
-              <Text style={styles.resourceText}>{resource.title}</Text>
+              <Text style={[styles.resourceText, { color: isDark ? '#e8eaed' : '#202124' }]}>
+                {resource.title}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Search help */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.searchContainer} onPress={handleSearch}>
-            <Ionicons name="search" size={20} color="#5f6368" style={styles.searchIcon} />
+          <TouchableOpacity
+            style={[
+              styles.searchContainer,
+              { backgroundColor: isDark ? '#2c2c2c' : '#f1f3f4' },
+            ]}
+            onPress={handleSearch}
+          >
+            <Ionicons
+              name="search"
+              size={20}
+              color={isDark ? '#c0c0c0' : '#5f6368'}
+              style={styles.searchIcon}
+            />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: isDark ? '#ffffff' : '#202124' }]}
               placeholder="Search help"
-              placeholderTextColor="#9aa0a6"
+              placeholderTextColor={isDark ? '#888' : '#9aa0a6'}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
@@ -108,31 +124,36 @@ export default function HelpFeedbackScreen ({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Need more help section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Need more help?</Text>
-          
-          {/* Help Community */}
+          <Text style={[styles.sectionTitle, { color: isDark ? '#9aa0a6' : '#5f6368' }]}>
+            Need more help?
+          </Text>
+
           <TouchableOpacity style={styles.helpOption} onPress={handleHelpCommunity}>
             <View style={styles.helpOptionLeft}>
               <View style={styles.communityIcon}>
                 <Ionicons name="people" size={20} color="#ffffff" />
               </View>
               <View style={styles.helpOptionText}>
-                <Text style={styles.helpOptionTitle}>Post to the Help Community</Text>
-                <Text style={styles.helpOptionSubtitle}>Get answers from community members</Text>
+                <Text style={[styles.helpOptionTitle, { color: isDark ? '#ffffff' : '#202124' }]}>
+                  Post to the Help Community
+                </Text>
+                <Text style={[styles.helpOptionSubtitle, { color: isDark ? '#aaaaaa' : '#5f6368' }]}>
+                  Get answers from community members
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
 
-          {/* Send Feedback */}
           <TouchableOpacity style={styles.helpOption} onPress={handleSendFeedback}>
             <View style={styles.helpOptionLeft}>
               <View style={styles.feedbackIcon}>
                 <Ionicons name="chatbox-outline" size={20} color="#4285f4" />
               </View>
               <View style={styles.helpOptionText}>
-                <Text style={styles.helpOptionTitle}>Send Feedback</Text>
+                <Text style={[styles.helpOptionTitle, { color: isDark ? '#ffffff' : '#202124' }]}>
+                  Send Feedback
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -140,12 +161,11 @@ export default function HelpFeedbackScreen ({ navigation }) {
       </ScrollView>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -153,7 +173,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e8eaed',
   },
   backButton: {
     padding: 8,
@@ -162,7 +181,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#202124',
     flex: 1,
   },
   menuButton: {
@@ -179,7 +197,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#5f6368',
     marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -199,13 +216,11 @@ const styles = StyleSheet.create({
   },
   resourceText: {
     fontSize: 16,
-    color: '#202124',
     flex: 1,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f3f4',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -216,7 +231,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#202124',
     paddingVertical: 8,
   },
   helpOption: {
@@ -253,12 +267,10 @@ const styles = StyleSheet.create({
   },
   helpOptionTitle: {
     fontSize: 16,
-    color: '#202124',
     fontWeight: '400',
   },
   helpOptionSubtitle: {
     fontSize: 14,
-    color: '#5f6368',
     marginTop: 2,
   },
 });
