@@ -156,12 +156,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     textAlign,
   });
 
-  const getAlignmentIcon = () => {
-    switch (textAlign) {
-      case 'center': return 'text-center';
-      case 'right': return 'text-right';
-      default: return 'text-left';
-    }
+  const getAlignmentText = () => {
+    return '☴';
   };
 
   return (
@@ -301,23 +297,23 @@ export default function NoteDetailScreen({ route, navigation }) {
           style={[styles.toolButton, isBold && styles.activeToolButton]} 
           onPress={() => setIsBold(!isBold)}
         >
-          <Ionicons name="bold" size={20} color={isBold ? '#fff' : '#4a5568'} />
+          <Text style={[styles.toolButtonText, { fontWeight: 'bold' }, isBold && styles.activeToolButtonText]}>B</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={[styles.toolButton, isItalic && styles.activeToolButton]} 
           onPress={() => setIsItalic(!isItalic)}
         >
-          <Ionicons name="italic" size={20} color={isItalic ? '#fff' : '#4a5568'} />
+          <Text style={[styles.toolButtonText, { fontStyle: 'italic' }, isItalic && styles.activeToolButtonText]}>I</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.toolButton} onPress={() => {
+        <TouchableOpacity style={[styles.toolButton, styles.textAlignButton]} onPress={() => {
           const aligns = ['left', 'center', 'right'];
           const currentIndex = aligns.indexOf(textAlign);
           const nextAlign = aligns[(currentIndex + 1) % aligns.length];
           setTextAlign(nextAlign);
         }}>
-          <Ionicons name={getAlignmentIcon()} size={20} color="#4a5568" />
+          <Text style={styles.toolButtonText}>{getAlignmentText()}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.toolButton} onPress={aiSummarize}>
@@ -502,9 +498,24 @@ const styles = StyleSheet.create({
   toolButton: {
     padding: 8,
     borderRadius: 6,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activeToolButton: {
     backgroundColor: '#4a5568',
+  },
+  toolButtonText: {
+    fontSize: 16,
+    color: '#4a5568',
+    fontWeight: '600',
+  },
+  activeToolButtonText: {
+    color: '#fff',
+  },
+  textAlignButton: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   modalOverlay: {
     flex: 1,

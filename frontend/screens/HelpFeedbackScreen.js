@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAr
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function HelpFeedbackScreen () {
+export default function HelpFeedbackScreen ({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const helpResources = [
@@ -32,13 +32,14 @@ export default function HelpFeedbackScreen () {
       icon: 'share-outline',
       color: '#ea4335',
     },
-    // {
-    //   id: 5,
-    //   title: 'Archive notes and lists',
-    //   icon: 'archive-outline',
-    //   color: '#9aa0a6',
-    // },
   ];
+
+  const handleBackPress = () => {
+    if (navigation) {
+      navigation.goBack();
+    }
+    console.log('Back button pressed');
+  };
 
   const handleResourcePress = (resource) => {
     console.log(`Selected: ${resource.title}`);
@@ -63,6 +64,15 @@ export default function HelpFeedbackScreen () {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#4a5568"/>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Ionicons name="arrow-back" size={24} color="#202124" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Help & Feedback</Text>
+        <View style={styles.menuButton} />
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Popular help resources */}
@@ -157,6 +167,7 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: 8,
+    width: 40,
   },
   content: {
     flex: 1,
