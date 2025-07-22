@@ -151,7 +151,7 @@ export default function HomeScreen({ navigation }) {
   const openDrawer = () => {
     setDrawerVisible(true);
     Animated.timing(slideAnim, {
-      toValue: SCREEN_WIDTH * 0.35, // Increased width - showing more of the drawer
+      toValue: SCREEN_WIDTH * 0.35, 
       duration: 250,
       useNativeDriver: false,
     }).start();
