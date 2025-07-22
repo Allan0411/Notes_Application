@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
     borderBottomWidth: 1,
+    paddingTop:50,
   },
   headerLeft: {
     flexDirection: 'row',

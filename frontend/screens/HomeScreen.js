@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect,useContext} from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
-  SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
+  SafeAreaView, Alert,StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-
+import { API_BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function HomeScreen({ navigation }) {
@@ -13,6 +13,76 @@ export default function HomeScreen({ navigation }) {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+
+  const [userInfo, setUserInfo] = useState({
+      name: '',
+      email: '',
+    });
+  //fetching data of user from the database. dont change this guys
+    useEffect(() => {
+    const fetchUserInfo=async()=>{
+      try{
+        const token=await AsyncStorage.getItem('authToken');
+        if (!token)
+          return;
+        const res=await fetch(API_BASE_URL+"/Auth/me",{
+          headers:{
+            Authorization:`Bearer ${token}`,
+          },
+
+          });
+
+          if(!res.ok)
+            throw new Error ("failed to fetch")
+
+          const data=await res.json();
+          setUserInfo({
+            name: data.username||'user',
+            email:data.email ||'email'
+          })
+
+      }
+      catch(err){
+        console.error("Error fetching user info:", err);
+        alert("couldnt fetch user info");
+      }
+    };
+    fetchUserInfo();
+
+  },[]);
+
+  //fetch notes titles
+  const fetchNotes = async () => {
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+
+    const response = await fetch(API_BASE_URL+`/Notes`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const text = await response.text();  // Handle empty or invalid JSON
+
+    if (!response.ok) {
+      console.error('API error:', response.status);
+      return;
+    }
+
+    const notes = text ? JSON.parse(text) : [];
+    console.log('Fetched Notes:', notes);
+    setNotesList(notes); // ✅ Update your noteList state
+  } catch (error) {
+    console.error('Fetch Notes error:', error);
+  }
+};
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
 
   const handleAddNote = () => {
     const newNote = {
@@ -28,6 +98,7 @@ export default function HomeScreen({ navigation }) {
       textAlign: 'left',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      is_new:true,
     };
     
     // Navigate to NoteDetail screen with the new note
@@ -286,8 +357,8 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.onlineIndicator} />
                 </View>
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>User </Text>
-                  <Text style={styles.userEmail}>user122@email.com</Text>
+                  <Text style={styles.userName}>{userInfo.name} </Text>
+                  <Text style={styles.userEmail}>{userInfo.email}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
               </TouchableOpacity>

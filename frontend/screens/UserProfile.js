@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect, use } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity,
   TextInput, Alert, ScrollView, Modal,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../config';
 export default function UserProfile({ navigation }) {
   const [userInfo, setUserInfo] = useState({
-    name: 'User',
-    email: 'user122@email.com',
+    name: '',
+    email: '',
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -18,6 +19,41 @@ export default function UserProfile({ navigation }) {
     confirmPassword: '',
   });
 
+  useEffect(() => {
+    const fetchUserInfo=async()=>{
+      try{
+        const token=await AsyncStorage.getItem('authToken');
+        if (!token)
+          return;
+        const res=await fetch(API_BASE_URL+"/Auth/me",{
+          headers:{
+            Authorization:`Bearer ${token}`,
+          },
+
+          });
+
+          if(!res.ok)
+            throw new Error ("failed to fetch")
+
+          const data=await res.json();
+          setUserInfo({
+            name: data.username||'user',
+            email:data.email ||'email'
+          })
+
+          setEditedInfo({
+            name: data.username||'user',
+            email:data.email ||'email'
+          })
+      }
+      catch(err){
+        console.error("Error fetching user info:", err);
+        alert("couldnt fetch user info");
+      }
+    };
+    fetchUserInfo();
+
+  },[]);
   const handleSaveProfile = () => {
     setUserInfo({ ...editedInfo });
     setEditMode(false);

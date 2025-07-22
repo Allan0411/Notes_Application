@@ -4,7 +4,8 @@ import {
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+// import Svg, { Path } from 'react-native-svg';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -64,6 +65,7 @@ export default function NoteDetailScreen({ route, navigation }) {
       textAlign,
       createdAt: note?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      is_new:true
     };
 
     // Call the onSave callback to update the home screen
@@ -101,6 +103,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const deleteChecklistItem = (id) => {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
+   let lastUpdateTime = Date.now();
 
   // Drawing functions with PanResponder
   const panResponder = PanResponder.create({
@@ -112,12 +115,18 @@ export default function NoteDetailScreen({ route, navigation }) {
       pathRef.current = `M${locationX},${locationY}`;
       setCurrentPath(pathRef.current);
     },
-    onPanResponderMove: (evt) => {
-      if (!isDrawing) return;
-      const { locationX, locationY } = evt.nativeEvent;
-      pathRef.current += ` L${locationX},${locationY}`;
-      setCurrentPath(pathRef.current);
-    },
+  
+onPanResponderMove: (evt) => {
+  if (!isDrawing) return;
+  const now = Date.now();
+  if (now - lastUpdateTime < 16) return; // ~60 FPS
+  lastUpdateTime = now;
+
+  const { locationX, locationY } = evt.nativeEvent;
+  pathRef.current += ` L${locationX},${locationY}`;
+  setCurrentPath(pathRef.current);
+},
+
     onPanResponderRelease: () => {
       if (isDrawing) {
         setDrawings([...drawings, pathRef.current]);
@@ -379,6 +388,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
+    paddingTop:50
   },
   header: {
     flexDirection: 'row',
@@ -389,6 +399,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+    
   },
   headerTitle: {
     fontSize: 18,
