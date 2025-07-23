@@ -1,3 +1,3 @@
 
 
-export const API_BASE_URL='https://1239d9ba4da6.ngrok-free.app/api';
+export const API_BASE_URL='https://notes-api-pt9h.onrender.com/api';
