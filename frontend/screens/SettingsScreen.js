@@ -25,7 +25,7 @@ const SettingsScreen = () => {
 
   const themeOptions = ['System', 'Light', 'Dark'];
 
-  const backgroundColor = isDark ? '#1a1a1a' : '#f0f0f0';
+  const backgroundColor = isDark ? '#1a202c' : '#f8f9fa';
   const textColor = isDark ? '#ffffff' : '#000000';
 
   return (

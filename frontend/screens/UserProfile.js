@@ -1,15 +1,42 @@
-import React, { useState,useEffect, use } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity,
-  TextInput, Alert, ScrollView, Modal,} from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import {
+  View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity,
+  TextInput, Alert, ScrollView, Modal
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config';
-export default function UserProfile({ navigation }) {
-  const [userInfo, setUserInfo] = useState({
-    name: '',
-    email: '',
-  });
+import { ThemeContext } from '../ThemeContext';
 
+export default function UserProfile({ navigation }) {
+  const { activeTheme } = useContext(ThemeContext);
+
+  const colors = {
+    light: {
+      background: '#dde2e8ff',
+      card: '#fff',
+      text: '#2d3748',
+      subtext: '#4a5568',
+      border: '#e2e8f0',
+      accent: '#4a5568',
+      input: '#fff',
+      overlay: 'rgba(0, 0, 0, 0.5)',
+    },
+    dark: {
+      background: '#1a202c',
+      card: '#2d3748',
+      text: '#f8fafc',
+      subtext: '#cbd5e0',
+      border: '#4a5568',
+      accent: '#899aaaff',
+      input: '#4a5568',
+      overlay: 'rgba(255, 255, 255, 0.1)',
+    },
+  };
+
+  const themeColors = colors[activeTheme] || colors.light;
+
+  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
   const [editMode, setEditMode] = useState(false);
   const [editedInfo, setEditedInfo] = useState({ ...userInfo });
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
@@ -20,40 +47,35 @@ export default function UserProfile({ navigation }) {
   });
 
   useEffect(() => {
-    const fetchUserInfo=async()=>{
-      try{
-        const token=await AsyncStorage.getItem('authToken');
-        if (!token)
-          return;
-        const res=await fetch(API_BASE_URL+"/Auth/me",{
-          headers:{
-            Authorization:`Bearer ${token}`,
-          },
+    const fetchUserInfo = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        if (!token) return;
 
-          });
+        const res = await fetch(API_BASE_URL + "/Auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-          if(!res.ok)
-            throw new Error ("failed to fetch")
+        if (!res.ok) throw new Error("Failed to fetch");
 
-          const data=await res.json();
-          setUserInfo({
-            name: data.username||'user',
-            email:data.email ||'email'
-          })
+        const data = await res.json();
+        setUserInfo({
+          name: data.username || 'User',
+          email: data.email || 'email@example.com'
+        });
 
-          setEditedInfo({
-            name: data.username||'user',
-            email:data.email ||'email'
-          })
-      }
-      catch(err){
+        setEditedInfo({
+          name: data.username || 'User',
+          email: data.email || 'email@example.com'
+        });
+      } catch (err) {
         console.error("Error fetching user info:", err);
-        alert("couldnt fetch user info");
+        alert("Couldn't fetch user info");
       }
     };
     fetchUserInfo();
+  }, []);
 
-  },[]);
   const handleSaveProfile = () => {
     setUserInfo({ ...editedInfo });
     setEditMode(false);
@@ -66,22 +88,24 @@ export default function UserProfile({ navigation }) {
   };
 
   const handleChangePassword = () => {
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    const { currentPassword, newPassword, confirmPassword } = passwordData;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all password fields');
       return;
     }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (newPassword !== confirmPassword) {
       Alert.alert('Error', 'New passwords do not match');
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
+    if (newPassword.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters long');
       return;
     }
 
-    // Here you would typically make an API call to change the password
+
     Alert.alert('Success', 'Password changed successfully!', [
       {
         text: 'OK',
@@ -97,21 +121,13 @@ export default function UserProfile({ navigation }) {
     ]);
   };
 
-  const formatJoinDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4a5568" />
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <StatusBar barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeColors.accent} />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: themeColors.accent }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
@@ -125,153 +141,138 @@ export default function UserProfile({ navigation }) {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Picture Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileImageLarge}>
+        <View style={[styles.profileSection, { backgroundColor: themeColors.card }]}>
+          <View style={[styles.profileImageLarge, { backgroundColor: themeColors.accent }]}>
             <Ionicons name="person" size={40} color="#fff" />
           </View>
           <View style={styles.onlineIndicatorLarge} />
-          <Text style={styles.profileName}>{userInfo.name}</Text>
-          <Text style={styles.profileEmail}>{userInfo.email}</Text>
+          <Text style={[styles.profileName, { color: themeColors.text }]}>{userInfo.name}</Text>
+          <Text style={[styles.profileEmail, { color: themeColors.subtext }]}>{userInfo.email}</Text>
         </View>
 
-        {/* Profile Information */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+        <View style={[styles.infoSection, { backgroundColor: themeColors.card }]}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Personal Information</Text>
 
-          {/* Name Field */}
+
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Full Name</Text>
+            <Text style={[styles.infoLabel, { color: themeColors.subtext }]}>Full Name</Text>
             {editMode ? (
               <TextInput
-                style={styles.infoInput}
+                style={[styles.infoInput, {
+                  backgroundColor: themeColors.input,
+                  color: themeColors.text,
+                  borderColor: themeColors.border,
+                }]}
                 value={editedInfo.name}
                 onChangeText={(text) => setEditedInfo({ ...editedInfo, name: text })}
                 placeholder="Enter your full name"
+                placeholderTextColor={themeColors.subtext}
               />
             ) : (
-              <Text style={styles.infoValue}>{userInfo.name}</Text>
+              <Text style={[styles.infoValue, {
+                backgroundColor: themeColors.input,
+                color: themeColors.text,
+              }]}>{userInfo.name}</Text>
             )}
           </View>
 
-          {/* Email Field */}
+
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Email Address</Text>
+            <Text style={[styles.infoLabel, { color: themeColors.subtext }]}>Email Address</Text>
             {editMode ? (
               <TextInput
-                style={styles.infoInput}
+                style={[styles.infoInput, {
+                  backgroundColor: themeColors.input,
+                  color: themeColors.text,
+                  borderColor: themeColors.border,
+                }]}
                 value={editedInfo.email}
                 onChangeText={(text) => setEditedInfo({ ...editedInfo, email: text })}
                 placeholder="Enter your email"
+                placeholderTextColor={themeColors.subtext}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             ) : (
-              <Text style={styles.infoValue}>{userInfo.email}</Text>
+              <Text style={[styles.infoValue, {
+                backgroundColor: themeColors.input,
+                color: themeColors.text,
+              }]}>{userInfo.email}</Text>
             )}
           </View>
 
-            {/* Edit Personal information */}
+
           {editMode && (
             <View style={styles.editActions}>
-              <TouchableOpacity onPress={handleCancelEdit} style={styles.cancelButton}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit}>
+                <Text style={[styles.cancelButtonText, { color: themeColors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveProfile} style={styles.saveButton}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: themeColors.accent }]} onPress={handleSaveProfile}>
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* Security Section */}
-        <View style={styles.securitySection}>
-          <Text style={styles.sectionTitle}>Security</Text>
-          
+        <View style={[styles.securitySection, { backgroundColor: themeColors.card }]}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Security</Text>
           <TouchableOpacity
             style={styles.securityItem}
             onPress={() => setPasswordModalVisible(true)}
           >
             <View style={styles.securityItemLeft}>
-              <Ionicons name="lock-closed" size={20} color="#4a5568" />
-              <Text style={styles.securityItemText}>Change Password</Text>
+              <Ionicons name="lock-closed" size={20} color={themeColors.subtext} />
+              <Text style={[styles.securityItemText, { color: themeColors.text }]}>Change Password</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbd5e0" />
+            <Ionicons name="chevron-forward" size={20} color={themeColors.border} />
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Change Password Modal */}
+      {/* Password Modal */}
       <Modal
         visible={passwordModalVisible}
-        transparent={true}
+        transparent
         animationType="slide"
         onRequestClose={() => setPasswordModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: themeColors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Change Password</Text>
-              <TouchableOpacity
-                onPress={() => setPasswordModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color="#718096" />
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Change Password</Text>
+              <TouchableOpacity onPress={() => setPasswordModalVisible(false)}>
+                <Ionicons name="close" size={24} color={themeColors.subtext} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.modalBody}>
-              <View style={styles.passwordField}>
-                <Text style={styles.passwordLabel}>Current Password</Text>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.currentPassword}
-                  onChangeText={(text) =>
-                    setPasswordData({ ...passwordData, currentPassword: text })
-                  }
-                  placeholder="Enter current password"
-                  secureTextEntry={true}
-                />
-              </View>
-
-              <View style={styles.passwordField}>
-                <Text style={styles.passwordLabel}>New Password</Text>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.newPassword}
-                  onChangeText={(text) =>
-                    setPasswordData({ ...passwordData, newPassword: text })
-                  }
-                  placeholder="Enter new password"
-                  secureTextEntry={true}
-                />
-              </View>
-
-              <View style={styles.passwordField}>
-                <Text style={styles.passwordLabel}>Confirm New Password</Text>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.confirmPassword}
-                  onChangeText={(text) =>
-                    setPasswordData({ ...passwordData, confirmPassword: text })
-                  }
-                  placeholder="Confirm new password"
-                  secureTextEntry={true}
-                />
-              </View>
+              {['Current Password', 'New Password', 'Confirm New Password'].map((label, index) => {
+                const key = ['currentPassword', 'newPassword', 'confirmPassword'][index];
+                return (
+                  <View style={styles.passwordField} key={key}>
+                    <Text style={[styles.passwordLabel, { color: themeColors.subtext }]}>{label}</Text>
+                    <TextInput
+                      style={[styles.passwordInput, {
+                        backgroundColor: themeColors.input,
+                        color: themeColors.text,
+                        borderColor: themeColors.border,
+                      }]}
+                      value={passwordData[key]}
+                      onChangeText={(text) => setPasswordData({ ...passwordData, [key]: text })}
+                      placeholder={`Enter ${label.toLowerCase()}`}
+                      placeholderTextColor={themeColors.subtext}
+                      secureTextEntry
+                    />
+                  </View>
+                );
+              })}
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                onPress={() => setPasswordModalVisible(false)}
-                style={styles.modalCancelButton}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+              <TouchableOpacity style={styles.modalCancelButton} onPress={() => setPasswordModalVisible(false)}>
+                <Text style={[styles.modalCancelText, { color: themeColors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleChangePassword}
-                style={styles.modalSaveButton}
-              >
+              <TouchableOpacity style={[styles.modalSaveButton, { backgroundColor: themeColors.accent }]} onPress={handleChangePassword}>
                 <Text style={styles.modalSaveText}>Change Password</Text>
               </TouchableOpacity>
             </View>
@@ -283,12 +284,9 @@ export default function UserProfile({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
+  container: { flex: 1 },
   header: {
-    backgroundColor: '#4a5568',
+
     paddingHorizontal: 16,
     paddingTop: 50,
     paddingBottom: 16,
@@ -296,232 +294,129 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    flex: 1,
-    textAlign: 'center',
-  },
-  editButton: {
-    padding: 4,
-  },
-  content: {
-    flex: 1,
-  },
+  headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  backButton: { padding: 4 },
+  editButton: { padding: 4 },
+  content: { flex: 1 },
   profileSection: {
-    backgroundColor: '#fff',
+
     alignItems: 'center',
-    paddingVertical: 30,
-    marginBottom: 20,
+    padding: 24,
+    margin: 16,
+    borderRadius: 12,
+    elevation: 2,
   },
   profileImageLarge: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4a5568',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   onlineIndicatorLarge: {
     position: 'absolute',
-    top: 76,
-    left: '50%',
-    marginLeft: 20,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#38a169',
-    borderWidth: 3,
+    bottom: 28,
+    right: '40%',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#22c55e',
+    borderWidth: 2,
     borderColor: '#fff',
   },
-  profileName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2d3748',
-    marginBottom: 4,
-  },
-  profileEmail: {
-    fontSize: 16,
-    color: '#718096',
-  },
+  profileName: { fontSize: 20, fontWeight: 'bold', marginTop: 4 },
+  profileEmail: { fontSize: 14, marginBottom: 8 },
   infoSection: {
-    backgroundColor: '#fff',
+
     marginHorizontal: 16,
+    marginTop: 8,
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    padding: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2d3748',
-    marginBottom: 16,
-  },
-  infoItem: {
-    marginBottom: 20,
-  },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4a5568',
-    marginBottom: 8,
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  infoItem: { marginBottom: 16 },
+  infoLabel: { fontSize: 14, marginBottom: 4 },
+  infoInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
   },
   infoValue: {
+    padding: 10,
     fontSize: 16,
-    color: '#2d3748',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-  },
-  infoInput: {
-    fontSize: 16,
-    color: '#2d3748',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+
     borderRadius: 8,
   },
   editActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    justifyContent: 'flex-end',
+    marginTop: 8,
   },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#e2e8f0',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4a5568',
-  },
+  cancelButton: { marginRight: 16 },
+  cancelButtonText: { fontSize: 14 },
   saveButton: {
-    flex: 1,
-    backgroundColor: '#4a5568',
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    marginLeft: 8,
-    alignItems: 'center',
+
   },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
+  saveButtonText: { color: '#fff', fontWeight: 'bold' },
   securitySection: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
+    margin: 16,
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    padding: 16,
   },
   securityItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+
     justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  securityItemLeft: {
-    flexDirection: 'row',
+
     alignItems: 'center',
+    marginTop: 12,
   },
-  securityItemText: {
-    fontSize: 16,
-    color: '#2d3748',
-    marginLeft: 12,
-  },
-  // Modal Styles
+  securityItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  securityItemText: { fontSize: 16, marginLeft: 8 },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    width: '90%',
-    maxWidth: 400,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2d3748',
-  },
-  modalCloseButton: {
-    padding: 4,
-  },
-  modalBody: {
-    padding: 20,
-  },
-  passwordField: {
-    marginBottom: 16,
-  },
-  passwordLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4a5568',
-    marginBottom: 8,
-  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold' },
+  modalBody: { marginTop: 16 },
+  passwordField: { marginBottom: 16 },
+  passwordLabel: { fontSize: 14, marginBottom: 4 },
   passwordInput: {
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+
     borderRadius: 8,
-    backgroundColor: '#fff',
+    padding: 10,
+    fontSize: 16,
   },
   modalActions: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    justifyContent: 'flex-end',
+    marginTop: 16,
   },
-  modalCancelButton: {
-    flex: 1,
-    backgroundColor: '#e2e8f0',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4a5568',
-  },
+  modalCancelButton: { marginRight: 16 },
+  modalCancelText: { fontSize: 14 },
   modalSaveButton: {
-    flex: 1,
-    backgroundColor: '#4a5568',
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    marginLeft: 8,
-    alignItems: 'center',
+
   },
-  modalSaveText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
+  modalSaveText: { color: '#fff', fontWeight: 'bold' },
 });
