@@ -4,8 +4,7 @@ import {
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import Svg, { Path } from 'react-native-svg';
-
+import Svg, { Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -21,7 +20,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   // UI states
   const [activeTab, setActiveTab] = useState('text');
   const [showFontModal, setShowFontModal] = useState(false);
-  const [showFormatModal, setShowFormatModal] = useState(false);
+  const [showDrawingModal, setShowDrawingModal] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
   
@@ -32,7 +31,14 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [isItalic, setIsItalic] = useState(note?.isItalic || false);
   const [textAlign, setTextAlign] = useState(note?.textAlign || 'left');
 
+  // Drawing tool states
+  const [selectedTool, setSelectedTool] = useState('pen');
+  const [selectedColor, setSelectedColor] = useState('#4a5568');
+  const [brushSize, setBrushSize] = useState(2);
+  const [currentDrawing, setCurrentDrawing] = useState(null);
+
   const pathRef = useRef('');
+  let lastUpdateTime = useRef(Date.now());
 
   // Font options
   const fonts = [
@@ -44,6 +50,22 @@ export default function NoteDetailScreen({ route, navigation }) {
   ];
 
   const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32];
+
+  // Drawing tool options
+  const drawingTools = [
+    { name: 'pen', icon: 'create', label: 'Pen' },
+    { name: 'brush', icon: 'brush', label: 'Brush' },
+    { name: 'highlighter', icon: 'color-fill', label: 'Highlighter' },
+  ];
+
+  const colors = [
+    '#000000', '#4a5568', '#2d3748', '#1a202c',
+    '#e53e3e', '#d69e2e', '#38a169', '#3182ce',
+    '#805ad5', '#d53f8c', '#ed8936', '#48bb78',
+    '#4299e1', '#9f7aea', '#ed64a6', '#f56565',
+  ];
+
+  const brushSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
   // Save note function
   const saveNote = () => {
@@ -65,7 +87,7 @@ export default function NoteDetailScreen({ route, navigation }) {
       textAlign,
       createdAt: note?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      is_new:true
+      is_new: true
     };
 
     // Call the onSave callback to update the home screen
@@ -103,7 +125,33 @@ export default function NoteDetailScreen({ route, navigation }) {
   const deleteChecklistItem = (id) => {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
-   let lastUpdateTime = Date.now();
+
+  // Get stroke properties based on selected tool
+  const getStrokeProperties = () => {
+    switch (selectedTool) {
+      case 'brush':
+        return {
+          strokeWidth: brushSize * 2,
+          strokeOpacity: 0.8,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        };
+      case 'highlighter':
+        return {
+          strokeWidth: brushSize * 3,
+          strokeOpacity: 0.4,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        };
+      default: // pen
+        return {
+          strokeWidth: brushSize,
+          strokeOpacity: 1,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        };
+    }
+  };
 
   // Drawing functions with PanResponder
   const panResponder = PanResponder.create({
@@ -113,24 +161,42 @@ export default function NoteDetailScreen({ route, navigation }) {
       setIsDrawing(true);
       const { locationX, locationY } = evt.nativeEvent;
       pathRef.current = `M${locationX},${locationY}`;
-      setCurrentPath(pathRef.current);
+      
+      const newDrawing = {
+        path: pathRef.current,
+        color: selectedColor,
+        tool: selectedTool,
+        ...getStrokeProperties(),
+      };
+      
+      setCurrentDrawing(newDrawing);
     },
-  
-onPanResponderMove: (evt) => {
-  if (!isDrawing) return;
-  const now = Date.now();
-  if (now - lastUpdateTime < 16) return; // ~60 FPS
-  lastUpdateTime = now;
 
-  const { locationX, locationY } = evt.nativeEvent;
-  pathRef.current += ` L${locationX},${locationY}`;
-  setCurrentPath(pathRef.current);
-},
+    onPanResponderMove: (evt) => {
+      if (!isDrawing) return;
+      const now = Date.now();
+      if (now - lastUpdateTime.current < 16) return; // ~60 FPS
+      lastUpdateTime.current = now;
+
+      const { locationX, locationY } = evt.nativeEvent;
+      pathRef.current += ` L${locationX},${locationY}`;
+      
+      setCurrentDrawing(prev => ({
+        ...prev,
+        path: pathRef.current,
+      }));
+    },
 
     onPanResponderRelease: () => {
-      if (isDrawing) {
-        setDrawings([...drawings, pathRef.current]);
-        setCurrentPath('');
+      if (isDrawing && currentDrawing) {
+        const finalDrawing = {
+          ...currentDrawing,
+          path: pathRef.current,
+          id: Date.now().toString(),
+        };
+        
+        setDrawings(prev => [...prev, finalDrawing]);
+        setCurrentDrawing(null);
         pathRef.current = '';
         setIsDrawing(false);
       }
@@ -138,9 +204,22 @@ onPanResponderMove: (evt) => {
   });
 
   const clearDrawing = () => {
-    setDrawings([]);
-    setCurrentPath('');
-    pathRef.current = '';
+    Alert.alert(
+      'Clear Drawing',
+      'Are you sure you want to clear all drawings?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            setDrawings([]);
+            setCurrentDrawing(null);
+            pathRef.current = '';
+          },
+        },
+      ]
+    );
   };
 
   // AI Summarizer (mock function)
@@ -165,8 +244,8 @@ onPanResponderMove: (evt) => {
     textAlign,
   });
 
-  const getAlignmentText = () => {
-    return '☴';
+  const getAlignmentIcon = () => {
+    return '☲';
   };
 
   return (
@@ -241,34 +320,57 @@ onPanResponderMove: (evt) => {
         {/* Drawing Tab */}
         {activeTab === 'drawing' && (
           <View style={styles.drawingContainer}>
+            {/* Drawing Tools Header */}
+            <View style={styles.drawingToolsHeader}>
+              <TouchableOpacity 
+                style={styles.drawingSettingsButton} 
+                onPress={() => setShowDrawingModal(true)}
+              >
+                <Ionicons name="settings" size={16} color="#4a5568" />
+                <Text style={styles.drawingSettingsText}>Tools</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.currentToolInfo}>
+                <View style={[styles.colorIndicator, { backgroundColor: selectedColor }]} />
+                <Text style={styles.toolText}>{selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)}</Text>
+                <Text style={styles.sizeText}>{brushSize}px</Text>
+              </View>
+              
+              <TouchableOpacity style={styles.clearButton} onPress={clearDrawing}>
+                <Ionicons name="trash" size={16} color="#d11a2a" />
+              </TouchableOpacity>
+            </View>
+
             <View
               style={styles.drawingArea}
               {...panResponder.panHandlers}
             >
-              <Svg height="300" width="100%">
-                {drawings.map((path, index) => (
+              <Svg height="400" width="100%">
+                {drawings.map((drawing, index) => (
                   <Path
-                    key={index}
-                    d={path}
-                    stroke="#4a5568"
-                    strokeWidth="2"
+                    key={drawing.id || index}
+                    d={drawing.path}
+                    stroke={drawing.color}
+                    strokeWidth={drawing.strokeWidth}
+                    strokeOpacity={drawing.strokeOpacity}
+                    strokeLinecap={drawing.strokeLinecap}
+                    strokeLinejoin={drawing.strokeLinejoin}
                     fill="none"
                   />
                 ))}
-                {currentPath && (
+                {currentDrawing && (
                   <Path
-                    d={currentPath}
-                    stroke="#4a5568"
-                    strokeWidth="2"
+                    d={currentDrawing.path}
+                    stroke={currentDrawing.color}
+                    strokeWidth={currentDrawing.strokeWidth}
+                    strokeOpacity={currentDrawing.strokeOpacity}
+                    strokeLinecap={currentDrawing.strokeLinecap}
+                    strokeLinejoin={currentDrawing.strokeLinejoin}
                     fill="none"
                   />
                 )}
               </Svg>
             </View>
-            <TouchableOpacity style={styles.clearButton} onPress={clearDrawing}>
-              <Ionicons name="trash" size={16} color="#d11a2a" />
-              <Text style={styles.clearButtonText}>Clear Drawing</Text>
-            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -322,7 +424,7 @@ onPanResponderMove: (evt) => {
           const nextAlign = aligns[(currentIndex + 1) % aligns.length];
           setTextAlign(nextAlign);
         }}>
-          <Text style={styles.toolButtonText}>{getAlignmentText()}</Text>
+          <Text style={styles.toolButtonText}>{getAlignmentIcon()}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.toolButton} onPress={aiSummarize}>
@@ -380,6 +482,80 @@ onPanResponderMove: (evt) => {
           </View>
         </View>
       </Modal>
+
+      {/* Drawing Tools Modal */}
+      <Modal visible={showDrawingModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Drawing Tools</Text>
+            
+            {/* Tool Selection */}
+            <Text style={styles.sectionTitle}>Tools</Text>
+            <View style={styles.toolsContainer}>
+              {drawingTools.map((tool) => (
+                <TouchableOpacity
+                  key={tool.name}
+                  style={[styles.toolOption, selectedTool === tool.name && styles.selectedTool]}
+                  onPress={() => setSelectedTool(tool.name)}
+                >
+                  <Ionicons 
+                    name={tool.icon} 
+                    size={24} 
+                    color={selectedTool === tool.name ? '#fff' : '#4a5568'} 
+                  />
+                  <Text style={[styles.toolLabel, selectedTool === tool.name && styles.selectedToolLabel]}>
+                    {tool.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Color Selection */}
+            <Text style={styles.sectionTitle}>Colors</Text>
+            <View style={styles.colorsContainer}>
+              {colors.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorOption, 
+                    { backgroundColor: color },
+                    selectedColor === color && styles.selectedColor
+                  ]}
+                  onPress={() => setSelectedColor(color)}
+                >
+                  {selectedColor === color && (
+                    <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : '#000'} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Brush Size Selection */}
+            <Text style={styles.sectionTitle}>Brush Size</Text>
+            <View style={styles.brushSizeContainer}>
+              {brushSizes.map((size) => (
+                <TouchableOpacity
+                  key={size}
+                  style={[styles.brushSizeOption, brushSize === size && styles.selectedBrushSize]}
+                  onPress={() => setBrushSize(size)}
+                >
+                  <View style={[styles.brushPreview, { width: size + 4, height: size + 4, backgroundColor: selectedColor }]} />
+                  <Text style={[styles.brushSizeText, brushSize === size && styles.selectedBrushSizeText]}>
+                    {size}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowDrawingModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -388,7 +564,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
-    paddingTop:50
+    paddingTop: 50
   },
   header: {
     flexDirection: 'row',
@@ -399,7 +575,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    
   },
   headerTitle: {
     fontSize: 18,
@@ -410,7 +585,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4a5568',
     fontWeight: '600',
-    paddingLeft : 12,
+    paddingLeft: 12,
   },
   contentContainer: {
     flex: 1,
@@ -424,6 +599,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 10,
   },
   textInput: {
     backgroundColor: '#fff',
@@ -478,24 +654,59 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
+  drawingToolsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    marginBottom: 12,
+  },
+  drawingSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  drawingSettingsText: {
+    fontSize: 12,
+    color: '#4a5568',
+    fontWeight: '500',
+  },
+  currentToolInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  colorIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  toolText: {
+    fontSize: 12,
+    color: '#4a5568',
+    fontWeight: '500',
+  },
+  sizeText: {
+    fontSize: 12,
+    color: '#718096',
+  },
   drawingArea: {
-    height: 500,
+    height: 400,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 8,
-    marginBottom: 12,
     backgroundColor: '#f8f9fa',
   },
   clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    gap: 6,
-  },
-  clearButtonText: {
-    color: '#d11a2a',
-    fontSize: 14,
+    padding: 6,
   },
   toolbar: {
     flexDirection: 'row',
@@ -593,6 +804,85 @@ const styles = StyleSheet.create({
   selectedFontSizeText: {
     color: '#fff',
   },
+  // Drawing Tools Modal Styles
+  toolsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  toolOption: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f7fafc',
+  },
+  selectedTool: {
+    backgroundColor: '#4a5568',
+    borderColor: '#4a5568',
+  },
+  toolLabel: {
+    fontSize: 12,
+    color: '#4a5568',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  selectedToolLabel: {
+    color: '#fff',
+  },
+  colorsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  colorOption: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedColor: {
+    borderColor: '#4a5568',
+    borderWidth: 3,
+  },
+  brushSizeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  brushSizeOption: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f7fafc',
+    minWidth: 60,
+  },
+  selectedBrushSize: {
+    backgroundColor: '#4a5568',
+    borderColor: '#4a5568',
+  },
+  brushPreview: {
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  brushSizeText: {
+    fontSize: 12,
+    color: '#4a5568',
+    fontWeight: '500',
+  },
+  selectedBrushSizeText: {
+    color: '#fff',
+  },
   closeButton: {
     backgroundColor: '#4a5568',
     paddingVertical: 12,
@@ -604,4 +894,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-});
+  });
