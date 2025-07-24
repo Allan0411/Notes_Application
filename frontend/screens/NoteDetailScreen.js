@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
@@ -21,6 +22,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [activeTab, setActiveTab] = useState('text');
   const [showFontModal, setShowFontModal] = useState(false);
   const [showDrawingModal, setShowDrawingModal] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
   
@@ -40,6 +42,9 @@ export default function NoteDetailScreen({ route, navigation }) {
   const pathRef = useRef('');
   let lastUpdateTime = useRef(Date.now());
 
+  // Animation for slide menu
+  const slideAnim = useRef(new Animated.Value(300)).current;
+
   // Font options
   const fonts = [
     { name: 'System', value: 'System' },
@@ -47,6 +52,12 @@ export default function NoteDetailScreen({ route, navigation }) {
     { name: 'Times New Roman', value: 'Times New Roman' },
     { name: 'Courier New', value: 'Courier New' },
     { name: 'Helvetica', value: 'Helvetica' },
+    { name: 'Georgia', value: 'Georgia' },
+    { name: 'Trebuchet MS', value: 'Trebuchet MS' },
+    { name: 'Impact', value: 'Impact' },
+    { name: 'Comic Sans MS', value: 'Comic Sans MS' },
+    { name: 'Roboto', value: 'Roboto' },
+    { name: 'Open Sans', value: 'Open Sans' },
   ];
 
   const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32];
@@ -67,10 +78,39 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   const brushSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
+  // Menu options
+  const menuOptions = [
+    { id: 'save', label: 'Save', icon: 'save-outline', action: saveNote },
+    { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
+    { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
+    { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
+  ];
+
+  // Show/Hide menu functions
+  const showMenu = () => {
+    setShowMenuModal(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideMenu = () => {
+    Animated.timing(slideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowMenuModal(false);
+    });
+  };
+
   // Save note function
-  const saveNote = () => {
+  function saveNote() {
     if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
       Alert.alert('Empty Note', 'Please add some content!');
+      hideMenu();
       return;
     }
 
@@ -95,10 +135,27 @@ export default function NoteDetailScreen({ route, navigation }) {
       onSave(updatedNote);
     }
     
+    hideMenu();
     Alert.alert('Success', 'Note saved successfully!', [
       { text: 'OK', onPress: () => navigation.goBack() }
     ]);
-  };
+  }
+
+  // Menu action functions
+  function handleSend() {
+    hideMenu();
+    Alert.alert('Send Note', 'Feature coming soon! You can share your note via email, messaging apps, or social media.');
+  }
+
+  function handleReminder() {
+    hideMenu();
+    Alert.alert('Set Reminder', 'Feature coming soon! You can set reminders for this note to notify you at specific times.');
+  }
+
+  function handleCollaborator() {
+    hideMenu();
+    Alert.alert('Add Collaborator', 'Feature coming soon! You can invite others to view and edit this note together.');
+  }
 
   // Checklist functions
   const addChecklistItem = () => {
@@ -245,7 +302,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   });
 
   const getAlignmentIcon = () => {
-    return '☲';
+    return '☰';
   };
 
   return (
@@ -258,8 +315,8 @@ export default function NoteDetailScreen({ route, navigation }) {
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Detail</Text>
-        <TouchableOpacity onPress={saveNote}>
-          <Text style={styles.saveText}>Save</Text>
+        <TouchableOpacity onPress={showMenu}>
+          <Ionicons name="ellipsis-vertical" size={24} color="#4a5568" />
         </TouchableOpacity>
       </View>
 
@@ -432,22 +489,74 @@ export default function NoteDetailScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Slide Menu Modal */}
+      <Modal visible={showMenuModal} transparent animationType="none">
+        <TouchableOpacity 
+          style={styles.menuOverlay} 
+          activeOpacity={1} 
+          onPress={hideMenu}
+        >
+          <Animated.View 
+            style={[
+              styles.slideMenu, 
+              { transform: [{ translateY: slideAnim }] }
+            ]}
+          >
+            <View style={styles.slideMenuHandle} />
+            <Text style={styles.slideMenuTitle}>Note Options</Text>
+            
+            {menuOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={styles.menuOption}
+                onPress={option.action}
+              >
+                <View style={styles.menuOptionContent}>
+                  <Ionicons name={option.icon} size={22} color="#4a5568" />
+                  <Text style={styles.menuOptionText}>{option.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#718096" />
+              </TouchableOpacity>
+            ))}
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Font Modal */}
       <Modal visible={showFontModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choose Font & Size</Text>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowFontModal(false)}
+        >
+          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Choose Font & Size</Text>
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={() => setShowFontModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#4a5568" />
+              </TouchableOpacity>
+            </View>
             
             {/* Font Family Section */}
             <Text style={styles.sectionTitle}>Font Family</Text>
-            <ScrollView style={styles.fontSection}>
+            <ScrollView style={styles.fontSection} showsVerticalScrollIndicator={false}>
               {fonts.map((font) => (
                 <TouchableOpacity
                   key={font.value}
-                  style={styles.fontOption}
+                  style={[
+                    styles.fontOption,
+                    fontFamily === font.value && styles.selectedFontOption
+                  ]}
                   onPress={() => setFontFamily(font.value)}
                 >
-                  <Text style={[styles.fontText, { fontFamily: font.value }]}>
+                  <Text style={[
+                    styles.fontText, 
+                    { fontFamily: font.value === 'System' ? undefined : font.value },
+                    fontFamily === font.value && styles.selectedFontText
+                  ]}>
                     {font.name}
                   </Text>
                   {fontFamily === font.value && (
@@ -472,22 +581,27 @@ export default function NoteDetailScreen({ route, navigation }) {
                 </TouchableOpacity>
               ))}
             </View>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowFontModal(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Drawing Tools Modal */}
       <Modal visible={showDrawingModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Drawing Tools</Text>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowDrawingModal(false)}
+        >
+          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Drawing Tools</Text>
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={() => setShowDrawingModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#4a5568" />
+              </TouchableOpacity>
+            </View>
             
             {/* Tool Selection */}
             <Text style={styles.sectionTitle}>Tools</Text>
@@ -524,7 +638,7 @@ export default function NoteDetailScreen({ route, navigation }) {
                   onPress={() => setSelectedColor(color)}
                 >
                   {selectedColor === color && (
-                    <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : '#000'} />
+                    <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : color === '#ffffff' ? '#000' : '#fff'} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -532,29 +646,32 @@ export default function NoteDetailScreen({ route, navigation }) {
 
             {/* Brush Size Selection */}
             <Text style={styles.sectionTitle}>Brush Size</Text>
-            <View style={styles.brushSizeContainer}>
-              {brushSizes.map((size) => (
-                <TouchableOpacity
-                  key={size}
-                  style={[styles.brushSizeOption, brushSize === size && styles.selectedBrushSize]}
-                  onPress={() => setBrushSize(size)}
-                >
-                  <View style={[styles.brushPreview, { width: size + 4, height: size + 4, backgroundColor: selectedColor }]} />
-                  <Text style={[styles.brushSizeText, brushSize === size && styles.selectedBrushSizeText]}>
-                    {size}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowDrawingModal(false)}
-            >
-              <Text style={styles.closeButtonText}>Done</Text>
-            </TouchableOpacity>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brushSizeScrollView}>
+              <View style={styles.brushSizeContainer}>
+                {brushSizes.map((size) => (
+                  <TouchableOpacity
+                    key={size}
+                    style={[styles.brushSizeOption, brushSize === size && styles.selectedBrushSize]}
+                    onPress={() => setBrushSize(size)}
+                  >
+                    <View style={[
+                      styles.brushPreview, 
+                      { 
+                        width: Math.max(size, 8), 
+                        height: Math.max(size, 8), 
+                        backgroundColor: selectedColor,
+                        borderRadius: Math.max(size, 8) / 2
+                      }
+                    ]} />
+                    <Text style={[styles.brushSizeText, brushSize === size && styles.selectedBrushSizeText]}>
+                      {size}px
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -564,7 +681,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
-    paddingTop: 50
+    paddingTop: 5,
   },
   header: {
     flexDirection: 'row',
@@ -581,12 +698,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2d3748',
   },
-  saveText: {
-    fontSize: 16,
-    color: '#4a5568',
-    fontWeight: '600',
-    paddingLeft: 12,
-  },
   contentContainer: {
     flex: 1,
     padding: 10,
@@ -599,7 +710,6 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
   textInput: {
     backgroundColor: '#fff',
@@ -739,60 +849,153 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
+  // Slide Menu Styles
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  slideMenu: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  slideMenuHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  slideMenuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f7fafc',
+  },
+  menuOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  menuOptionText: {
+    fontSize: 16,
+    color: '#2d3748',
+    fontWeight: '500',
+  },
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#2d3748',
+  },
+  modalCloseButton: {
+    padding: 4,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
+    marginTop: 8,
     color: '#2d3748',
   },
+  // Font Modal Styles
   fontSection: {
-    maxHeight: 150,
+    maxHeight: 200,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
   },
   fontOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#f7fafc',
+  },
+  selectedFontOption: {
+    backgroundColor: '#f7fafc',
   },
   fontText: {
     fontSize: 16,
+    color: '#2d3748',
+  },
+  selectedFontText: {
+    color: '#4a5568',
+    fontWeight: '600',
   },
   fontSizeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   fontSizeOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    minWidth: 40,
+    minWidth: 50,
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   selectedFontSize: {
     backgroundColor: '#4a5568',
@@ -800,9 +1003,11 @@ const styles = StyleSheet.create({
   },
   fontSizeText: {
     color: '#2d3748',
+    fontWeight: '500',
   },
   selectedFontSizeText: {
     color: '#fff',
+    fontWeight: '600',
   },
   // Drawing Tools Modal Styles
   toolsContainer: {
@@ -813,9 +1018,10 @@ const styles = StyleSheet.create({
   toolOption: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 2,
     borderColor: '#e2e8f0',
     backgroundColor: '#f7fafc',
   },
@@ -826,8 +1032,8 @@ const styles = StyleSheet.create({
   toolLabel: {
     fontSize: 12,
     color: '#4a5568',
-    marginTop: 4,
-    fontWeight: '500',
+    marginTop: 6,
+    fontWeight: '600',
   },
   selectedToolLabel: {
     color: '#fff',
@@ -835,63 +1041,70 @@ const styles = StyleSheet.create({
   colorsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
     marginBottom: 20,
+    justifyContent: 'center',
   },
   colorOption: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
     borderColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   selectedColor: {
     borderColor: '#4a5568',
-    borderWidth: 3,
+    borderWidth: 4,
+  },
+  brushSizeScrollView: {
+    marginBottom: 10,
   },
   brushSizeContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
+    gap: 12,
+    paddingHorizontal: 4,
   },
   brushSizeOption: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 2,
     borderColor: '#e2e8f0',
     backgroundColor: '#f7fafc',
-    minWidth: 60,
+    minWidth: 70,
   },
   selectedBrushSize: {
     backgroundColor: '#4a5568',
     borderColor: '#4a5568',
   },
   brushPreview: {
-    borderRadius: 10,
-    marginBottom: 4,
+    marginBottom: 6,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
   },
   brushSizeText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#4a5568',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   selectedBrushSizeText: {
     color: '#fff',
   },
-  closeButton: {
-    backgroundColor: '#4a5568',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  });
+});
