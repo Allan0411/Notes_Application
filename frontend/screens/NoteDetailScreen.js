@@ -9,11 +9,12 @@ import Svg, { Path } from 'react-native-svg';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator } from 'react-native';
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function NoteDetailScreen({ route, navigation }) {
   const { note, onSave,isNewNote } = route.params;
-  const [isSaving,setIsSaving]=useState(false);
+   const [isSaving,setIsSaving]=useState(false);
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
@@ -81,9 +82,8 @@ export default function NoteDetailScreen({ route, navigation }) {
   const brushSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
 
-  // Replace with your API endpoint(s)
 
-// Simulate random integer for id (for new note creation)
+  // Save note function
 const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
 
 // POST: Create new note
@@ -122,20 +122,7 @@ const createNote = async (note) => {
   }
 };
 
-
-
-// GET: Fetch a note by id
-const fetchNoteById = async (id) => {
-  try {
-    const response = await fetch(`${API_BASE_URL+'/Notes'}/${id}`);
-    return await response.json();
-  } catch (err) {
-    console.error('Error fetching note:', err);
-    throw err;
-  }
-};
-
-// POST/PUT: Update a note by id
+// PUT: Update a note by id
 const updateNote = async (id, note) => {
   try {
     const token=await AsyncStorage.getItem('authToken');
@@ -163,6 +150,7 @@ const updateNote = async (id, note) => {
 
   // Save note function
 const saveNote = async () => {
+  console.log("burron clikect");
     if(isSaving) return; //lmfao this is all it took to stop double taps
 
   if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
@@ -203,14 +191,59 @@ const saveNote = async () => {
 }
 
   } catch (err) {
-    Alert.alert('Error', 'There was a problem saving your note.');
+    Alert.alert('Error', 'There was a problem saving your note.',err.message);
   }
   finally{
     setIsSaving(false);
   }
 };
+  // Menu action functions
+  function handleSend() {
+    hideMenu();
+    Alert.alert('Send Note', 'Feature coming soon! You can share your note via email, messaging apps, or social media.');
+  }
 
+  function handleReminder() {
+    hideMenu();
+    Alert.alert('Set Reminder', 'Feature coming soon! You can set reminders for this note to notify you at specific times.');
+  }
 
+  function handleCollaborator() {
+    hideMenu();
+    Alert.alert('Add Collaborator', 'Feature coming soon! You can invite others to view and edit this note together.');
+  }
+
+  
+  // Show/Hide menu functions
+  const showMenu = () => {
+    setShowMenuModal(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideMenu = () => {
+    Animated.timing(slideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowMenuModal(false);
+    });
+  };
+
+  //menuOptions
+    // Menu options
+  const menuOptions = [
+    { id: 'save', label: 'Save', icon: 'save-outline', action: async  ()=>{ 
+       hideMenu();
+      await saveNote();} },
+    { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
+    { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
+    { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
+  ];
 
   // Checklist functions
   const addChecklistItem = () => {
@@ -370,16 +403,8 @@ const saveNote = async () => {
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Detail</Text>
-        <TouchableOpacity onPress={saveNote} disabled={isSaving}>
-          {isSaving?(
-            <View style={styles.saveText}>
-              <ActivityIndicator size="small" color="#4a5568" />
-            <Text style={styles.saveText}>Saving...</Text>
-            </View>
-          ):(
-           <Text style={styles.saveText}>Save</Text>
-          )}
-          
+        <TouchableOpacity onPress={showMenu}>
+          <Ionicons name="ellipsis-vertical" size={24} color="#4a5568" />
         </TouchableOpacity>
       </View>
 
@@ -744,7 +769,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
-    paddingTop: 5,
+    paddingTop: 40,
   },
   header: {
     flexDirection: 'row',
