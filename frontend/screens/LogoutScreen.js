@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, StatusBa
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../ThemeContext'; // Make sure this is correct path
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LogoutScreen() {
   const navigation = useNavigation();
@@ -13,7 +14,7 @@ export default function LogoutScreen() {
   const handleLogout = () => {
     Alert.alert(
       'Confirm Logout',
-      'Are you sure you want to log out?',
+      'Are you sure you want to log out?<your auth token will be destroyed>',
       [
         {
           text: 'Cancel',
@@ -22,13 +23,19 @@ export default function LogoutScreen() {
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => {
-
-            console.log('User logged out');
+          onPress: async () => {
+            try{
+              await AsyncStorage.removeItem('authToken');
+              console.log('User logged out');
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
             });
+            }
+            catch(err){
+              console.error('Error logging out:', err);
+            }
+            
           },
         },
       ]

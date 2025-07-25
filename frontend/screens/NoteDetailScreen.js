@@ -5,14 +5,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-
+import { API_BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator } from 'react-native';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function NoteDetailScreen({ route, navigation }) {
-  const { note, onSave } = route.params;
-  
+  const { note, onSave,isNewNote } = route.params;
+  const [isSaving,setIsSaving]=useState(false);
   // Note content states
-  const [noteText, setNoteText] = useState(note?.text || '');
+  const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
   const [checklistItems, setChecklistItems] = useState(note?.checklistItems || []);
   const [drawings, setDrawings] = useState(note?.drawings || []);
@@ -67,38 +69,137 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   const brushSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
+
+  // Replace with your API endpoint(s)
+
+// Simulate random integer for id (for new note creation)
+const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
+
+// POST: Create new note
+const createNote = async (note) => {
+  try {
+  
+    const token= await AsyncStorage.getItem('authToken');
+    console.log('Sending payload:', note);
+    console.log('Auth token:', token);
+
+    const response = await fetch(API_BASE_URL + '/Notes', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(note)
+    });
+
+    // Print HTTP status code!
+    console.log('Response status code:', response.status);
+
+    // Optionally print status text (most fetch implementations)
+    console.log('Response status text:', response.statusText);
+
+    // Carefully parse only if response has content
+    const text = await response.text();
+    if (!text) {
+      throw new Error('Empty response from server');
+    }
+    return JSON.parse(text);
+
+  } catch (err) {
+    console.error('Error creating note:', err);
+    throw err;
+  }
+};
+
+
+
+// GET: Fetch a note by id
+const fetchNoteById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL+'/Notes'}/${id}`);
+    return await response.json();
+  } catch (err) {
+    console.error('Error fetching note:', err);
+    throw err;
+  }
+};
+
+// POST/PUT: Update a note by id
+const updateNote = async (id, note) => {
+  try {
+    const token=await AsyncStorage.getItem('authToken');
+    // If your API expects PUT or PATCH, change accordingly:
+    const response = await fetch(`${API_BASE_URL+'/Notes'}/${id}`, {
+      method: 'PUT', // or 'PUT' / 'PATCH' per your API
+      headers: { 'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+       },
+      body: JSON.stringify(note)
+    });
+     console.log('Response status code:', response.status);
+      console.log('Response status text:', response.statusText);
+    const text = await response.text();
+    console.log("text: ",text)
+    if (!text) {
+      return true;
+    }
+    return JSON.parse(text)
+  } catch (err) {
+    console.error('Error updating note:', err);
+    throw err;
+  }
+};
+
   // Save note function
-  const saveNote = () => {
-    if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
-      Alert.alert('Empty Note', 'Please add some content!');
-      return;
-    }
+const saveNote = async () => {
+    if(isSaving) return; //lmfao this is all it took to stop double taps
 
-    const updatedNote = {
-      id: note?.id || Date.now().toString(),
-      text: noteText,
-      title: noteTitle || 'Untitled Note',
-      checklistItems,
-      drawings,
-      fontSize,
-      fontFamily,
-      isBold,
-      isItalic,
-      textAlign,
-      createdAt: note?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      is_new: true
-    };
-
-    // Call the onSave callback to update the home screen
-    if (onSave) {
-      onSave(updatedNote);
-    }
-    
-    Alert.alert('Success', 'Note saved successfully!', [
-      { text: 'OK', onPress: () => navigation.goBack() }
-    ]);
+  if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
+    Alert.alert('Empty Note', 'Please add some content!');
+    return;
+  }
+  
+  setIsSaving(true);
+  let notePayload = {
+    id: note?.id || generateRandomId(),
+    title: noteTitle || 'Untitled Note',
+    textContents: noteText,
+    s3Contents: "tempor est laboris",
+    // ...other fields as needed
   };
+
+  try {
+    if (isNewNote) {
+      // JUST CREATE, nothing else for a new note
+      const created = await createNote(notePayload);
+      if (onSave) onSave(created);
+      Alert.alert('Success', 'Note created successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
+    } else {
+  // ONLY update existing note
+  const updated = await updateNote(note?.id, notePayload);
+  if (onSave) {
+    if (updated === true || updated == null) {
+      onSave({ ...note, ...notePayload });
+    } else {
+      onSave(updated);
+    }
+  }
+  Alert.alert('Success', 'Note updated successfully!', [
+    { text: 'OK', onPress: () => navigation.goBack() }
+  ]);
+}
+
+  } catch (err) {
+    Alert.alert('Error', 'There was a problem saving your note.');
+  }
+  finally{
+    setIsSaving(false);
+  }
+};
+
+
 
   // Checklist functions
   const addChecklistItem = () => {
@@ -258,8 +359,16 @@ export default function NoteDetailScreen({ route, navigation }) {
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Detail</Text>
-        <TouchableOpacity onPress={saveNote}>
-          <Text style={styles.saveText}>Save</Text>
+        <TouchableOpacity onPress={saveNote} disabled={isSaving}>
+          {isSaving?(
+            <View style={styles.saveText}>
+              <ActivityIndicator size="small" color="#4a5568" />
+            <Text style={styles.saveText}>Saving...</Text>
+            </View>
+          ):(
+           <Text style={styles.saveText}>Save</Text>
+          )}
+          
         </TouchableOpacity>
       </View>
 

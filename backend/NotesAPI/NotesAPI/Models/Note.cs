@@ -10,8 +10,7 @@ namespace NotesAPI.Models
     public class Note
     {
         [Key]
-        [JsonIgnore]
-        [BindNever]
+        
         [Column("id")]
         public int Id { get; set; }
 

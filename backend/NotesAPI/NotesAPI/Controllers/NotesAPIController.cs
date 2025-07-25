@@ -14,6 +14,12 @@ namespace NotesAPI.Controllers
     {
         private readonly NotesDbContext _context;
 
+        private DateTime GetIndianTime()
+        {
+            TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indiaTimeZone);
+        }
+
         public NotesController(NotesDbContext context)
         {
             _context = context;
@@ -42,7 +48,7 @@ namespace NotesAPI.Controllers
             if (note == null)
                 return NotFound();
 
-            note.LastAccessed = DateTime.UtcNow;
+            note.LastAccessed = GetIndianTime();
             await _context.SaveChangesAsync();
 
             return note;
@@ -54,8 +60,8 @@ namespace NotesAPI.Controllers
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
             note.Note_Email = userEmail;
-            note.CreatedAt = DateTime.UtcNow;
-            note.LastAccessed = DateTime.UtcNow;
+            note.CreatedAt = GetIndianTime();
+            note.LastAccessed = GetIndianTime();
 
             _context.Notes.Add(note);
             await _context.SaveChangesAsync();

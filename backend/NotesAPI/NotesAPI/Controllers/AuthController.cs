@@ -57,7 +57,26 @@ namespace NotesAPI.Controllers
             var token = GenerateJwt(user);
             return Ok(new { token });
         }
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
 
+            if (email == null)
+                return Unauthorized();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+                return NotFound();
+
+            return Ok(new
+            {
+                user.Id,
+                user.Username,
+                user.Email
+            });
+        }
         // Password Hashing
         private string HashPassword(string password)
         {

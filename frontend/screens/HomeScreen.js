@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect,useContext} from 'react';
+import React, { useState, useRef, useEffect,useContext, Suspense} from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
   SafeAreaView, Alert,StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const SCREEN_WIDTH = Dimensions.get('window').width;
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen({ navigation }) {
   const [notesList, setNotesList] = useState([]);
@@ -79,14 +80,17 @@ export default function HomeScreen({ navigation }) {
   }
 };
 
-  useEffect(() => {
+ useFocusEffect(
+  React.useCallback(() => {
     fetchNotes();
-  }, []);
+    // (OPTIONAL) fetchUserInfo() if needed, too.
+  }, [])
+);
 
 
   const handleAddNote = () => {
     const newNote = {
-      id: Date.now().toString(),
+      id: null,
       title: '',
       text: '',
       checklistItems: [],
@@ -98,7 +102,6 @@ export default function HomeScreen({ navigation }) {
       textAlign: 'left',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      is_new:true,
     };
     
     // Navigate to NoteDetail screen with the new note
@@ -112,20 +115,65 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
+  const handleDeleteAPI = async (id) => {
+
+    const token=await AsyncStorage.getItem('authToken');
+    try{
+      const response=await fetch(API_BASE_URL+`/Notes/${id}`,{
+        method:'DELETE',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':`Bearer ${token}`
+        }
+      } )
+
+      console.log(response.text());
+      console.log(response.status);
+      if(response.ok){
+        alert("Note deleted successfully ");
+        return true;
+      }
+      else{
+        alert("error handling deletino of notes");
+        return false;
+      }
+      
+    }
+    catch(err){
+      console.error("error while deleting: ",err);
+      return false;
+    }
+  }
+
   const handleDeleteNote = id => {
-    Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
+    
+
+
+    Alert.alert('Delete Note', `Are you sure you want to delete this note?${id}`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => {
-          setNotesList(notesList.filter(note => note.id !== id));
+        onPress: async () => {
+          const success= await handleDeleteAPI(id);
+          if (success){
+            setNotesList(notesList.filter(note => note.id !== id));
+          }
+          else{
+            alert('Error deleting note.')
+          }
+          
+          
+
         },
       },
     ]);
+
+    
   };
 
   const handleEditNote = (note) => {
+    console.log(note);
     navigation.navigate('NoteDetail', { 
       note: note,
       isNewNote: false,

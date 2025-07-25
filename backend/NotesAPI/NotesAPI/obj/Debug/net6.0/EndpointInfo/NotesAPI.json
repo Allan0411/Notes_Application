@@ -67,6 +67,18 @@
         }
       }
     },
+    "/api/Auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notes": {
       "get": {
         "tags": [
@@ -272,6 +284,10 @@
       "Note": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
           "title": {
             "maxLength": 255,
             "type": "string",
