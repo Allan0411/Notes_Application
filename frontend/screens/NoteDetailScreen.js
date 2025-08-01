@@ -252,7 +252,7 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // Save note function
   const saveNote = async () => {
-    console.log("burron clikect");
+    console.log("button clicked");
     if (isSaving) return; //lmfao this is all it took to stop double taps
 
     if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
@@ -299,6 +299,7 @@ export default function NoteDetailScreen({ route, navigation }) {
       setIsSaving(false);
     }
   };
+
   // Menu action functions
   function handleSend() {
     hideMenu();
@@ -336,13 +337,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     });
   };
 
-  //menuOptions
-  // Menu options
+  // Updated menu options (removed save option)
   const menuOptions = [
-    { id: 'save', label: 'Save', icon: 'save-outline', action: async () => {
-      hideMenu();
-      await saveNote();
-    } },
     { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
     { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
     { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
@@ -514,9 +510,25 @@ export default function NoteDetailScreen({ route, navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.headerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.headerText }]}>Note Detail</Text>
-        <TouchableOpacity onPress={showMenu}>
-          <Ionicons name="ellipsis-vertical" size={24} color={colors.headerText} />
-        </TouchableOpacity>
+        <View style={styles.headerButtonsContainer}>
+          {/* Save Button */}
+          <TouchableOpacity 
+            style={styles.headerButton} 
+            onPress={saveNote}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color={colors.headerText} />
+            ) : (
+              <Ionicons name="save-outline" size={24} color={colors.headerText} />
+            )}
+          </TouchableOpacity>
+          
+          {/* Pin/Clip Menu Button */}
+          <TouchableOpacity style={styles.headerButton} onPress={showMenu}>
+            <Ionicons name="attach-outline" size={24} color={colors.headerText} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content Area */}
@@ -944,7 +956,7 @@ export default function NoteDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 1,
   },
   header: {
     flexDirection: 'row',
@@ -958,6 +970,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  headerButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 4,
+  },
   contentContainer: {
     flex: 1,
     padding: 10,
@@ -968,7 +988,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10, // Added margin for spacing
+    marginBottom: 5, 
   },
   textInput: {
     borderRadius: 4,
@@ -976,14 +996,14 @@ const styles = StyleSheet.create({
     minHeight: 570,
     textAlignVertical: 'top',
     borderWidth: 1,
-    marginBottom: 10, // Added margin for spacing
+    marginBottom: 10, 
   },
   checklistContainer: {
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
     minHeight: 570,
-    marginBottom: 10, // Added margin for spacing
+    marginBottom: 10,
   },
   checklistItem: {
     flexDirection: 'row',
@@ -1015,7 +1035,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    marginBottom: 10, // Added margin for spacing
+    marginBottom: 10, 
   },
   drawingToolsHeader: {
     flexDirection: 'row',
@@ -1056,7 +1076,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   drawingArea: {
-    height: 400,
+    height: 500,
     borderWidth: 1,
     borderRadius: 8,
   },

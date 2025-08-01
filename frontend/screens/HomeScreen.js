@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 50,
+    paddingTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   fabButton: {
     position: 'absolute',
     bottom: 24,
-    right: 24,
+    right: 12,
     width: 60,
     height: 60,
     borderRadius: 30,

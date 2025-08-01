@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemeContext } from '../ThemeContext'; // Make sure this is correct path
+import { ThemeContext } from '../ThemeContext'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LogoutScreen() {
