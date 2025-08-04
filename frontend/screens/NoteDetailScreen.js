@@ -2,19 +2,19 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
-  Animated,
+  Animated, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function NoteDetailScreen({ route, navigation }) {
-  const { note, onSave,isNewNote } = route.params;
-   const [isSaving,setIsSaving]=useState(false);
+  const { note, onSave, isNewNote } = route.params;
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false); 
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
@@ -26,7 +26,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [showFontModal, setShowFontModal] = useState(false);
   const [showDrawingModal, setShowDrawingModal] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
-  const [currentPath, setCurrentPath] = useState('');
+  const [showAiModal, setShowAiModal] = useState(false); // State for the new AI menu
   const [isDrawing, setIsDrawing] = useState(false);
   
   // Text formatting states
@@ -45,9 +45,9 @@ export default function NoteDetailScreen({ route, navigation }) {
   const pathRef = useRef('');
   let lastUpdateTime = useRef(Date.now());
 
-  // Animation for slide menu
+  // Animations for slide menus
   const slideAnim = useRef(new Animated.Value(300)).current;
-
+  const aiSlideAnim = useRef(new Animated.Value(300)).current; // Sep
   // Font options
   const fonts = [
     { name: 'System', value: 'System' },
@@ -94,7 +94,7 @@ const createNote = async (note) => {
     console.log('Sending payload:', note);
     console.log('Auth token:', token);
 
-    const response = await fetch(API_BASE_URL + '/Notes', {
+    const response = await fetch(API_BASE_URL + '/notes', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ const updateNote = async (id, note) => {
   try {
     const token=await AsyncStorage.getItem('authToken');
     // If your API expects PUT or PATCH, change accordingly:
-    const response = await fetch(`${API_BASE_URL+'/Notes'}/${id}`, {
+    const response = await fetch(`${API_BASE_URL+'/notes'}/${id}`, {
       method: 'PUT', // or 'PUT' / 'PATCH' per your API
       headers: { 'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -160,12 +160,12 @@ const saveNote = async () => {
   
   setIsSaving(true);
   let notePayload = {
-    id: note?.id || generateRandomId(),
-    title: noteTitle || 'Untitled Note',
-    textContents: noteText,
-    s3Contents: "tempor est laboris",
-    // ...other fields as needed
-  };
+  title: noteTitle || 'Untitled Note',
+  textContents: noteText,
+  isArchived: false,
+  isPrivate: false
+};
+
 
   try {
     if (isNewNote) {
@@ -236,13 +236,117 @@ const saveNote = async () => {
 
   //menuOptions
     // Menu options
+  const openAiMenu = () => {
+    setShowAiModal(true);
+    Animated.timing(aiSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeAiMenu = () => {
+    Animated.timing(aiSlideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setShowAiModal(false));
+  };
+  
+
+
+//handleAiResult
+function handleAiResult(aiText, setNoteText, noteText) {
+  Alert.alert(
+    "AI Result",
+    aiText,
+    [
+      { text: "Add", onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText) },
+      { text: "Replace", onPress: () => setNoteText(aiText) },
+      { text: "Cancel", style: "cancel" }
+    ]
+  );
+}
+
+
+
+  const handleAiAction = async (actionType) => {
+  closeAiMenu();
+  if (!noteText) {
+    Alert.alert('No Content', 'Please add some text before using an AI action.');
+    return;
+  }
+  setIsAiProcessing(true);
+
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+
+    // Build endpoint - adjust as needed for your API paths
+    // If you have per-note AI: `/api/notes/${note.id}/ai/${actionType}`
+    // If you have a general AI: `/api/ai/${actionType}`
+    console.log(actionType);
+   const endpoint = `${API_BASE_URL}/${actionType}`;
+
+const response = await fetch(endpoint, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({ text: noteText })
+});
+console.log("response: ",response);
+
+// Get the raw response text for debugging
+const text = await response.text();
+let data = null;
+if (text) {
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    console.error('JSON parse error:', err);
+    Alert.alert('Error', 'Server response not JSON!');
+    return;
+  }
+} else {
+  Alert.alert('Error', 'No response from server.');
+  return;
+}
+
+if (response.ok) {
+  if (data && data.aiResponse) {
+    handleAiResult(data.aiResponse,setNoteText,noteText);
+  } else {
+    Alert.alert('AI Result', JSON.stringify(data));
+  }
+} else {
+  Alert.alert('AI Error', data?.message || 'Could not process AI action.');
+}
+
+  } catch (err) {
+    console.error('AI API error:', err);
+    Alert.alert('Error', 'There was a problem contacting the AI API.');
+  }
+  finally { // <-- ADD THIS FINALLY BLOCK
+        setIsAiProcessing(false); // This will run after the try or catch is complete.
+    }
+};
+
+
+  // *** UPDATED *** Menu options (Save is removed)
   const menuOptions = [
-    { id: 'save', label: 'Save', icon: 'save-outline', action: async  ()=>{ 
-       hideMenu();
-      await saveNote();} },
     { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
     { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
     { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
+  ];
+
+  // *** NEW *** AI action options
+  const aiOptions = [
+    { id: 'summarize', label: 'Summarize', icon: 'analytics-outline', action: () => handleAiAction('summarize') },
+    { id: 'shorten', label: 'Shorten', icon: 'remove-circle-outline', action: () => handleAiAction('shorten') },
+    { id: 'expand', label: 'Expand', icon: 'add-circle-outline', action: () => handleAiAction('expand') },
+    { id: 'formal', label: 'Make Formal', icon: 'school-outline', action: () => handleAiAction('make_formal') },
+    { id: 'grammar', label: 'Fix Grammar', icon: 'checkmark-circle-outline', action: () => handleAiAction('fix_grammar') },
   ];
 
   // Checklist functions
@@ -368,17 +472,17 @@ const saveNote = async () => {
   };
 
   // AI Summarizer (mock function)
-  const aiSummarize = () => {
-    if (!noteText.trim()) {
-      Alert.alert('No Content', 'Please add some text to summarize!');
-      return;
-    }
+  // const aiSummarize = () => {
+  //   if (!noteText.trim()) {
+  //     Alert.alert('No Content', 'Please add some text to summarize!');
+  //     return;
+  //   }
     
-    const summary = noteText.length > 100 ? 
-      `Summary: ${noteText.substring(0, 100)}...` : 
-      `Summary: ${noteText}`;
-    Alert.alert('AI Summary', summary);
-  };
+  //   const summary = noteText.length > 100 ? 
+  //     `Summary: ${noteText.substring(0, 100)}...` : 
+  //     `Summary: ${noteText}`;
+  //   Alert.alert('AI Summary', summary);
+  // };
 
   // Text formatting functions
   const getTextStyle = () => ({
@@ -394,19 +498,26 @@ const saveNote = async () => {
   };
 
   return (
+    <>
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#edf2f7" />
       
-      {/* Header */}
+      {/* *** UPDATED *** Header with Save Checkmark */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Detail</Text>
-        <TouchableOpacity onPress={showMenu}>
-          <Ionicons name="ellipsis-vertical" size={24} color="#4a5568" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+            <TouchableOpacity onPress={saveNote} style={{marginRight: 10}}>
+                <Ionicons name="checkmark-done-outline" size={28} color="#38a169" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={showMenu}>
+                <Ionicons name="ellipsis-vertical" size={24} color="#4a5568" />
+            </TouchableOpacity>
+        </View>
       </View>
+
 
       {/* Content Area */}
       <ScrollView style={styles.contentContainer}>
@@ -520,7 +631,7 @@ const saveNote = async () => {
         )}
       </ScrollView>
 
-      {/* Bottom Toolbar */}
+      {/* Bottom Toolbar  updatede*/}
       <View style={styles.toolbar}>
         {/* Content Type Buttons */}
         <TouchableOpacity 
@@ -572,7 +683,7 @@ const saveNote = async () => {
           <Text style={styles.toolButtonText}>{getAlignmentIcon()}</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.toolButton} onPress={aiSummarize}>
+        <TouchableOpacity style={styles.toolButton} onPress={openAiMenu}>
           <Ionicons name="bulb" size={20} color="#4a5568" />
         </TouchableOpacity>
       </View>
@@ -761,7 +872,65 @@ const saveNote = async () => {
           </View>
         </TouchableOpacity>
       </Modal>
+      <Modal visible={showAiModal} transparent animationType="none">
+        <TouchableOpacity 
+          style={styles.menuOverlay} 
+          activeOpacity={1} 
+          onPress={closeAiMenu}
+        >
+          <Animated.View 
+            style={[
+              styles.slideMenu, 
+              { transform: [{ translateY: aiSlideAnim }] }
+            ]}
+          >
+            <View style={styles.slideMenuHandle} />
+            <Text style={styles.slideMenuTitle}>AI Actions</Text>
+            
+            {aiOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={styles.menuOption}
+                onPress={option.action}
+              >
+                <View style={styles.menuOptionContent}>
+                  <Ionicons name={option.icon} size={22} color="#4a5568" />
+                  <Text style={styles.menuOptionText}>{option.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#718096" />
+              </TouchableOpacity>
+            ))}
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
+     {/* Saving Overlay */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isSaving}
+      >
+        <View style={styles.savingOverlay}>
+            <View style={styles.savingContainer}>
+                <ActivityIndicator size="large" color="#4a5568" />
+                <Text style={styles.savingText}>Saving...</Text>
+            </View>
+        </View>
+      </Modal>
+      {/* AI Processing Overlay <-- ADD THIS ENTIRE MODAL BLOCK */}
+    <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isAiProcessing}
+    >
+        <View style={styles.savingOverlay}>
+            <View style={styles.savingContainer}>
+                <ActivityIndicator size="large" color="#4a5568" />
+                <Text style={styles.savingText}>AI is doing its work...</Text>
+            </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -769,7 +938,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
-    paddingTop: 40,
+    
+    paddingBottom:35
   },
   header: {
     flexDirection: 'row',
@@ -777,6 +947,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 46,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
@@ -786,6 +957,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2d3748',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   contentContainer: {
     flex: 1,
     padding: 10,
@@ -1194,5 +1370,29 @@ const styles = StyleSheet.create({
   },
   selectedBrushSizeText: {
     color: '#fff',
+  },
+  savingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  savingContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  savingText: {
+    marginLeft: 16,
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#2d3748',
   },
 });

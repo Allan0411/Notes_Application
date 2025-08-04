@@ -57,7 +57,7 @@ export default function HomeScreen({ navigation }) {
   try {
     const token = await AsyncStorage.getItem('authToken');
 
-    const response = await fetch(API_BASE_URL+`/Notes`, {
+    const response = await fetch(API_BASE_URL+`/notes`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export default function HomeScreen({ navigation }) {
 
     const token=await AsyncStorage.getItem('authToken');
     try{
-      const response=await fetch(API_BASE_URL+`/Notes/${id}`,{
+      const response=await fetch(API_BASE_URL+`/notes/${id}`,{
         method:'DELETE',
         headers:{
           'Content-Type':'application/json',

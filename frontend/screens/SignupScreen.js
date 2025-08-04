@@ -15,13 +15,17 @@ export default function SignupScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading,setIsLoading]=useState(false);
 
   const handleSignup = async () => {
+
+    if(isLoading)
+        return
     if (!name || !email || !password) {
       alert("Please enter all fields");
       return;
     }
-    
+    setIsLoading(true);
     try {
       const response = await fetch(API_BASE_URL + "/Auth/register", {
         method: 'POST',
@@ -47,6 +51,9 @@ export default function SignupScreen({ navigation }) {
     } catch (err) {
       console.error("Signup error: ", err);
       alert('Signup failed');
+    }
+    finally {
+      setIsLoading(false); // <-- 3. STOP loading indicator in all cases
     }
   };
 
@@ -100,13 +107,21 @@ export default function SignupScreen({ navigation }) {
               />
             </View>
 
+            {/* v-- 4. UPDATE THE BUTTON --v */}
+            
             <TouchableOpacity
-              style={styles.signupButton}
-              onPress={handleSignup}
+              style={[styles.loginButton, isLoading && styles.disabledButton]}
+              onPress={handleLogin}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
-              <Text style={styles.signupButtonText}>Create Account</Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
+            {/* ^-- 4. UPDATE THE BUTTON --^ */}
           </View>
 
           {/* Footer Section */}
