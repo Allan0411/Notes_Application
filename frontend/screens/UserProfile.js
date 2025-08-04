@@ -145,7 +145,7 @@ export default function UserProfile({ navigation }) {
           <View style={[styles.profileImageLarge, { backgroundColor: themeColors.accent }]}>
             <Ionicons name="person" size={40} color="#fff" />
           </View>
-          <View style={styles.onlineIndicatorLarge} />
+          {/* <View style={styles.onlineIndicatorLarge} /> */}
           <Text style={[styles.profileName, { color: themeColors.text }]}>{userInfo.name}</Text>
           <Text style={[styles.profileEmail, { color: themeColors.subtext }]}>{userInfo.email}</Text>
         </View>
@@ -286,9 +286,8 @@ export default function UserProfile({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -314,17 +313,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  onlineIndicatorLarge: {
-    position: 'absolute',
-    bottom: 28,
-    right: '40%',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#22c55e',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
+  // onlineIndicatorLarge: {
+  //   position: 'absolute',
+  //   bottom: 2,
+  //   right: '40%',
+  //   width: 14,
+  //   height: 14,
+  //   borderRadius: 7,
+  //   backgroundColor: '#22c55e',
+  //   borderWidth: 2,
+  //   borderColor: '#fff',
+  // },
   profileName: { fontSize: 20, fontWeight: 'bold', marginTop: 4 },
   profileEmail: { fontSize: 14, marginBottom: 8 },
   infoSection: {
@@ -346,7 +345,6 @@ const styles = StyleSheet.create({
   infoValue: {
     padding: 10,
     fontSize: 16,
-
     borderRadius: 8,
   },
   editActions: {
@@ -398,9 +396,8 @@ const styles = StyleSheet.create({
   passwordField: { marginBottom: 16 },
   passwordLabel: { fontSize: 14, marginBottom: 4 },
   passwordInput: {
-
+    
     borderWidth: 1,
-
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
@@ -416,7 +413,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-
   },
   modalSaveText: { color: '#fff', fontWeight: 'bold' },
 });

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect,useContext, Suspense} from 'react';
+import React, { useState, useRef, useEffect, useContext, Suspense } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
-  SafeAreaView, Alert,StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
+  SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
@@ -9,53 +9,103 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 import { useFocusEffect } from '@react-navigation/native';
 
+// Import the ThemeContext directly
+import { ThemeContext } from '../ThemeContext'; // Correct path to your ThemeContext
+
+// Define your color palettes directly in HomeScreen.js
+// This needs to be consistent with what you'd expect for light/dark
+const lightColors = {
+  background: '#edf2f7',
+  cardBackground: '#fff',
+  text: '#2d3748',
+  subText: '#718096',
+  headerBackground: '#4a5568',
+  headerText: '#fff',
+  iconColor: '#4a5568',
+  borderColor: '#e2e8f0',
+  drawerBackground: '#fff',
+  drawerHeaderBackground: '#f8fafc',
+  searchBackground: '#fff',
+  searchText: '#2d3748',
+  searchPlaceholder: '#a0aec0',
+  deleteIcon: '#d11a2a',
+  onlineIndicator: '#38a169',
+  logoutText: '#e53e3e',
+};
+
+const darkColors = {
+  background: '#1a202c',
+  cardBackground: '#2d3748',
+  text: '#e2e8f0',
+  subText: '#a0aec0',
+  headerBackground: '#2d3748',
+  headerText: '#fff',
+  iconColor: '#cbd5e0',
+  borderColor: '#4a5568',
+  drawerBackground: '#2d3748',
+  drawerHeaderBackground: '#1a202c',
+  searchBackground: '#4a5568',
+  searchText: '#e2e8f0',
+  searchPlaceholder: '#cbd5e0',
+  deleteIcon: '#fc8181',
+  onlineIndicator: '#48bb78',
+  logoutText: '#fc8181',
+};
+
+
 export default function HomeScreen({ navigation }) {
+  // Use useContext to get the values provided by ThemeContext.Provider
+  const { activeTheme } = useContext(ThemeContext);
+
+  // Determine the current color palette based on activeTheme
+  const colors = activeTheme === 'dark' ? darkColors : lightColors;
+
   const [notesList, setNotesList] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
   const [userInfo, setUserInfo] = useState({
-      name: '',
-      email: '',
-    });
+    name: '',
+    email: '',
+  });
   //fetching data of user from the database. dont change this guys
-    useEffect(() => {
-    const fetchUserInfo=async()=>{
-      try{
-        const token=await AsyncStorage.getItem('authToken');
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
         if (!token)
           return;
-        const res=await fetch(API_BASE_URL+"/Auth/me",{
-          headers:{
-            Authorization:`Bearer ${token}`,
+        const res = await fetch(API_BASE_URL + "/Auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
 
-          });
+        });
 
-          if(!res.ok)
-            throw new Error ("failed to fetch")
+        if (!res.ok)
+          throw new Error("failed to fetch")
 
-          const data=await res.json();
-          setUserInfo({
-            name: data.username||'user',
-            email:data.email ||'email'
-          })
+        const data = await res.json();
+        setUserInfo({
+          name: data.username || 'user',
+          email: data.email || 'email'
+        })
 
       }
-      catch(err){
+      catch (err) {
         console.error("Error fetching user info:", err);
         alert("couldnt fetch user info");
       }
     };
     fetchUserInfo();
 
-  },[]);
+  }, []);
 
   //fetch notes titles
   const fetchNotes = async () => {
-  try {
-    const token = await AsyncStorage.getItem('authToken');
+    try {
+      const token = await AsyncStorage.getItem('authToken');
 
     const response = await fetch(API_BASE_URL+`/notes`, {
       method: 'GET',
@@ -65,27 +115,27 @@ export default function HomeScreen({ navigation }) {
       },
     });
 
-    const text = await response.text();  // Handle empty or invalid JSON
+      const text = await response.text();  // Handle empty or invalid JSON
 
-    if (!response.ok) {
-      console.error('API error:', response.status);
-      return;
+      if (!response.ok) {
+        console.error('API error:', response.status);
+        return;
+      }
+
+      const notes = text ? JSON.parse(text) : [];
+      console.log('Fetched Notes:', notes);
+      setNotesList(notes); // ✅ Update your noteList state
+    } catch (error) {
+      console.error('Fetch Notes error:', error);
     }
+  };
 
-    const notes = text ? JSON.parse(text) : [];
-    console.log('Fetched Notes:', notes);
-    setNotesList(notes); // ✅ Update your noteList state
-  } catch (error) {
-    console.error('Fetch Notes error:', error);
-  }
-};
-
- useFocusEffect(
-  React.useCallback(() => {
-    fetchNotes();
-    // (OPTIONAL) fetchUserInfo() if needed, too.
-  }, [])
-);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchNotes();
+      // (OPTIONAL) fetchUserInfo() if needed, too.
+    }, [])
+  );
 
 
   const handleAddNote = () => {
@@ -103,10 +153,10 @@ export default function HomeScreen({ navigation }) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     // Navigate to NoteDetail screen with the new note
-    navigation.navigate('NoteDetail', { 
-      note: newNote, 
+    navigation.navigate('NoteDetail', {
+      note: newNote,
       isNewNote: true,
       onSave: (updatedNote) => {
         // Add the new note to the list
@@ -125,28 +175,28 @@ export default function HomeScreen({ navigation }) {
           'Content-Type':'application/json',
           'Authorization':`Bearer ${token}`
         }
-      } )
+      })
 
       console.log(response.text());
       console.log(response.status);
-      if(response.ok){
+      if (response.ok) {
         alert("Note deleted successfully ");
         return true;
       }
-      else{
+      else {
         alert("error handling deletino of notes");
         return false;
       }
-      
+
     }
-    catch(err){
-      console.error("error while deleting: ",err);
+    catch (err) {
+      console.error("error while deleting: ", err);
       return false;
     }
   }
 
   const handleDeleteNote = id => {
-    
+
 
 
     Alert.alert('Delete Note', `Are you sure you want to delete this note?${id}`, [
@@ -155,31 +205,31 @@ export default function HomeScreen({ navigation }) {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          const success= await handleDeleteAPI(id);
-          if (success){
+          const success = await handleDeleteAPI(id);
+          if (success) {
             setNotesList(notesList.filter(note => note.id !== id));
           }
-          else{
+          else {
             alert('Error deleting note.')
           }
-          
-          
+
+
 
         },
       },
     ]);
 
-    
+
   };
 
   const handleEditNote = (note) => {
     console.log(note);
-    navigation.navigate('NoteDetail', { 
+    navigation.navigate('NoteDetail', {
       note: note,
       isNewNote: false,
       onSave: (updatedNote) => {
         // Update the existing note in the list
-        setNotesList(notesList.map(n => 
+        setNotesList(notesList.map(n =>
           n.id === updatedNote.id ? updatedNote : n
         ));
       }
@@ -199,7 +249,7 @@ export default function HomeScreen({ navigation }) {
   const openDrawer = () => {
     setDrawerVisible(true);
     Animated.timing(slideAnim, {
-      toValue: SCREEN_WIDTH * 0.35, 
+      toValue: SCREEN_WIDTH * 0.35,
       duration: 250,
       useNativeDriver: false,
     }).start();
@@ -248,41 +298,41 @@ export default function HomeScreen({ navigation }) {
     return (
       (note.title && note.title.toLowerCase().includes(searchLower)) ||
       (note.text && note.text.toLowerCase().includes(searchLower)) ||
-      (note.checklistItems && note.checklistItems.some(item => 
+      (note.checklistItems && note.checklistItems.some(item =>
         item.text && item.text.toLowerCase().includes(searchLower)
       ))
     );
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4a5568" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={colors.headerText === '#fff' ? 'light-content' : 'dark-content'} backgroundColor={colors.headerBackground} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
-          <Ionicons name="book" size={28} color="#fff" />
-          <Text style={styles.headerTitle}>My Notes</Text>
+          <Ionicons name="book" size={28} color={colors.headerText} />
+          <Text style={[styles.headerTitle, { color: colors.headerText }]}>My Notes</Text>
         </View>
         <TouchableOpacity onPress={openDrawer}>
-          <Ionicons name="menu" size={26} color="#fff" />
+          <Ionicons name="menu" size={26} color={colors.headerText} />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#718096" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.searchBackground }]}>
+          <Ionicons name="search" size={20} color={colors.subText} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.searchText }]}
             placeholder="Search notes..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#a0aec0"
+            placeholderTextColor={colors.searchPlaceholder}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#718096" />
+              <Ionicons name="close-circle" size={20} color={colors.subText} />
             </TouchableOpacity>
           )}
         </View>
@@ -296,13 +346,13 @@ export default function HomeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={64} color="#cbd5e0" />
-            <Text style={styles.emptyText}>
+            <Ionicons name="document-text-outline" size={64} color={colors.subText} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>
               {searchQuery ? 'No notes found' : 'No notes yet'}
             </Text>
-            <Text style={styles.emptySubText}>
-              {searchQuery 
-                ? 'Try searching for something else' 
+            <Text style={[styles.emptySubText, { color: colors.subText }]}>
+              {searchQuery
+                ? 'Try searching for something else'
                 : 'Tap the "+" button to create your first note'
               }
             </Text>
@@ -311,58 +361,58 @@ export default function HomeScreen({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => handleEditNote(item)}
-            style={styles.noteCard}
+            style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
           >
             <View style={styles.noteHeader}>
               <View style={styles.noteInfo}>
-                <Ionicons 
-                  name={getNoteTypeIcon(item)} 
-                  size={16} 
-                  color="#4a5568" 
+                <Ionicons
+                  name={getNoteTypeIcon(item)}
+                  size={16}
+                  color={colors.iconColor}
                   style={styles.noteIcon}
                 />
-                <Text style={styles.noteDate}>{formatDate(item.updatedAt)}</Text>
+                <Text style={[styles.noteDate, { color: colors.subText }]}>{formatDate(item.updatedAt)}</Text>
               </View>
               <View style={styles.noteActions}>
-                <Pressable 
+                <Pressable
                   onPress={() => handleEditNote(item)}
                   style={styles.actionButton}
                 >
-                  <Ionicons name="create" size={18} color="#4a5568" />
+                  <Ionicons name="create" size={18} color={colors.iconColor} />
                 </Pressable>
-                <Pressable 
+                <Pressable
                   onPress={() => handleDeleteNote(item.id)}
                   style={styles.actionButton}
                 >
-                  <Ionicons name="trash" size={18} color="#d11a2a" />
+                  <Ionicons name="trash" size={18} color={colors.deleteIcon} />
                 </Pressable>
               </View>
             </View>
-            
-            <Text style={styles.notePreview} numberOfLines={3}>
+
+            <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
               {getPreviewText(item)}
             </Text>
-            
+
             {/* Show content indicators */}
             <View style={styles.contentIndicators}>
               {item.text && item.text.trim() && (
                 <View style={styles.indicator}>
-                  <Ionicons name="document-text" size={12} color="#718096" />
-                  <Text style={styles.indicatorText}>Text</Text>
+                  <Ionicons name="document-text" size={12} color={colors.subText} />
+                  <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
                 </View>
               )}
               {item.checklistItems && item.checklistItems.length > 0 && (
                 <View style={styles.indicator}>
-                  <Ionicons name="checkbox" size={12} color="#718096" />
-                  <Text style={styles.indicatorText}>
+                  <Ionicons name="checkbox" size={12} color={colors.subText} />
+                  <Text style={[styles.indicatorText, { color: colors.subText }]}>
                     {item.checklistItems.length} items
                   </Text>
                 </View>
               )}
               {item.drawings && item.drawings.length > 0 && (
                 <View style={styles.indicator}>
-                  <Ionicons name="brush" size={12} color="#718096" />
-                  <Text style={styles.indicatorText}>Drawing</Text>
+                  <Ionicons name="brush" size={12} color={colors.subText} />
+                  <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
                 </View>
               )}
             </View>
@@ -371,8 +421,8 @@ export default function HomeScreen({ navigation }) {
       />
 
       {/* Floating Add Note Button - Bottom Right */}
-      <TouchableOpacity style={styles.fabButton} onPress={handleAddNote}>
-        <Ionicons name="add" size={28} color="#fff" />
+      <TouchableOpacity style={[styles.fabButton, { backgroundColor: colors.headerBackground }]} onPress={handleAddNote}>
+        <Ionicons name="add" size={28} color={colors.headerText} />
       </TouchableOpacity>
 
       {/* Right-side slide drawer */}
@@ -381,17 +431,17 @@ export default function HomeScreen({ navigation }) {
           <TouchableWithoutFeedback onPress={closeDrawer}>
             <View style={styles.overlay} />
           </TouchableWithoutFeedback>
-          <Animated.View style={[styles.drawer, { left: slideAnim }]}>
+          <Animated.View style={[styles.drawer, { left: slideAnim, backgroundColor: colors.drawerBackground }]}>
             {/* Enhanced Drawer Header */}
-            <View style={styles.drawerHeader}>
+            <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeaderBackground, borderBottomColor: colors.borderColor }]}>
               <View style={styles.drawerTitleSection}>
-                <Ionicons name="book" size={24} color="#4a5568" />
-                <Text style={styles.drawerTitle}>Notes</Text>
+                <Ionicons name="book" size={24} color={colors.iconColor} />
+                <Text style={[styles.drawerTitle, { color: colors.text }]}>Notes</Text>
               </View>
-              
+
               {/* User Profile Section */}
-              <TouchableOpacity 
-                style={styles.userProfile}
+              <TouchableOpacity
+                style={[styles.userProfile, { backgroundColor: colors.cardBackground }]}
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('UserProfile');
@@ -399,101 +449,101 @@ export default function HomeScreen({ navigation }) {
                 activeOpacity={0.7}
               >
                 <View style={styles.profileImageContainer}>
-                  <View style={styles.profileImage}>
-                    <Ionicons name="person" size={20} color="#fff" />
+                  <View style={[styles.profileImage, { backgroundColor: colors.headerBackground }]}>
+                    <Ionicons name="person" size={20} color={colors.headerText} />
                   </View>
-                  <View style={styles.onlineIndicator} />
+                  <View style={[styles.onlineIndicator, { backgroundColor: colors.onlineIndicator, borderColor: colors.cardBackground }]} />
                 </View>
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{userInfo.name} </Text>
-                  <Text style={styles.userEmail}>{userInfo.email}</Text>
+                  <Text style={[styles.userName, { color: colors.text }]}>{userInfo.name} </Text>
+                  <Text style={[styles.userEmail, { color: colors.subText }]}>{userInfo.email}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+                <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
-              
+
               {/* Close Button */}
               <TouchableOpacity onPress={closeDrawer} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color="#718096" />
+                <Ionicons name="close" size={24} color={colors.subText} />
               </TouchableOpacity>
             </View>
 
             {/* Divider */}
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
 
             {/* Drawer Menu Items */}
             <View style={styles.drawerContent}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('DeletedNotes');
                 }}
-                style={styles.drawerMenuItem}
+                style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="trash-outline" size={20} color="#718096" />
+                  <Ionicons name="trash-outline" size={20} color={colors.iconColor} />
                 </View>
-                <Text style={styles.drawerItemText}>Deleted Notes</Text>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+                <Text style={[styles.drawerItemText, { color: colors.text }]}>Deleted Notes</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('Reminders');
                 }}
-                style={styles.drawerMenuItem}
+                style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="alarm-outline" size={20} color="#718096" />
+                  <Ionicons name="alarm-outline" size={20} color={colors.iconColor} />
                 </View>
-                <Text style={styles.drawerItemText}>Reminders</Text>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+                <Text style={[styles.drawerItemText, { color: colors.text }]}>Reminders</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('Settings');
                 }}
-                style={styles.drawerMenuItem}
+                style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="settings-outline" size={20} color="#718096" />
+                  <Ionicons name="settings-outline" size={20} color={colors.iconColor} />
                 </View>
-                <Text style={styles.drawerItemText}>Settings</Text>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+                <Text style={[styles.drawerItemText, { color: colors.text }]}>Settings</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('HelpFeedback');
                 }}
-                style={styles.drawerMenuItem}
+                style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="help-circle-outline" size={20} color="#718096" />
+                  <Ionicons name="help-circle-outline" size={20} color={colors.iconColor} />
                 </View>
-                <Text style={styles.drawerItemText}>Help & Feedback</Text>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+                <Text style={[styles.drawerItemText, { color: colors.text }]}>Help & Feedback</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
               {/* Spacer */}
               <View style={styles.menuSpacer} />
 
               {/* Logout with different styling */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
                   navigation.navigate('LogoutScreen');
                 }}
-                style={[styles.drawerMenuItem, styles.logoutMenuItem]}
+                style={[styles.drawerMenuItem, styles.logoutMenuItem, { borderTopColor: colors.borderColor }]}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
+                  <Ionicons name="log-out-outline" size={20} color={colors.logoutText} />
                 </View>
-                <Text style={[styles.drawerItemText, styles.logoutText]}>Logout</Text>
-                <Ionicons name="chevron-forward" size={16} color="#e53e3e" />
+                <Text style={[styles.drawerItemText, { color: colors.logoutText }]}>Logout</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.logoutText} />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -504,14 +554,12 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#edf2f7' 
+  container: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#4a5568',
     padding: 16,
-    paddingTop: 50,
+    paddingTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -523,18 +571,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    color: '#fff',
     fontWeight: 'bold',
     marginLeft: 10,
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: '#edf2f7',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -549,12 +594,11 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#2d3748',
   },
   listContainer: {
     padding: 16,
     paddingTop: 0,
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -563,19 +607,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: '#4a5568',
     fontWeight: '600',
     marginTop: 16,
   },
   emptySubText: {
     fontSize: 14,
-    color: '#718096',
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 32,
   },
   noteCard: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -600,7 +641,6 @@ const styles = StyleSheet.create({
   },
   noteDate: {
     fontSize: 12,
-    color: '#718096',
   },
   noteActions: {
     flexDirection: 'row',
@@ -611,7 +651,6 @@ const styles = StyleSheet.create({
   },
   notePreview: {
     fontSize: 16,
-    color: '#2d3748',
     lineHeight: 22,
     marginBottom: 8,
   },
@@ -627,16 +666,14 @@ const styles = StyleSheet.create({
   },
   indicatorText: {
     fontSize: 10,
-    color: '#718096',
   },
   fabButton: {
     position: 'absolute',
     bottom: 24,
-    right: 24,
+    right: 12,
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#4a5568',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -647,9 +684,9 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: 'absolute',
-    top: 0, 
-    bottom: 0, 
-    left: 0, 
+    top: 0,
+    bottom: 0,
+    left: 0,
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
@@ -658,7 +695,6 @@ const styles = StyleSheet.create({
     top: 0,
     width: SCREEN_WIDTH * 0.65, // Increased width to 65%
     height: '100%',
-    backgroundColor: '#fff',
     elevation: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -670,9 +706,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   drawerTitleSection: {
     flexDirection: 'row',
@@ -682,14 +716,12 @@ const styles = StyleSheet.create({
   drawerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2d3748',
     marginLeft: 8,
   },
   userProfile: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 12,
     shadowColor: '#000',
@@ -705,7 +737,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#4a5568',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -716,9 +747,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#38a169',
     borderWidth: 2,
-    borderColor: '#fff',
   },
   userInfo: {
     flex: 1,
@@ -726,12 +755,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3748',
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 12,
-    color: '#718096',
   },
   closeButton: {
     position: 'absolute',
@@ -741,7 +768,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e2e8f0',
     marginHorizontal: 20,
   },
   drawerContent: {
@@ -754,7 +780,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f7fafc',
   },
   menuIconContainer: {
     width: 32,
@@ -763,7 +788,6 @@ const styles = StyleSheet.create({
   },
   drawerItemText: {
     fontSize: 16,
-    color: '#2d3748',
     flex: 1,
     fontWeight: '500',
   },
@@ -773,10 +797,7 @@ const styles = StyleSheet.create({
   },
   logoutMenuItem: {
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
     marginTop: 10,
   },
-  logoutText: {
-    color: '#e53e3e',
-  },
+  // No specific `logoutText` style needed here as it's directly applied with `color` prop
 });
