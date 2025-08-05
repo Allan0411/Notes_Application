@@ -5,7 +5,7 @@ import {
   Animated, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -14,21 +14,22 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function NoteDetailScreen({ route, navigation }) {
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
-  const [isAiProcessing, setIsAiProcessing] = useState(false); 
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
   const [checklistItems, setChecklistItems] = useState(note?.checklistItems || []);
   const [drawings, setDrawings] = useState(note?.drawings || []);
-  
+ 
   // UI states
   const [activeTab, setActiveTab] = useState('text');
   const [showFontModal, setShowFontModal] = useState(false);
   const [showDrawingModal, setShowDrawingModal] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false); // State for the new AI menu
+  const [showAiModal, setShowAiModal] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  
+  const [drawingMode, setDrawingMode] = useState(false);
+ 
   // Text formatting states
   const [fontSize, setFontSize] = useState(note?.fontSize || 16);
   const [fontFamily, setFontFamily] = useState(note?.fontFamily || 'System');
@@ -40,6 +41,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [selectedTool, setSelectedTool] = useState('pen');
   const [selectedColor, setSelectedColor] = useState('#4a5568');
   const [brushSize, setBrushSize] = useState(2);
+  const [eraserSize, setEraserSize] = useState(10); // New state for eraser size
   const [currentDrawing, setCurrentDrawing] = useState(null);
 
   const pathRef = useRef('');
@@ -47,7 +49,8 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // Animations for slide menus
   const slideAnim = useRef(new Animated.Value(300)).current;
-  const aiSlideAnim = useRef(new Animated.Value(300)).current; // Sep
+  const aiSlideAnim = useRef(new Animated.Value(300)).current;
+
   // Font options
   const fonts = [
     { name: 'System', value: 'System' },
@@ -65,11 +68,12 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32];
 
-  // Drawing tool options
+  // Updated drawing tool options to include eraser
   const drawingTools = [
     { name: 'pen', icon: 'create', label: 'Pen' },
     { name: 'brush', icon: 'brush', label: 'Brush' },
     { name: 'highlighter', icon: 'color-fill', label: 'Highlighter' },
+    { name: 'eraser', icon: 'remove-circle', label: 'Eraser' },
   ];
 
   const colors = [
@@ -79,9 +83,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     '#4299e1', '#9f7aea', '#ed64a6', '#f56565',
   ];
 
-  const brushSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
-
-
+  const brushSizes = [1, 2, 4, 8, 10, 12, 15, 20];
+  const eraserSizes = [5, 10, 15, 20, 25, 30, 40, 50]; // New eraser sizes
 
   // Save note function
 const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
@@ -89,14 +92,14 @@ const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
 // POST: Create new note
 const createNote = async (note) => {
   try {
-  
+ 
     const token= await AsyncStorage.getItem('authToken');
     console.log('Sending payload:', note);
     console.log('Auth token:', token);
 
     const response = await fetch(API_BASE_URL + '/notes', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
@@ -150,14 +153,14 @@ const updateNote = async (id, note) => {
 
   // Save note function
 const saveNote = async () => {
-  console.log("burron clikect");
+  console.log("button clicked");
     if(isSaving) return; //lmfao this is all it took to stop double taps
 
   if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
     Alert.alert('Empty Note', 'Please add some content!');
     return;
   }
-  
+ 
   setIsSaving(true);
   let notePayload = {
   title: noteTitle || 'Untitled Note',
@@ -197,6 +200,7 @@ const saveNote = async () => {
     setIsSaving(false);
   }
 };
+
   // Menu action functions
   function handleSend() {
     hideMenu();
@@ -213,7 +217,7 @@ const saveNote = async () => {
     Alert.alert('Add Collaborator', 'Feature coming soon! You can invite others to view and edit this note together.');
   }
 
-  
+ 
   // Show/Hide menu functions
   const showMenu = () => {
     setShowMenuModal(true);
@@ -252,9 +256,7 @@ const saveNote = async () => {
       useNativeDriver: true,
     }).start(() => setShowAiModal(false));
   };
-  
-
-
+ 
 //handleAiResult
 function handleAiResult(aiText, setNoteText, noteText) {
   Alert.alert(
@@ -267,8 +269,6 @@ function handleAiResult(aiText, setNoteText, noteText) {
     ]
   );
 }
-
-
 
   const handleAiAction = async (actionType) => {
   closeAiMenu();
@@ -332,7 +332,6 @@ if (response.ok) {
     }
 };
 
-
   // *** UPDATED *** Menu options (Save is removed)
   const menuOptions = [
     { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
@@ -375,7 +374,7 @@ if (response.ok) {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
-  // Get stroke properties based on selected tool
+  // Get stroke properties based on selected tool - Updated for eraser
   const getStrokeProperties = () => {
     switch (selectedTool) {
       case 'brush':
@@ -392,6 +391,13 @@ if (response.ok) {
           strokeLinecap: 'round',
           strokeLinejoin: 'round',
         };
+      case 'eraser':
+        return {
+          strokeWidth: eraserSize,
+          strokeOpacity: 1,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        };
       default: // pen
         return {
           strokeWidth: brushSize,
@@ -402,51 +408,92 @@ if (response.ok) {
     }
   };
 
-  // Drawing functions with PanResponder
+  // Helper function to check if a point is within eraser distance of a path
+  const isPointNearPath = (x, y, pathString, eraserRadius) => {
+    // Simple distance-based erasing - check if point is within eraser radius of any path point
+    const pathPoints = pathString.match(/\d+\.?\d*/g);
+    if (!pathPoints || pathPoints.length < 2) return false;
+   
+    for (let i = 0; i < pathPoints.length - 1; i += 2) {
+      const px = parseFloat(pathPoints[i]);
+      const py = parseFloat(pathPoints[i + 1]);
+      const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+      if (distance <= eraserRadius) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Updated drawing functions with eraser support
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponder: () => drawingMode,
+    onMoveShouldSetPanResponder: () => drawingMode,
     onPanResponderGrant: (evt) => {
+      if (!drawingMode) return;
       setIsDrawing(true);
       const { locationX, locationY } = evt.nativeEvent;
-      pathRef.current = `M${locationX},${locationY}`;
-      
-      const newDrawing = {
-        path: pathRef.current,
-        color: selectedColor,
-        tool: selectedTool,
-        ...getStrokeProperties(),
-      };
-      
-      setCurrentDrawing(newDrawing);
+     
+      if (selectedTool === 'eraser') {
+        // For eraser, immediately start erasing at the touch point
+        const updatedDrawings = drawings.filter(drawing =>
+          !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
+        );
+        setDrawings(updatedDrawings);
+      } else {
+        // For other tools, start a new path
+        pathRef.current = `M${locationX},${locationY}`;
+       
+        const newDrawing = {
+          path: pathRef.current,
+          color: selectedColor,
+          tool: selectedTool,
+          ...getStrokeProperties(),
+        };
+       
+        setCurrentDrawing(newDrawing);
+      }
     },
 
     onPanResponderMove: (evt) => {
-      if (!isDrawing) return;
+      if (!isDrawing || !drawingMode) return;
       const now = Date.now();
       if (now - lastUpdateTime.current < 16) return; // ~60 FPS
       lastUpdateTime.current = now;
 
       const { locationX, locationY } = evt.nativeEvent;
-      pathRef.current += ` L${locationX},${locationY}`;
-      
-      setCurrentDrawing(prev => ({
-        ...prev,
-        path: pathRef.current,
-      }));
+     
+      if (selectedTool === 'eraser') {
+        // Continue erasing as finger moves
+        const updatedDrawings = drawings.filter(drawing =>
+          !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
+        );
+        setDrawings(updatedDrawings);
+      } else {
+        // Continue drawing path for other tools
+        pathRef.current += ` L${locationX},${locationY}`;
+       
+        setCurrentDrawing(prev => ({
+          ...prev,
+          path: pathRef.current,
+        }));
+      }
     },
 
     onPanResponderRelease: () => {
-      if (isDrawing && currentDrawing) {
-        const finalDrawing = {
-          ...currentDrawing,
-          path: pathRef.current,
-          id: Date.now().toString(),
-        };
-        
-        setDrawings(prev => [...prev, finalDrawing]);
-        setCurrentDrawing(null);
-        pathRef.current = '';
+      if (isDrawing && drawingMode) {
+        if (selectedTool !== 'eraser' && currentDrawing) {
+          // Finish drawing for non-eraser tools
+          const finalDrawing = {
+            ...currentDrawing,
+            path: pathRef.current,
+            id: Date.now().toString(),
+          };
+         
+          setDrawings(prev => [...prev, finalDrawing]);
+          setCurrentDrawing(null);
+          pathRef.current = '';
+        }
         setIsDrawing(false);
       }
     },
@@ -471,18 +518,13 @@ if (response.ok) {
     );
   };
 
-  // AI Summarizer (mock function)
-  // const aiSummarize = () => {
-  //   if (!noteText.trim()) {
-  //     Alert.alert('No Content', 'Please add some text to summarize!');
-  //     return;
-  //   }
-    
-  //   const summary = noteText.length > 100 ? 
-  //     `Summary: ${noteText.substring(0, 100)}...` : 
-  //     `Summary: ${noteText}`;
-  //   Alert.alert('AI Summary', summary);
-  // };
+  // Toggle drawing mode
+  const toggleDrawingMode = () => {
+    setDrawingMode(!drawingMode);
+    if (!drawingMode) {
+      setShowDrawingModal(true);
+    }
+  };
 
   // Text formatting functions
   const getTextStyle = () => ({
@@ -497,12 +539,17 @@ if (response.ok) {
     return '☰';
   };
 
+  // Get current tool size for display
+  const getCurrentToolSize = () => {
+    return selectedTool === 'eraser' ? eraserSize : brushSize;
+  };
+
   return (
     <>
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#edf2f7" />
-      
-      {/* *** UPDATED *** Header with Save Checkmark */}
+     
+      {/* Header with Save Checkmark */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#4a5568" />
@@ -518,6 +565,22 @@ if (response.ok) {
         </View>
       </View>
 
+      {/* Updated Drawing Mode Banner */}
+      {drawingMode && (
+        <View style={styles.drawingModeBanner}>
+          <View style={styles.drawingModeInfo}>
+            {selectedTool !== 'eraser' && (
+              <View style={[styles.colorIndicator, { backgroundColor: selectedColor }]} />
+            )}
+            <Text style={styles.drawingModeText}>
+              Drawing Mode - {selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)} ({getCurrentToolSize()}px)
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => setDrawingMode(false)} style={styles.exitDrawingButton}>
+            <Text style={styles.exitDrawingText}>Exit</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Content Area */}
       <ScrollView style={styles.contentContainer}>
@@ -528,18 +591,52 @@ if (response.ok) {
           value={noteTitle}
           onChangeText={setNoteTitle}
           placeholderTextColor="#718096"
+          editable={!drawingMode}
         />
 
-        {/* Text Tab */}
+        {/* Combined Text and Drawing Area */}
         {activeTab === 'text' && (
-          <TextInput
-            style={[styles.textInput, getTextStyle()]}
-            placeholder="Write your note..."
-            value={noteText}
-            onChangeText={setNoteText}
-            multiline
-            placeholderTextColor="#718096"
-          />
+          <View style={styles.combinedTextDrawingArea} {...panResponder.panHandlers}>
+            {/* Text Input */}
+            <TextInput
+              style={[styles.textInput, getTextStyle()]}
+              placeholder="Write your note..."
+              value={noteText}
+              onChangeText={setNoteText}
+              multiline
+              placeholderTextColor="#718096"
+              editable={!drawingMode}
+            />
+           
+            {/* Drawing Overlay */}
+            <View style={styles.drawingOverlay} pointerEvents={drawingMode ? 'auto' : 'none'}>
+              <Svg height="100%" width="100%" style={styles.svgOverlay}>
+                {drawings.map((drawing, index) => (
+                  <Path
+                    key={drawing.id || index}
+                    d={drawing.path}
+                    stroke={drawing.color}
+                    strokeWidth={drawing.strokeWidth}
+                    strokeOpacity={drawing.strokeOpacity}
+                    strokeLinecap={drawing.strokeLinecap}
+                    strokeLinejoin={drawing.strokeLinejoin}
+                    fill="none"
+                  />
+                ))}
+                {currentDrawing && selectedTool !== 'eraser' && (
+                  <Path
+                    d={currentDrawing.path}
+                    stroke={currentDrawing.color}
+                    strokeWidth={currentDrawing.strokeWidth}
+                    strokeOpacity={currentDrawing.strokeOpacity}
+                    strokeLinecap={currentDrawing.strokeLinecap}
+                    strokeLinejoin={currentDrawing.strokeLinejoin}
+                    fill="none"
+                  />
+                )}
+              </Svg>
+            </View>
+          </View>
         )}
 
         {/* Checklist Tab */}
@@ -548,10 +645,10 @@ if (response.ok) {
             {checklistItems.map((item) => (
               <View key={item.id} style={styles.checklistItem}>
                 <TouchableOpacity onPress={() => toggleChecklistItem(item.id)}>
-                  <Ionicons 
-                    name={item.checked ? "checkbox" : "square-outline"} 
-                    size={20} 
-                    color={item.checked ? "#4a5568" : "#718096"} 
+                  <Ionicons
+                    name={item.checked ? "checkbox" : "square-outline"}
+                    size={20}
+                    color={item.checked ? "#4a5568" : "#718096"}
                   />
                 </TouchableOpacity>
                 <TextInput
@@ -572,108 +669,52 @@ if (response.ok) {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Drawing Tab */}
-        {activeTab === 'drawing' && (
-          <View style={styles.drawingContainer}>
-            {/* Drawing Tools Header */}
-            <View style={styles.drawingToolsHeader}>
-              <TouchableOpacity 
-                style={styles.drawingSettingsButton} 
-                onPress={() => setShowDrawingModal(true)}
-              >
-                <Ionicons name="settings" size={16} color="#4a5568" />
-                <Text style={styles.drawingSettingsText}>Tools</Text>
-              </TouchableOpacity>
-              
-              <View style={styles.currentToolInfo}>
-                <View style={[styles.colorIndicator, { backgroundColor: selectedColor }]} />
-                <Text style={styles.toolText}>{selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)}</Text>
-                <Text style={styles.sizeText}>{brushSize}px</Text>
-              </View>
-              
-              <TouchableOpacity style={styles.clearButton} onPress={clearDrawing}>
-                <Ionicons name="trash" size={16} color="#d11a2a" />
-              </TouchableOpacity>
-            </View>
-
-            <View
-              style={styles.drawingArea}
-              {...panResponder.panHandlers}
-            >
-              <Svg height="400" width="100%">
-                {drawings.map((drawing, index) => (
-                  <Path
-                    key={drawing.id || index}
-                    d={drawing.path}
-                    stroke={drawing.color}
-                    strokeWidth={drawing.strokeWidth}
-                    strokeOpacity={drawing.strokeOpacity}
-                    strokeLinecap={drawing.strokeLinecap}
-                    strokeLinejoin={drawing.strokeLinejoin}
-                    fill="none"
-                  />
-                ))}
-                {currentDrawing && (
-                  <Path
-                    d={currentDrawing.path}
-                    stroke={currentDrawing.color}
-                    strokeWidth={currentDrawing.strokeWidth}
-                    strokeOpacity={currentDrawing.strokeOpacity}
-                    strokeLinecap={currentDrawing.strokeLinecap}
-                    strokeLinejoin={currentDrawing.strokeLinejoin}
-                    fill="none"
-                  />
-                )}
-              </Svg>
-            </View>
-          </View>
-        )}
       </ScrollView>
 
-      {/* Bottom Toolbar  updatede*/}
+      {/* Bottom Toolbar - Updated to remove drawing tab and add drawing toggle */}
       <View style={styles.toolbar}>
         {/* Content Type Buttons */}
-        <TouchableOpacity 
-          style={[styles.toolButton, activeTab === 'text' && styles.activeToolButton]} 
+        <TouchableOpacity
+          style={[styles.toolButton, activeTab === 'text' && styles.activeToolButton]}
           onPress={() => setActiveTab('text')}
         >
           <Ionicons name="document-text" size={20} color={activeTab === 'text' ? '#fff' : '#4a5568'} />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.toolButton, activeTab === 'checklist' && styles.activeToolButton]} 
+       
+        <TouchableOpacity
+          style={[styles.toolButton, activeTab === 'checklist' && styles.activeToolButton]}
           onPress={() => setActiveTab('checklist')}
         >
           <Ionicons name="list" size={20} color={activeTab === 'checklist' ? '#fff' : '#4a5568'} />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.toolButton, activeTab === 'drawing' && styles.activeToolButton]} 
-          onPress={() => setActiveTab('drawing')}
+       
+        {/* Drawing Mode Toggle Button */}
+        <TouchableOpacity
+          style={[styles.toolButton, drawingMode && styles.activeToolButton]}
+          onPress={toggleDrawingMode}
         >
-          <Ionicons name="brush" size={20} color={activeTab === 'drawing' ? '#fff' : '#4a5568'} />
+          <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : '#4a5568'} />
         </TouchableOpacity>
 
         {/* Formatting Tools */}
         <TouchableOpacity style={styles.toolButton} onPress={() => setShowFontModal(true)}>
           <Ionicons name="text" size={20} color="#4a5568" />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.toolButton, isBold && styles.activeToolButton]} 
+       
+        <TouchableOpacity
+          style={[styles.toolButton, isBold && styles.activeToolButton]}
           onPress={() => setIsBold(!isBold)}
         >
           <Text style={[styles.toolButtonText, { fontWeight: 'bold' }, isBold && styles.activeToolButtonText]}>B</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.toolButton, isItalic && styles.activeToolButton]} 
+       
+        <TouchableOpacity
+          style={[styles.toolButton, isItalic && styles.activeToolButton]}
           onPress={() => setIsItalic(!isItalic)}
         >
           <Text style={[styles.toolButtonText, { fontStyle: 'italic' }, isItalic && styles.activeToolButtonText]}>I</Text>
         </TouchableOpacity>
-        
+       
         <TouchableOpacity style={[styles.toolButton, styles.textAlignButton]} onPress={() => {
           const aligns = ['left', 'center', 'right'];
           const currentIndex = aligns.indexOf(textAlign);
@@ -682,7 +723,7 @@ if (response.ok) {
         }}>
           <Text style={styles.toolButtonText}>{getAlignmentIcon()}</Text>
         </TouchableOpacity>
-        
+       
         <TouchableOpacity style={styles.toolButton} onPress={openAiMenu}>
           <Ionicons name="bulb" size={20} color="#4a5568" />
         </TouchableOpacity>
@@ -690,20 +731,20 @@ if (response.ok) {
 
       {/* Slide Menu Modal */}
       <Modal visible={showMenuModal} transparent animationType="none">
-        <TouchableOpacity 
-          style={styles.menuOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
           onPress={hideMenu}
         >
-          <Animated.View 
+          <Animated.View
             style={[
-              styles.slideMenu, 
+              styles.slideMenu,
               { transform: [{ translateY: slideAnim }] }
             ]}
           >
             <View style={styles.slideMenuHandle} />
             <Text style={styles.slideMenuTitle}>Note Options</Text>
-            
+           
             {menuOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
@@ -723,22 +764,22 @@ if (response.ok) {
 
       {/* Font Modal */}
       <Modal visible={showFontModal} transparent animationType="slide">
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowFontModal(false)}
         >
           <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Choose Font & Size</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowFontModal(false)}
               >
                 <Ionicons name="close" size={24} color="#4a5568" />
               </TouchableOpacity>
             </View>
-            
+           
             {/* Font Family Section */}
             <Text style={styles.sectionTitle}>Font Family</Text>
             <ScrollView style={styles.fontSection} showsVerticalScrollIndicator={false}>
@@ -752,7 +793,7 @@ if (response.ok) {
                   onPress={() => setFontFamily(font.value)}
                 >
                   <Text style={[
-                    styles.fontText, 
+                    styles.fontText,
                     { fontFamily: font.value === 'System' ? undefined : font.value },
                     fontFamily === font.value && styles.selectedFontText
                   ]}>
@@ -784,24 +825,24 @@ if (response.ok) {
         </TouchableOpacity>
       </Modal>
 
-      {/* Drawing Tools Modal */}
+      {/* Updated Drawing Tools Modal with Eraser Support */}
       <Modal visible={showDrawingModal} transparent animationType="slide">
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowDrawingModal(false)}
         >
           <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Drawing Tools</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowDrawingModal(false)}
               >
                 <Ionicons name="close" size={24} color="#4a5568" />
               </TouchableOpacity>
             </View>
-            
+           
             {/* Tool Selection */}
             <Text style={styles.sectionTitle}>Tools</Text>
             <View style={styles.toolsContainer}>
@@ -811,10 +852,10 @@ if (response.ok) {
                   style={[styles.toolOption, selectedTool === tool.name && styles.selectedTool]}
                   onPress={() => setSelectedTool(tool.name)}
                 >
-                  <Ionicons 
-                    name={tool.icon} 
-                    size={24} 
-                    color={selectedTool === tool.name ? '#fff' : '#4a5568'} 
+                  <Ionicons
+                    name={tool.icon}
+                    size={24}
+                    color={selectedTool === tool.name ? '#fff' : '#4a5568'}
                   />
                   <Text style={[styles.toolLabel, selectedTool === tool.name && styles.selectedToolLabel]}>
                     {tool.label}
@@ -823,70 +864,92 @@ if (response.ok) {
               ))}
             </View>
 
-            {/* Color Selection */}
-            <Text style={styles.sectionTitle}>Colors</Text>
-            <View style={styles.colorsContainer}>
-              {colors.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorOption, 
-                    { backgroundColor: color },
-                    selectedColor === color && styles.selectedColor
-                  ]}
-                  onPress={() => setSelectedColor(color)}
-                >
-                  {selectedColor === color && (
-                    <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : color === '#ffffff' ? '#000' : '#fff'} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+            {/* Color Selection - Hidden for Eraser */}
+            {selectedTool !== 'eraser' && (
+              <>
+                <Text style={styles.sectionTitle}>Colors</Text>
+                <View style={styles.colorsContainer}>
+                  {colors.map((color) => (
+                    <TouchableOpacity
+                      key={color}
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: color },
+                        selectedColor === color && styles.selectedColor
+                      ]}
+                      onPress={() => setSelectedColor(color)}
+                    >
+                      {selectedColor === color && (
+                        <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : color === '#ffffff' ? '#000' : '#fff'} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
-            {/* Brush Size Selection */}
-            <Text style={styles.sectionTitle}>Brush Size</Text>
+            {/* Size Selection - Different for Eraser vs Other Tools */}
+            <Text style={styles.sectionTitle}>
+              {selectedTool === 'eraser' ? 'Eraser Size' : 'Brush Size'}
+            </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brushSizeScrollView}>
               <View style={styles.brushSizeContainer}>
-                {brushSizes.map((size) => (
+                {(selectedTool === 'eraser' ? eraserSizes : brushSizes).map((size) => (
                   <TouchableOpacity
                     key={size}
-                    style={[styles.brushSizeOption, brushSize === size && styles.selectedBrushSize]}
-                    onPress={() => setBrushSize(size)}
+                    style={[
+                      styles.brushSizeOption,
+                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && styles.selectedBrushSize
+                    ]}
+                    onPress={() => selectedTool === 'eraser' ? setEraserSize(size) : setBrushSize(size)}
                   >
                     <View style={[
-                      styles.brushPreview, 
-                      { 
-                        width: Math.max(size, 8), 
-                        height: Math.max(size, 8), 
-                        backgroundColor: selectedColor,
-                        borderRadius: Math.max(size, 8) / 2
+                      styles.brushPreview,
+                      {
+                        width: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
+                        height: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
+                        backgroundColor: selectedTool === 'eraser' ? '#e2e8f0' : selectedColor,
+                        borderRadius: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8) / 2,
+                        borderWidth: selectedTool === 'eraser' ? 2 : 0,
+                        borderColor: selectedTool === 'eraser' ? '#4a5568' : 'transparent'
                       }
                     ]} />
-                    <Text style={[styles.brushSizeText, brushSize === size && styles.selectedBrushSizeText]}>
+                    <Text style={[
+                      styles.brushSizeText,
+                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && styles.selectedBrushSizeText
+                    ]}>
                       {size}px
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </ScrollView>
+
+            {/* Clear Drawing Button */}
+            <TouchableOpacity style={styles.clearDrawingButton} onPress={clearDrawing}>
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.clearDrawingText}>Clear All Drawings</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* AI Modal */}
       <Modal visible={showAiModal} transparent animationType="none">
-        <TouchableOpacity 
-          style={styles.menuOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
           onPress={closeAiMenu}
         >
-          <Animated.View 
+          <Animated.View
             style={[
-              styles.slideMenu, 
+              styles.slideMenu,
               { transform: [{ translateY: aiSlideAnim }] }
             ]}
           >
             <View style={styles.slideMenuHandle} />
             <Text style={styles.slideMenuTitle}>AI Actions</Text>
-            
+           
             {aiOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
@@ -917,7 +980,7 @@ if (response.ok) {
             </View>
         </View>
       </Modal>
-      {/* AI Processing Overlay <-- ADD THIS ENTIRE MODAL BLOCK */}
+      {/* AI Processing Overlay */}
     <Modal
         transparent={true}
         animationType="fade"
@@ -938,8 +1001,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#edf2f7',
-    
-    paddingBottom:35
+    paddingBottom: 35
   },
   header: {
     flexDirection: 'row',
@@ -961,7 +1023,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
+  // New Drawing Mode Banner Styles
+  drawingModeBanner: {
+    backgroundColor: '#4a5568',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  drawingModeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  drawingModeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  exitDrawingButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  exitDrawingText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   contentContainer: {
     flex: 1,
     padding: 10,
@@ -974,6 +1065,12 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  // New Combined Text and Drawing Area Styles
+  combinedTextDrawingArea: {
+    position: 'relative',
+    minHeight: 570,
   },
   textInput: {
     backgroundColor: '#fff',
@@ -983,6 +1080,21 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     borderWidth: 1,
     borderColor: '#e2e8f0',
+  },
+  drawingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
+  svgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   checklistContainer: {
     backgroundColor: '#fff',
@@ -1021,66 +1133,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4a5568',
   },
-  drawingContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  drawingToolsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    marginBottom: 12,
-  },
-  drawingSettingsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f7fafc',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  drawingSettingsText: {
-    fontSize: 12,
-    color: '#4a5568',
-    fontWeight: '500',
-  },
-  currentToolInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   colorIndicator: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-  },
-  toolText: {
-    fontSize: 12,
-    color: '#4a5568',
-    fontWeight: '500',
-  },
-  sizeText: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  drawingArea: {
-    height: 400,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    backgroundColor: '#f8f9fa',
-  },
-  clearButton: {
-    padding: 6,
   },
   toolbar: {
     flexDirection: 'row',
@@ -1331,7 +1389,7 @@ const styles = StyleSheet.create({
     borderWidth: 4,
   },
   brushSizeScrollView: {
-    marginBottom: 10,
+    marginBottom: 20,
   },
   brushSizeContainer: {
     flexDirection: 'row',
@@ -1370,6 +1428,23 @@ const styles = StyleSheet.create({
   },
   selectedBrushSizeText: {
     color: '#fff',
+  },
+  // Clear Drawing Button Style
+  clearDrawingButton: {
+    backgroundColor: '#d11a2a',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+    marginTop: 10,
+  },
+  clearDrawingText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   savingOverlay: {
     flex: 1,

@@ -452,7 +452,7 @@ export default function HomeScreen({ navigation }) {
                   <View style={[styles.profileImage, { backgroundColor: colors.headerBackground }]}>
                     <Ionicons name="person" size={20} color={colors.headerText} />
                   </View>
-                  <View style={[styles.onlineIndicator, { backgroundColor: colors.onlineIndicator, borderColor: colors.cardBackground }]} />
+                  {/* <View style={[styles.onlineIndicator, { backgroundColor: colors.onlineIndicator, borderColor: colors.cardBackground }]} /> */}
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={[styles.userName, { color: colors.text }]}>{userInfo.name} </Text>
@@ -740,15 +740,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-  },
+  // onlineIndicator: {
+  //   position: 'absolute',
+  //   bottom: 2,
+  //   right: 2,
+  //   width: 12,
+  //   height: 12,
+  //   borderRadius: 6,
+  //   borderWidth: 2,
+  // },
   userInfo: {
     flex: 1,
   },
