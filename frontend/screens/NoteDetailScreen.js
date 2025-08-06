@@ -41,11 +41,17 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [selectedTool, setSelectedTool] = useState('pen');
   const [selectedColor, setSelectedColor] = useState('#4a5568');
   const [brushSize, setBrushSize] = useState(2);
-  const [eraserSize, setEraserSize] = useState(10); // New state for eraser size
+  const [eraserSize, setEraserSize] = useState(10);
   const [currentDrawing, setCurrentDrawing] = useState(null);
+
+  // New states for scroll indicators
+  const [brushScrollPosition, setBrushScrollPosition] = useState(0);
+  const [brushScrollWidth, setBrushScrollWidth] = useState(0);
+  const [brushContentWidth, setBrushContentWidth] = useState(0);
 
   const pathRef = useRef('');
   let lastUpdateTime = useRef(Date.now());
+  const brushScrollRef = useRef(null);
 
   // Animations for slide menus
   const slideAnim = useRef(new Animated.Value(300)).current;
@@ -77,14 +83,36 @@ export default function NoteDetailScreen({ route, navigation }) {
   ];
 
   const colors = [
-    '#000000', '#4a5568', '#2d3748', '#1a202c',
-    '#e53e3e', '#d69e2e', '#38a169', '#3182ce',
+    '#000000', '#4a5568', '#8099c5ff', '#012b7eff',
+    '#e53e3e', '#f3ba49ff', '#38a169', '#3182ce',
     '#805ad5', '#d53f8c', '#ed8936', '#48bb78',
     '#4299e1', '#9f7aea', '#ed64a6', '#f56565',
   ];
 
   const brushSizes = [1, 2, 4, 8, 10, 12, 15, 20];
-  const eraserSizes = [5, 10, 15, 20, 25, 30, 40, 50]; // New eraser sizes
+  const eraserSizes = [5, 10, 15, 20, 25, 30];
+
+  // New function to handle scroll events and update indicators
+  const handleBrushScroll = (event) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    setBrushScrollPosition(contentOffset.x);
+    setBrushScrollWidth(layoutMeasurement.width);
+    setBrushContentWidth(contentSize.width);
+  };
+
+  // Function to calculate scroll indicators
+  const getScrollIndicators = () => {
+    if (brushContentWidth <= brushScrollWidth) return [];
+    
+    const totalDots = 2; // Maximum number of dots to show
+    const scrollPercentage = brushScrollPosition / (brushContentWidth - brushScrollWidth);
+    const currentDot = Math.round(scrollPercentage * (totalDots - 1));
+    
+    return Array.from({ length: totalDots }, (_, index) => ({
+      active: index === currentDot,
+      key: index
+    }));
+  };
 
   // Save note function
 const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
@@ -725,7 +753,7 @@ if (response.ok) {
         </TouchableOpacity>
        
         <TouchableOpacity style={styles.toolButton} onPress={openAiMenu}>
-          <Ionicons name="bulb" size={20} color="#4a5568" />
+          <Ionicons name="sparkles" size={20} color="#4a5568" />
         </TouchableOpacity>
       </View>
 
@@ -825,7 +853,7 @@ if (response.ok) {
         </TouchableOpacity>
       </Modal>
 
-      {/* Updated Drawing Tools Modal with Eraser Support */}
+      {/* Updated Drawing Tools Modal with Eraser Support and Scroll Indicators */}
       <Modal visible={showDrawingModal} transparent animationType="slide">
         <TouchableOpacity
           style={styles.modalOverlay}
@@ -888,11 +916,18 @@ if (response.ok) {
               </>
             )}
 
-            {/* Size Selection - Different for Eraser vs Other Tools */}
+            {/* Size Selection with Scroll Indicators */}
             <Text style={styles.sectionTitle}>
               {selectedTool === 'eraser' ? 'Eraser Size' : 'Brush Size'}
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brushSizeScrollView}>
+            <ScrollView 
+              ref={brushScrollRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              style={styles.brushSizeScrollView}
+              onScroll={handleBrushScroll}
+              scrollEventThrottle={16}
+            >
               <View style={styles.brushSizeContainer}>
                 {(selectedTool === 'eraser' ? eraserSizes : brushSizes).map((size) => (
                   <TouchableOpacity
@@ -924,6 +959,21 @@ if (response.ok) {
                 ))}
               </View>
             </ScrollView>
+
+            {/* Scroll Indicators */}
+            {brushContentWidth > brushScrollWidth && (
+              <View style={styles.scrollIndicatorContainer}>
+                {getScrollIndicators().map((dot) => (
+                  <View
+                    key={dot.key}
+                    style={[
+                      styles.scrollDot,
+                      dot.active && styles.activeDot
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
 
             {/* Clear Drawing Button */}
             <TouchableOpacity style={styles.clearDrawingButton} onPress={clearDrawing}>
@@ -1171,6 +1221,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
+  sparkleText: {
+    fontSize: 18,
+    color: '#4a5568',
+  },
   // Slide Menu Styles
   menuOverlay: {
     flex: 1,
@@ -1335,7 +1389,7 @@ const styles = StyleSheet.create({
   toolsContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   toolOption: {
     flex: 1,
@@ -1389,7 +1443,7 @@ const styles = StyleSheet.create({
     borderWidth: 4,
   },
   brushSizeScrollView: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   brushSizeContainer: {
     flexDirection: 'row',
@@ -1428,6 +1482,27 @@ const styles = StyleSheet.create({
   },
   selectedBrushSizeText: {
     color: '#fff',
+  },
+  // New Scroll Indicator Styles
+  scrollIndicatorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 12,
+    gap: 6,
+  },
+  scrollDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#cbd5e0',
+    opacity: 0.5,
+  },
+  activeDot: {
+    backgroundColor: '#4a5568',
+    opacity: 1,
+    transform: [{ scale: 1.3 }],
   },
   // Clear Drawing Button Style
   clearDrawingButton: {
