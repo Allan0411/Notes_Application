@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
@@ -59,11 +59,21 @@ export default function NoteDetailScreen({ route, navigation }) {
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
   const [checklistItems, setChecklistItems] = useState(note?.checklistItems || []);
-  const [drawings, setDrawings] = useState(note?.drawings || []);
+  
+  // UPDATED: Better drawings initialization with validation
+  const [drawings, setDrawings] = useState(() => {
+    if (note?.drawings && Array.isArray(note.drawings)) {
+      console.log('Loaded drawings from note:', note.drawings.length);
+      return note.drawings;
+    }
+    console.log('No drawings found in note, starting with empty array');
+    return [];
+  });
  
   // UI states
   const [activeTab, setActiveTab] = useState('text');
@@ -100,6 +110,77 @@ export default function NoteDetailScreen({ route, navigation }) {
   // Animations for slide menus
   const slideAnim = useRef(new Animated.Value(300)).current;
   const aiSlideAnim = useRef(new Animated.Value(300)).current;
+
+  // ADDED: Monitor drawings state changes for debugging
+  useEffect(() => {
+    console.log('Drawings updated:', drawings.length, 'total drawings');
+    drawings.forEach((drawing, index) => {
+      console.log(`Drawing ${index}:`, {
+        id: drawing.id,
+        pathLength: drawing.path?.length,
+        color: drawing.color,
+        tool: drawing.tool,
+        hasTimestamp: !!drawing.timestamp
+      });
+    });
+  }, [drawings]);
+
+  // ADDED: Drawing backup and recovery functions
+  const backupDrawings = async (drawingsToBackup) => {
+    try {
+      const backupKey = `note_drawings_${note?.id || 'new'}`;
+      await AsyncStorage.setItem(backupKey, JSON.stringify(drawingsToBackup));
+      console.log('Drawings backed up successfully');
+    } catch (error) {
+      console.error('Failed to backup drawings:', error);
+    }
+  };
+
+  const recoverDrawings = async () => {
+    try {
+      const backupKey = `note_drawings_${note?.id || 'new'}`;
+      const backupData = await AsyncStorage.getItem(backupKey);
+      if (backupData) {
+        const recoveredDrawings = JSON.parse(backupData);
+        console.log('Recovered drawings:', recoveredDrawings.length);
+        return recoveredDrawings;
+      }
+    } catch (error) {
+      console.error('Failed to recover drawings:', error);
+    }
+    return [];
+  };
+
+  // ADDED: Initialize drawings with recovery support
+  useEffect(() => {
+    const initializeDrawings = async () => {
+      let initialDrawings = [];
+      
+      // First, try to load from note data
+      if (note?.drawings && Array.isArray(note.drawings)) {
+        initialDrawings = note.drawings;
+        console.log('Loaded drawings from note:', initialDrawings.length);
+      } else if (!isNewNote) {
+        // If editing existing note but no drawings, try to recover from backup
+        const recoveredDrawings = await recoverDrawings();
+        if (recoveredDrawings.length > 0) {
+          initialDrawings = recoveredDrawings;
+          console.log('Recovered drawings from backup:', recoveredDrawings.length);
+        }
+      }
+      
+      setDrawings(initialDrawings);
+    };
+
+    initializeDrawings();
+  }, [note?.id]);
+
+  // ADDED: Backup drawings whenever they change
+  useEffect(() => {
+    if (drawings.length > 0) {
+      backupDrawings(drawings);
+    }
+  }, [drawings]);
 
   // Font options
   const fonts = [
@@ -158,120 +239,140 @@ export default function NoteDetailScreen({ route, navigation }) {
     }));
   };
 
-  // Save note function
-const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
+  // UPDATED: Save note function with drawings support
+  const generateRandomId = () => Math.floor(100000 + Math.random() * 899999);
 
-// POST: Create new note
-const createNote = async (note) => {
-  try {
- 
-    const token= await AsyncStorage.getItem('authToken');
-    console.log('Sending payload:', note);
-    console.log('Auth token:', token);
+  // POST: Create new note
+  const createNote = async (note) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      console.log('Sending payload:', {
+        ...note,
+        drawingsCount: note.drawings?.length || 0
+      });
+      console.log('Auth token:', token);
 
-    const response = await fetch(API_BASE_URL + '/notes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(note)
-    });
+      const response = await fetch(API_BASE_URL + '/notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(note)
+      });
 
-    // Print HTTP status code!
-    console.log('Response status code:', response.status);
-
-    // Optionally print status text (most fetch implementations)
-    console.log('Response status text:', response.statusText);
-
-    // Carefully parse only if response has content
-    const text = await response.text();
-    if (!text) {
-      throw new Error('Empty response from server');
-    }
-    return JSON.parse(text);
-
-  } catch (err) {
-    console.error('Error creating note:', err);
-    throw err;
-  }
-};
-
-// PUT: Update a note by id
-const updateNote = async (id, note) => {
-  try {
-    const token=await AsyncStorage.getItem('authToken');
-    // If your API expects PUT or PATCH, change accordingly:
-    const response = await fetch(`${API_BASE_URL+'/notes'}/${id}`, {
-      method: 'PUT', // or 'PUT' / 'PATCH' per your API
-      headers: { 'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-       },
-      body: JSON.stringify(note)
-    });
-     console.log('Response status code:', response.status);
+      console.log('Response status code:', response.status);
       console.log('Response status text:', response.statusText);
-    const text = await response.text();
-    console.log("text: ",text)
-    if (!text) {
-      return true;
+
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response from server');
+      }
+      return JSON.parse(text);
+
+    } catch (err) {
+      console.error('Error creating note:', err);
+      throw err;
     }
-    return JSON.parse(text)
-  } catch (err) {
-    console.error('Error updating note:', err);
-    throw err;
-  }
-};
+  };
 
-  // Save note function
-const saveNote = async () => {
-  console.log("button clicked");
-    if(isSaving) return; //lmfao this is all it took to stop double taps
-
-  if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
-    Alert.alert('Empty Note', 'Please add some content!');
-    return;
-  }
- 
-  setIsSaving(true);
-  let notePayload = {
-  title: noteTitle || 'Untitled Note',
-  textContents: noteText,
-  isArchived: false,
-  isPrivate: false
-};
-
-
-  try {
-    if (isNewNote) {
-      // JUST CREATE, nothing else for a new note
-      const created = await createNote(notePayload);
-      if (onSave) onSave(created);
-      Alert.alert('Success', 'Note created successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
-    } else {
-  // ONLY update existing note
-  const updated = await updateNote(note?.id, notePayload);
-  if (onSave) {
-    if (updated === true || updated == null) {
-      onSave({ ...note, ...notePayload });
-    } else {
-      onSave(updated);
+  // PUT: Update a note by id
+  const updateNote = async (id, note) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      console.log('Updating note with drawings:', note.drawings?.length || 0);
+      
+      const response = await fetch(`${API_BASE_URL + '/notes'}/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(note)
+      });
+      
+      console.log('Response status code:', response.status);
+      console.log('Response status text:', response.statusText);
+      
+      const text = await response.text();
+      console.log("response text: ", text);
+      
+      if (!text) {
+        return true;
+      }
+      return JSON.parse(text);
+    } catch (err) {
+      console.error('Error updating note:', err);
+      throw err;
     }
-  }
-  Alert.alert('Success', 'Note updated successfully!', [
-    { text: 'OK', onPress: () => navigation.goBack() }
-  ]);
-}
+  };
 
-  } catch (err) {
-    Alert.alert('Error', 'There was a problem saving your note.',err.message);
-  }
-  finally{
-    setIsSaving(false);
-  }
-};
+  // UPDATED: Save note function with complete data
+  const saveNote = async () => {
+    console.log("Save button clicked");
+    if (isSaving) return; // Prevent double taps
+
+    if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0 && drawings.length === 0) {
+      Alert.alert('Empty Note', 'Please add some content!');
+      return;
+    }
+   
+    setIsSaving(true);
+    
+    // UPDATED: Include all note data including drawings
+    let notePayload = {
+      title: noteTitle || 'Untitled Note',
+      textContents: noteText,
+      checklistItems: checklistItems,
+      drawings: drawings, // Include drawings array
+      fontSize: fontSize,
+      fontFamily: fontFamily,
+      isBold: isBold,
+      isItalic: isItalic,
+      textAlign: textAlign,
+      isArchived: false,
+      isPrivate: false
+    };
+
+    console.log('Saving note with:', {
+      title: notePayload.title,
+      textLength: notePayload.textContents.length,
+      checklistCount: notePayload.checklistItems.length,
+      drawingsCount: notePayload.drawings.length
+    });
+
+    try {
+      if (isNewNote) {
+        const created = await createNote(notePayload);
+        if (onSave) onSave(created);
+        
+        // Clear backup after successful save
+        const backupKey = `note_drawings_new`;
+        await AsyncStorage.removeItem(backupKey);
+        
+        Alert.alert('Success', 'Note created successfully!', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        const updated = await updateNote(note?.id, notePayload);
+        if (onSave) {
+          if (updated === true || updated == null) {
+            onSave({ ...note, ...notePayload });
+          } else {
+            onSave(updated);
+          }
+        }
+        Alert.alert('Success', 'Note updated successfully!', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      }
+
+    } catch (err) {
+      Alert.alert('Error', 'There was a problem saving your note: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Menu action functions
   function handleSend() {
@@ -288,7 +389,6 @@ const saveNote = async () => {
     hideMenu();
     Alert.alert('Add Collaborator', 'Feature coming soon! You can invite others to view and edit this note together.');
   }
-
  
   // Show/Hide menu functions
   const showMenu = () => {
@@ -310,8 +410,7 @@ const saveNote = async () => {
     });
   };
 
-  //menuOptions
-    // Menu options
+  // Menu options
   const openAiMenu = () => {
     setShowAiModal(true);
     Animated.timing(aiSlideAnim, {
@@ -329,89 +428,84 @@ const saveNote = async () => {
     }).start(() => setShowAiModal(false));
   };
  
-//handleAiResult
-function handleAiResult(aiText, setNoteText, noteText) {
-  Alert.alert(
-    "AI Result",
-    aiText,
-    [
-      { text: "Add", onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText) },
-      { text: "Replace", onPress: () => setNoteText(aiText) },
-      { text: "Cancel", style: "cancel" }
-    ]
-  );
-}
+  // Handle AI Result
+  function handleAiResult(aiText, setNoteText, noteText) {
+    Alert.alert(
+      "AI Result",
+      aiText,
+      [
+        { text: "Add", onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText) },
+        { text: "Replace", onPress: () => setNoteText(aiText) },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  }
 
   const handleAiAction = async (actionType) => {
-  closeAiMenu();
-  if (!noteText) {
-    Alert.alert('No Content', 'Please add some text before using an AI action.');
-    return;
-  }
-  setIsAiProcessing(true);
-
-  try {
-    const token = await AsyncStorage.getItem('authToken');
-
-    // Build endpoint - adjust as needed for your API paths
-    // If you have per-note AI: `/api/notes/${note.id}/ai/${actionType}`
-    // If you have a general AI: `/api/ai/${actionType}`
-    console.log(actionType);
-   const endpoint = `${API_BASE_URL}/${actionType}`;
-
-const response = await fetch(endpoint, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  },
-  body: JSON.stringify({ text: noteText })
-});
-console.log("response: ",response);
-
-// Get the raw response text for debugging
-const text = await response.text();
-let data = null;
-if (text) {
-  try {
-    data = JSON.parse(text);
-  } catch (err) {
-    console.error('JSON parse error:', err);
-    Alert.alert('Error', 'Server response not JSON!');
-    return;
-  }
-} else {
-  Alert.alert('Error', 'No response from server.');
-  return;
-}
-
-if (response.ok) {
-  if (data && data.aiResponse) {
-    handleAiResult(data.aiResponse,setNoteText,noteText);
-  } else {
-    Alert.alert('AI Result', JSON.stringify(data));
-  }
-} else {
-  Alert.alert('AI Error', data?.message || 'Could not process AI action.');
-}
-
-  } catch (err) {
-    console.error('AI API error:', err);
-    Alert.alert('Error', 'There was a problem contacting the AI API.');
-  }
-  finally { // <-- ADD THIS FINALLY BLOCK
-        setIsAiProcessing(false); // This will run after the try or catch is complete.
+    closeAiMenu();
+    if (!noteText) {
+      Alert.alert('No Content', 'Please add some text before using an AI action.');
+      return;
     }
-};
+    setIsAiProcessing(true);
 
-  // *** UPDATED *** Menu options (Save is removed)
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+
+      console.log(actionType);
+      const endpoint = `${API_BASE_URL}/${actionType}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: noteText })
+      });
+      console.log("response: ", response);
+
+      const text = await response.text();
+      let data = null;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          console.error('JSON parse error:', err);
+          Alert.alert('Error', 'Server response not JSON!');
+          return;
+        }
+      } else {
+        Alert.alert('Error', 'No response from server.');
+        return;
+      }
+
+      if (response.ok) {
+        if (data && data.aiResponse) {
+          handleAiResult(data.aiResponse, setNoteText, noteText);
+        } else {
+          Alert.alert('AI Result', JSON.stringify(data));
+        }
+      } else {
+        Alert.alert('AI Error', data?.message || 'Could not process AI action.');
+      }
+
+    } catch (err) {
+      console.error('AI API error:', err);
+      Alert.alert('Error', 'There was a problem contacting the AI API.');
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  // Menu options (Save is removed)
   const menuOptions = [
     { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
     { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
     { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
   ];
 
-  // *** NEW *** AI action options
+  // AI action options
   const aiOptions = [
     { id: 'summarize', label: 'Summarize', icon: 'analytics-outline', action: () => handleAiAction('summarize') },
     { id: 'shorten', label: 'Shorten', icon: 'remove-circle-outline', action: () => handleAiAction('shorten') },
@@ -480,9 +574,32 @@ if (response.ok) {
     }
   };
 
+  // ADDED: Improved drawing creation function
+  const createDrawingObject = (path, tool = selectedTool) => {
+    const baseDrawing = {
+      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+      path: path,
+      color: selectedColor,
+      tool: tool,
+      timestamp: new Date().toISOString(),
+      ...getStrokeProperties()
+    };
+
+    // Add tool-specific properties
+    switch (tool) {
+      case 'brush':
+        return { ...baseDrawing, size: brushSize * 2 };
+      case 'highlighter':
+        return { ...baseDrawing, size: brushSize * 3 };
+      case 'eraser':
+        return { ...baseDrawing, size: eraserSize };
+      default: // pen
+        return { ...baseDrawing, size: brushSize };
+    }
+  };
+
   // Helper function to check if a point is within eraser distance of a path
   const isPointNearPath = (x, y, pathString, eraserRadius) => {
-    // Simple distance-based erasing - check if point is within eraser radius of any path point
     const pathPoints = pathString.match(/\d+\.?\d*/g);
     if (!pathPoints || pathPoints.length < 2) return false;
    
@@ -497,7 +614,7 @@ if (response.ok) {
     return false;
   };
 
-  // Updated drawing functions with eraser support
+  // UPDATED: Drawing functions with eraser support and improved drawing creation
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => drawingMode,
     onMoveShouldSetPanResponder: () => drawingMode,
@@ -511,7 +628,10 @@ if (response.ok) {
         const updatedDrawings = drawings.filter(drawing =>
           !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
         );
-        setDrawings(updatedDrawings);
+        if (updatedDrawings.length !== drawings.length) {
+          console.log('Erased drawings, remaining:', updatedDrawings.length);
+          setDrawings(updatedDrawings);
+        }
       } else {
         // For other tools, start a new path
         pathRef.current = `M${locationX},${locationY}`;
@@ -540,7 +660,9 @@ if (response.ok) {
         const updatedDrawings = drawings.filter(drawing =>
           !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
         );
-        setDrawings(updatedDrawings);
+        if (updatedDrawings.length !== drawings.length) {
+          setDrawings(updatedDrawings);
+        }
       } else {
         // Continue drawing path for other tools
         pathRef.current += ` L${locationX},${locationY}`;
@@ -554,15 +676,16 @@ if (response.ok) {
 
     onPanResponderRelease: () => {
       if (isDrawing && drawingMode) {
-        if (selectedTool !== 'eraser' && currentDrawing) {
-          // Finish drawing for non-eraser tools
-          const finalDrawing = {
-            ...currentDrawing,
-            path: pathRef.current,
-            id: Date.now().toString(),
-          };
+        if (selectedTool !== 'eraser' && currentDrawing && pathRef.current) {
+          // Use the improved drawing creation function
+          const finalDrawing = createDrawingObject(pathRef.current);
          
-          setDrawings(prev => [...prev, finalDrawing]);
+          console.log('Adding drawing:', finalDrawing.id, 'Tool:', finalDrawing.tool);
+          setDrawings(prev => {
+            const newDrawings = [...prev, finalDrawing];
+            console.log('Total drawings after add:', newDrawings.length);
+            return newDrawings;
+          });
           setCurrentDrawing(null);
           pathRef.current = '';
         }
@@ -571,16 +694,18 @@ if (response.ok) {
     },
   });
 
+  // UPDATED: Clear drawing with better confirmation
   const clearDrawing = () => {
     Alert.alert(
       'Clear Drawing',
-      'Are you sure you want to clear all drawings?',
+      `Are you sure you want to clear all ${drawings.length} drawings?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Clear',
           style: 'destructive',
           onPress: () => {
+            console.log('Clearing all drawings');
             setDrawings([]);
             setCurrentDrawing(null);
             pathRef.current = '';
@@ -615,6 +740,18 @@ if (response.ok) {
   // Get current tool size for display
   const getCurrentToolSize = () => {
     return selectedTool === 'eraser' ? eraserSize : brushSize;
+  };
+
+  // ADDED: Drawing statistics function
+  const getDrawingStats = () => {
+    const stats = drawings.reduce((acc, drawing) => {
+      acc.total++;
+      acc.tools[drawing.tool] = (acc.tools[drawing.tool] || 0) + 1;
+      return acc;
+    }, { total: 0, tools: {} });
+    
+    console.log('Drawing statistics:', stats);
+    return stats;
   };
 
   // Create themed styles
@@ -846,18 +983,27 @@ if (response.ok) {
             {/* Drawing Overlay */}
             <View style={styles.drawingOverlay} pointerEvents={drawingMode ? 'auto' : 'none'}>
               <Svg height="100%" width="100%" style={styles.svgOverlay}>
-                {drawings.map((drawing, index) => (
-                  <Path
-                    key={drawing.id || index}
-                    d={drawing.path}
-                    stroke={drawing.color}
-                    strokeWidth={drawing.strokeWidth}
-                    strokeOpacity={drawing.strokeOpacity}
-                    strokeLinecap={drawing.strokeLinecap}
-                    strokeLinejoin={drawing.strokeLinejoin}
-                    fill="none"
-                  />
-                ))}
+                {/* UPDATED: Better drawing rendering with validation */}
+                {drawings
+                  .filter(drawing => 
+                    drawing && 
+                    drawing.path && 
+                    drawing.path.length > 0 &&
+                    drawing.color
+                  )
+                  .map((drawing, index) => (
+                    <Path
+                      key={drawing.id || `drawing_${index}`}
+                      d={drawing.path}
+                      stroke={drawing.color}
+                      strokeWidth={drawing.strokeWidth || 2}
+                      strokeOpacity={drawing.strokeOpacity || 1}
+                      strokeLinecap={drawing.strokeLinecap || 'round'}
+                      strokeLinejoin={drawing.strokeLinejoin || 'round'}
+                      fill="none"
+                    />
+                  ))
+                }
                 {currentDrawing && selectedTool !== 'eraser' && (
                   <Path
                     d={currentDrawing.path}
