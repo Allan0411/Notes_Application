@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
@@ -8,10 +8,54 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../ThemeContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Theme configuration
+const themes = {
+  light: {
+    background: '#edf2f7',
+    surface: '#ffffff',
+    surfaceSecondary: '#f7fafc',
+    primary: '#4a5568',
+    primaryLight: '#718096',
+    text: '#2d3748',
+    textSecondary: '#4a5568',
+    textMuted: '#718096',
+    border: '#e2e8f0',
+    borderLight: '#f7fafc',
+    accent: '#38a169',
+    danger: '#d11a2a',
+    overlay: 'rgba(0,0,0,0.5)',
+    placeholder: '#718096',
+    drawingBanner: '#4a5568',
+    statusBar: 'dark-content',
+  },
+  dark: {
+    background: '#1a202c',
+    surface: '#2d3748',
+    surfaceSecondary: '#4a5568',
+    primary: '#e2e8f0',
+    primaryLight: '#cbd5e0',
+    text: '#f7fafc',
+    textSecondary: '#e2e8f0',
+    textMuted: '#a0aec0',
+    border: '#4a5568',
+    borderLight: '#2d3748',
+    accent: '#48bb78',
+    danger: '#fc8181',
+    overlay: 'rgba(0,0,0,0.7)',
+    placeholder: '#a0aec0',
+    drawingBanner: '#2d3748',
+    statusBar: 'light-content',
+  },
+};
+
 export default function NoteDetailScreen({ route, navigation }) {
+  const { activeTheme } = useContext(ThemeContext);
+  const theme = themes[activeTheme] || themes.light;
+  
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -39,7 +83,7 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // Drawing tool states
   const [selectedTool, setSelectedTool] = useState('pen');
-  const [selectedColor, setSelectedColor] = useState('#4a5568');
+  const [selectedColor, setSelectedColor] = useState(activeTheme === 'dark' ? '#e2e8f0' : '#4a5568');
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10);
   const [currentDrawing, setCurrentDrawing] = useState(null);
@@ -561,6 +605,7 @@ if (response.ok) {
     fontWeight: isBold ? 'bold' : 'normal',
     fontStyle: isItalic ? 'italic' : 'normal',
     textAlign,
+    color: theme.text,
   });
 
   const getAlignmentIcon = () => {
@@ -572,33 +617,195 @@ if (response.ok) {
     return selectedTool === 'eraser' ? eraserSize : brushSize;
   };
 
+  // Create themed styles
+  const themedStyles = StyleSheet.create({
+    container: {
+      ...styles.container,
+      backgroundColor: theme.background,
+    },
+    header: {
+      ...styles.header,
+      backgroundColor: theme.surface,
+      borderBottomColor: theme.border,
+    },
+    headerTitle: {
+      ...styles.headerTitle,
+      color: theme.text,
+    },
+    drawingModeBanner: {
+      ...styles.drawingModeBanner,
+      backgroundColor: theme.drawingBanner,
+    },
+    titleInput: {
+      ...styles.titleInput,
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+      color: theme.text,
+    },
+    textInput: {
+      ...styles.textInput,
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+      color: theme.text,
+    },
+    checklistContainer: {
+      ...styles.checklistContainer,
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+    },
+    checklistText: {
+      ...styles.checklistText,
+      color: theme.text,
+      borderBottomColor: theme.border,
+    },
+    addButtonText: {
+      ...styles.addButtonText,
+      color: theme.textSecondary,
+    },
+    toolbar: {
+      ...styles.toolbar,
+      backgroundColor: theme.surface,
+      borderTopColor: theme.border,
+    },
+    toolButtonText: {
+      ...styles.toolButtonText,
+      color: theme.textSecondary,
+    },
+    activeToolButton: {
+      ...styles.activeToolButton,
+      backgroundColor: theme.primary,
+    },
+    slideMenu: {
+      ...styles.slideMenu,
+      backgroundColor: theme.surface,
+    },
+    slideMenuTitle: {
+      ...styles.slideMenuTitle,
+      color: theme.text,
+    },
+    slideMenuHandle: {
+      ...styles.slideMenuHandle,
+      backgroundColor: theme.border,
+    },
+    menuOptionText: {
+      ...styles.menuOptionText,
+      color: theme.text,
+    },
+    modalContent: {
+      ...styles.modalContent,
+      backgroundColor: theme.surface,
+    },
+    modalTitle: {
+      ...styles.modalTitle,
+      color: theme.text,
+    },
+    sectionTitle: {
+      ...styles.sectionTitle,
+      color: theme.text,
+    },
+    fontOption: {
+      ...styles.fontOption,
+      borderBottomColor: theme.borderLight,
+    },
+    selectedFontOption: {
+      ...styles.selectedFontOption,
+      backgroundColor: theme.surfaceSecondary,
+    },
+    fontText: {
+      ...styles.fontText,
+      color: theme.text,
+    },
+    selectedFontText: {
+      ...styles.selectedFontText,
+      color: theme.textSecondary,
+    },
+    fontSizeOption: {
+      ...styles.fontSizeOption,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+    },
+    selectedFontSize: {
+      ...styles.selectedFontSize,
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    fontSizeText: {
+      ...styles.fontSizeText,
+      color: theme.text,
+    },
+    toolOption: {
+      ...styles.toolOption,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceSecondary,
+    },
+    selectedTool: {
+      ...styles.selectedTool,
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    toolLabel: {
+      ...styles.toolLabel,
+      color: theme.textSecondary,
+    },
+    brushSizeOption: {
+      ...styles.brushSizeOption,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceSecondary,
+    },
+    selectedBrushSize: {
+      ...styles.selectedBrushSize,
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    brushSizeText: {
+      ...styles.brushSizeText,
+      color: theme.textSecondary,
+    },
+    scrollDot: {
+      ...styles.scrollDot,
+      backgroundColor: theme.border,
+    },
+    activeDot: {
+      ...styles.activeDot,
+      backgroundColor: theme.primary,
+    },
+    savingContainer: {
+      ...styles.savingContainer,
+      backgroundColor: theme.surface,
+    },
+    savingText: {
+      ...styles.savingText,
+      color: theme.text,
+    },
+  });
+
   return (
     <>
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#edf2f7" />
+    <SafeAreaView style={themedStyles.container}>
+      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
      
       {/* Header with Save Checkmark */}
-      <View style={styles.header}>
+      <View style={themedStyles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#4a5568" />
+          <Ionicons name="arrow-back" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Note Detail</Text>
+        <Text style={themedStyles.headerTitle}>Note Detail</Text>
         <View style={styles.headerActions}>
             <TouchableOpacity onPress={saveNote} style={{marginRight: 10}}>
-                <Ionicons name="checkmark-done-outline" size={28} color="#38a169" />
+                <Ionicons name="checkmark-done-outline" size={28} color={theme.accent} />
             </TouchableOpacity>
             <TouchableOpacity onPress={showMenu}>
-                <Ionicons name="ellipsis-vertical" size={24} color="#4a5568" />
+                <Ionicons name="ellipsis-vertical" size={24} color={theme.textSecondary} />
             </TouchableOpacity>
         </View>
       </View>
 
       {/* Updated Drawing Mode Banner */}
       {drawingMode && (
-        <View style={styles.drawingModeBanner}>
+        <View style={themedStyles.drawingModeBanner}>
           <View style={styles.drawingModeInfo}>
             {selectedTool !== 'eraser' && (
-              <View style={[styles.colorIndicator, { backgroundColor: selectedColor }]} />
+              <View style={[styles.colorIndicator, { backgroundColor: selectedColor, borderColor: theme.border }]} />
             )}
             <Text style={styles.drawingModeText}>
               Drawing Mode - {selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)} ({getCurrentToolSize()}px)
@@ -614,11 +821,11 @@ if (response.ok) {
       <ScrollView style={styles.contentContainer}>
         {/* Title Input */}
         <TextInput
-          style={[styles.titleInput, getTextStyle()]}
+          style={[themedStyles.titleInput, getTextStyle()]}
           placeholder="Note Title"
           value={noteTitle}
           onChangeText={setNoteTitle}
-          placeholderTextColor="#718096"
+          placeholderTextColor={theme.placeholder}
           editable={!drawingMode}
         />
 
@@ -627,12 +834,12 @@ if (response.ok) {
           <View style={styles.combinedTextDrawingArea} {...panResponder.panHandlers}>
             {/* Text Input */}
             <TextInput
-              style={[styles.textInput, getTextStyle()]}
+              style={[themedStyles.textInput, getTextStyle()]}
               placeholder="Write your note..."
               value={noteText}
               onChangeText={setNoteText}
               multiline
-              placeholderTextColor="#718096"
+              placeholderTextColor={theme.placeholder}
               editable={!drawingMode}
             />
            
@@ -669,78 +876,78 @@ if (response.ok) {
 
         {/* Checklist Tab */}
         {activeTab === 'checklist' && (
-          <View style={styles.checklistContainer}>
+          <View style={themedStyles.checklistContainer}>
             {checklistItems.map((item) => (
               <View key={item.id} style={styles.checklistItem}>
                 <TouchableOpacity onPress={() => toggleChecklistItem(item.id)}>
                   <Ionicons
                     name={item.checked ? "checkbox" : "square-outline"}
                     size={20}
-                    color={item.checked ? "#4a5568" : "#718096"}
+                    color={item.checked ? theme.textSecondary : theme.textMuted}
                   />
                 </TouchableOpacity>
                 <TextInput
-                  style={[styles.checklistText, item.checked && styles.checkedText]}
+                  style={[themedStyles.checklistText, item.checked && styles.checkedText]}
                   value={item.text}
                   onChangeText={(text) => updateChecklistItem(item.id, text)}
                   placeholder="Add item..."
-                  placeholderTextColor="#718096"
+                  placeholderTextColor={theme.placeholder}
                 />
                 <TouchableOpacity onPress={() => deleteChecklistItem(item.id)}>
-                  <Ionicons name="trash" size={18} color="#d11a2a" />
+                  <Ionicons name="trash" size={18} color={theme.danger} />
                 </TouchableOpacity>
               </View>
             ))}
             <TouchableOpacity style={styles.addButton} onPress={addChecklistItem}>
-              <Ionicons name="add" size={20} color="#4a5568" />
-              <Text style={styles.addButtonText}>Add Item</Text>
+              <Ionicons name="add" size={20} color={theme.textSecondary} />
+              <Text style={themedStyles.addButtonText}>Add Item</Text>
             </TouchableOpacity>
           </View>
         )}
       </ScrollView>
 
       {/* Bottom Toolbar - Updated to remove drawing tab and add drawing toggle */}
-      <View style={styles.toolbar}>
+      <View style={themedStyles.toolbar}>
         {/* Content Type Buttons */}
         <TouchableOpacity
-          style={[styles.toolButton, activeTab === 'text' && styles.activeToolButton]}
+          style={[styles.toolButton, activeTab === 'text' && themedStyles.activeToolButton]}
           onPress={() => setActiveTab('text')}
         >
-          <Ionicons name="document-text" size={20} color={activeTab === 'text' ? '#fff' : '#4a5568'} />
+          <Ionicons name="document-text" size={20} color={activeTab === 'text' ? '#fff' : theme.textSecondary} />
         </TouchableOpacity>
        
         <TouchableOpacity
-          style={[styles.toolButton, activeTab === 'checklist' && styles.activeToolButton]}
+          style={[styles.toolButton, activeTab === 'checklist' && themedStyles.activeToolButton]}
           onPress={() => setActiveTab('checklist')}
         >
-          <Ionicons name="list" size={20} color={activeTab === 'checklist' ? '#fff' : '#4a5568'} />
+          <Ionicons name="list" size={20} color={activeTab === 'checklist' ? '#fff' : theme.textSecondary} />
         </TouchableOpacity>
        
         {/* Drawing Mode Toggle Button */}
         <TouchableOpacity
-          style={[styles.toolButton, drawingMode && styles.activeToolButton]}
+          style={[styles.toolButton, drawingMode && themedStyles.activeToolButton]}
           onPress={toggleDrawingMode}
         >
-          <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : '#4a5568'} />
+          <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : theme.textSecondary} />
         </TouchableOpacity>
 
         {/* Formatting Tools */}
         <TouchableOpacity style={styles.toolButton} onPress={() => setShowFontModal(true)}>
-          <Ionicons name="text" size={20} color="#4a5568" />
+          <Ionicons name="text" size={20} color={theme.textSecondary} />
         </TouchableOpacity>
        
         <TouchableOpacity
-          style={[styles.toolButton, isBold && styles.activeToolButton]}
+          style={[styles.toolButton, isBold && themedStyles.activeToolButton]}
           onPress={() => setIsBold(!isBold)}
         >
-          <Text style={[styles.toolButtonText, { fontWeight: 'bold' }, isBold && styles.activeToolButtonText]}>B</Text>
+          <Text style={[themedStyles.toolButtonText, { fontWeight: 'bold' }, isBold && styles.activeToolButtonText]}>B</Text>
         </TouchableOpacity>
        
         <TouchableOpacity
-          style={[styles.toolButton, isItalic && styles.activeToolButton]}
+          style={[styles.toolButton, isItalic && themedStyles.activeToolButton]}
           onPress={() => setIsItalic(!isItalic)}
         >
-          <Text style={[styles.toolButtonText, { fontStyle: 'italic' }, isItalic && styles.activeToolButtonText]}>I</Text>
+          <Text style={[themedStyles.toolButtonText, { fontStyle: 'italic' }, isItalic && styles.activeToolButtonText]}>I</Text>
         </TouchableOpacity>
        
         <TouchableOpacity style={[styles.toolButton, styles.textAlignButton]} onPress={() => {
@@ -749,41 +956,41 @@ if (response.ok) {
           const nextAlign = aligns[(currentIndex + 1) % aligns.length];
           setTextAlign(nextAlign);
         }}>
-          <Text style={styles.toolButtonText}>{getAlignmentIcon()}</Text>
+          <Text style={themedStyles.toolButtonText}>{getAlignmentIcon()}</Text>
         </TouchableOpacity>
        
         <TouchableOpacity style={styles.toolButton} onPress={openAiMenu}>
-          <Ionicons name="sparkles" size={20} color="#4a5568" />
+          <Ionicons name="sparkles" size={20} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {/* Slide Menu Modal */}
       <Modal visible={showMenuModal} transparent animationType="none">
         <TouchableOpacity
-          style={styles.menuOverlay}
+          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
           activeOpacity={1}
           onPress={hideMenu}
         >
           <Animated.View
             style={[
-              styles.slideMenu,
+              themedStyles.slideMenu,
               { transform: [{ translateY: slideAnim }] }
             ]}
           >
-            <View style={styles.slideMenuHandle} />
-            <Text style={styles.slideMenuTitle}>Note Options</Text>
+            <View style={themedStyles.slideMenuHandle} />
+            <Text style={themedStyles.slideMenuTitle}>Note Options</Text>
            
             {menuOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
-                style={styles.menuOption}
+                style={[styles.menuOption, { borderBottomColor: theme.borderLight }]}
                 onPress={option.action}
               >
                 <View style={styles.menuOptionContent}>
-                  <Ionicons name={option.icon} size={22} color="#4a5568" />
-                  <Text style={styles.menuOptionText}>{option.label}</Text>
+                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
+                  <Text style={themedStyles.menuOptionText}>{option.label}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#718096" />
+                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
               </TouchableOpacity>
             ))}
           </Animated.View>
@@ -793,57 +1000,57 @@ if (response.ok) {
       {/* Font Modal */}
       <Modal visible={showFontModal} transparent animationType="slide">
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}
           activeOpacity={1}
           onPress={() => setShowFontModal(false)}
         >
-          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choose Font & Size</Text>
+          <View style={themedStyles.modalContent} onStartShouldSetResponder={() => true}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={themedStyles.modalTitle}>Choose Font & Size</Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowFontModal(false)}
               >
-                <Ionicons name="close" size={24} color="#4a5568" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
            
             {/* Font Family Section */}
-            <Text style={styles.sectionTitle}>Font Family</Text>
-            <ScrollView style={styles.fontSection} showsVerticalScrollIndicator={false}>
+            <Text style={themedStyles.sectionTitle}>Font Family</Text>
+            <ScrollView style={[styles.fontSection, { borderColor: theme.border }]} showsVerticalScrollIndicator={false}>
               {fonts.map((font) => (
                 <TouchableOpacity
                   key={font.value}
                   style={[
-                    styles.fontOption,
-                    fontFamily === font.value && styles.selectedFontOption
+                    themedStyles.fontOption,
+                    fontFamily === font.value && themedStyles.selectedFontOption
                   ]}
                   onPress={() => setFontFamily(font.value)}
                 >
                   <Text style={[
-                    styles.fontText,
+                    themedStyles.fontText,
                     { fontFamily: font.value === 'System' ? undefined : font.value },
-                    fontFamily === font.value && styles.selectedFontText
+                    fontFamily === font.value && themedStyles.selectedFontText
                   ]}>
                     {font.name}
                   </Text>
                   {fontFamily === font.value && (
-                    <Ionicons name="checkmark" size={20} color="#4a5568" />
+                    <Ionicons name="checkmark" size={20} color={theme.textSecondary} />
                   )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
 
             {/* Font Size Section */}
-            <Text style={styles.sectionTitle}>Font Size</Text>
+            <Text style={themedStyles.sectionTitle}>Font Size</Text>
             <View style={styles.fontSizeContainer}>
               {fontSizes.map((size) => (
                 <TouchableOpacity
                   key={size}
-                  style={[styles.fontSizeOption, fontSize === size && styles.selectedFontSize]}
+                  style={[themedStyles.fontSizeOption, fontSize === size && themedStyles.selectedFontSize]}
                   onPress={() => setFontSize(size)}
                 >
-                  <Text style={[styles.fontSizeText, fontSize === size && styles.selectedFontSizeText]}>
+                  <Text style={[themedStyles.fontSizeText, fontSize === size && styles.selectedFontSizeText]}>
                     {size}
                   </Text>
                 </TouchableOpacity>
@@ -856,36 +1063,36 @@ if (response.ok) {
       {/* Updated Drawing Tools Modal with Eraser Support and Scroll Indicators */}
       <Modal visible={showDrawingModal} transparent animationType="slide">
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}
           activeOpacity={1}
           onPress={() => setShowDrawingModal(false)}
         >
-          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Drawing Tools</Text>
+          <View style={themedStyles.modalContent} onStartShouldSetResponder={() => true}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={themedStyles.modalTitle}>Drawing Tools</Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowDrawingModal(false)}
               >
-                <Ionicons name="close" size={24} color="#4a5568" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
            
             {/* Tool Selection */}
-            <Text style={styles.sectionTitle}>Tools</Text>
+            <Text style={themedStyles.sectionTitle}>Tools</Text>
             <View style={styles.toolsContainer}>
               {drawingTools.map((tool) => (
                 <TouchableOpacity
                   key={tool.name}
-                  style={[styles.toolOption, selectedTool === tool.name && styles.selectedTool]}
+                  style={[themedStyles.toolOption, selectedTool === tool.name && themedStyles.selectedTool]}
                   onPress={() => setSelectedTool(tool.name)}
                 >
                   <Ionicons
                     name={tool.icon}
                     size={24}
-                    color={selectedTool === tool.name ? '#fff' : '#4a5568'}
+                    color={selectedTool === tool.name ? '#fff' : theme.textSecondary}
                   />
-                  <Text style={[styles.toolLabel, selectedTool === tool.name && styles.selectedToolLabel]}>
+                  <Text style={[themedStyles.toolLabel, selectedTool === tool.name && styles.selectedToolLabel]}>
                     {tool.label}
                   </Text>
                 </TouchableOpacity>
@@ -895,15 +1102,15 @@ if (response.ok) {
             {/* Color Selection - Hidden for Eraser */}
             {selectedTool !== 'eraser' && (
               <>
-                <Text style={styles.sectionTitle}>Colors</Text>
+                <Text style={themedStyles.sectionTitle}>Colors</Text>
                 <View style={styles.colorsContainer}>
                   {colors.map((color) => (
                     <TouchableOpacity
                       key={color}
                       style={[
                         styles.colorOption,
-                        { backgroundColor: color },
-                        selectedColor === color && styles.selectedColor
+                        { backgroundColor: color, borderColor: theme.border },
+                        selectedColor === color && [styles.selectedColor, { borderColor: theme.primary }]
                       ]}
                       onPress={() => setSelectedColor(color)}
                     >
@@ -917,7 +1124,7 @@ if (response.ok) {
             )}
 
             {/* Size Selection with Scroll Indicators */}
-            <Text style={styles.sectionTitle}>
+            <Text style={themedStyles.sectionTitle}>
               {selectedTool === 'eraser' ? 'Eraser Size' : 'Brush Size'}
             </Text>
             <ScrollView 
@@ -933,8 +1140,8 @@ if (response.ok) {
                   <TouchableOpacity
                     key={size}
                     style={[
-                      styles.brushSizeOption,
-                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && styles.selectedBrushSize
+                      themedStyles.brushSizeOption,
+                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && themedStyles.selectedBrushSize
                     ]}
                     onPress={() => selectedTool === 'eraser' ? setEraserSize(size) : setBrushSize(size)}
                   >
@@ -943,14 +1150,14 @@ if (response.ok) {
                       {
                         width: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
                         height: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
-                        backgroundColor: selectedTool === 'eraser' ? '#e2e8f0' : selectedColor,
+                        backgroundColor: selectedTool === 'eraser' ? theme.surfaceSecondary : selectedColor,
                         borderRadius: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8) / 2,
                         borderWidth: selectedTool === 'eraser' ? 2 : 0,
-                        borderColor: selectedTool === 'eraser' ? '#4a5568' : 'transparent'
+                        borderColor: selectedTool === 'eraser' ? theme.textSecondary : 'transparent'
                       }
                     ]} />
                     <Text style={[
-                      styles.brushSizeText,
+                      themedStyles.brushSizeText,
                       (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && styles.selectedBrushSizeText
                     ]}>
                       {size}px
@@ -967,8 +1174,8 @@ if (response.ok) {
                   <View
                     key={dot.key}
                     style={[
-                      styles.scrollDot,
-                      dot.active && styles.activeDot
+                      themedStyles.scrollDot,
+                      dot.active && themedStyles.activeDot
                     ]}
                   />
                 ))}
@@ -976,7 +1183,7 @@ if (response.ok) {
             )}
 
             {/* Clear Drawing Button */}
-            <TouchableOpacity style={styles.clearDrawingButton} onPress={clearDrawing}>
+            <TouchableOpacity style={[styles.clearDrawingButton, { backgroundColor: theme.danger }]} onPress={clearDrawing}>
               <Ionicons name="trash" size={20} color="#fff" />
               <Text style={styles.clearDrawingText}>Clear All Drawings</Text>
             </TouchableOpacity>
@@ -987,30 +1194,30 @@ if (response.ok) {
       {/* AI Modal */}
       <Modal visible={showAiModal} transparent animationType="none">
         <TouchableOpacity
-          style={styles.menuOverlay}
+          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
           activeOpacity={1}
           onPress={closeAiMenu}
         >
           <Animated.View
             style={[
-              styles.slideMenu,
+              themedStyles.slideMenu,
               { transform: [{ translateY: aiSlideAnim }] }
             ]}
           >
-            <View style={styles.slideMenuHandle} />
-            <Text style={styles.slideMenuTitle}>AI Actions</Text>
+            <View style={themedStyles.slideMenuHandle} />
+            <Text style={themedStyles.slideMenuTitle}>AI Actions</Text>
            
             {aiOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
-                style={styles.menuOption}
+                style={[styles.menuOption, { borderBottomColor: theme.borderLight }]}
                 onPress={option.action}
               >
                 <View style={styles.menuOptionContent}>
-                  <Ionicons name={option.icon} size={22} color="#4a5568" />
-                  <Text style={styles.menuOptionText}>{option.label}</Text>
+                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
+                  <Text style={themedStyles.menuOptionText}>{option.label}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#718096" />
+                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
               </TouchableOpacity>
             ))}
           </Animated.View>
@@ -1023,10 +1230,10 @@ if (response.ok) {
         animationType="fade"
         visible={isSaving}
       >
-        <View style={styles.savingOverlay}>
-            <View style={styles.savingContainer}>
-                <ActivityIndicator size="large" color="#4a5568" />
-                <Text style={styles.savingText}>Saving...</Text>
+        <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
+            <View style={themedStyles.savingContainer}>
+                <ActivityIndicator size="large" color={theme.textSecondary} />
+                <Text style={themedStyles.savingText}>Saving...</Text>
             </View>
         </View>
       </Modal>
@@ -1036,10 +1243,10 @@ if (response.ok) {
         animationType="fade"
         visible={isAiProcessing}
     >
-        <View style={styles.savingOverlay}>
-            <View style={styles.savingContainer}>
-                <ActivityIndicator size="large" color="#4a5568" />
-                <Text style={styles.savingText}>AI is doing its work...</Text>
+        <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
+            <View style={themedStyles.savingContainer}>
+                <ActivityIndicator size="large" color={theme.textSecondary} />
+                <Text style={themedStyles.savingText}>AI is doing its work...</Text>
             </View>
         </View>
       </Modal>
@@ -1050,7 +1257,6 @@ if (response.ok) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#edf2f7',
     paddingBottom: 35
   },
   header: {
@@ -1060,22 +1266,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     paddingTop: 46,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2d3748',
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // New Drawing Mode Banner Styles
+  // Drawing Mode Banner Styles
   drawingModeBanner: {
-    backgroundColor: '#4a5568',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1108,28 +1310,24 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   titleInput: {
-    backgroundColor: '#fff',
     borderRadius: 4,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  // New Combined Text and Drawing Area Styles
+  // Combined Text and Drawing Area Styles
   combinedTextDrawingArea: {
     position: 'relative',
     minHeight: 570,
   },
   textInput: {
-    backgroundColor: '#fff',
     borderRadius: 4,
     padding: 12,
     minHeight: 570,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   drawingOverlay: {
     position: 'absolute',
@@ -1147,11 +1345,9 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   checklistContainer: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     minHeight: 570,
   },
   checklistItem: {
@@ -1163,14 +1359,12 @@ const styles = StyleSheet.create({
   checklistText: {
     flex: 1,
     fontSize: 16,
-    color: '#2d3748',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
     paddingVertical: 4,
   },
   checkedText: {
     textDecorationLine: 'line-through',
-    color: '#718096',
+    opacity: 0.6,
   },
   addButton: {
     flexDirection: 'row',
@@ -1181,22 +1375,18 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: 16,
-    color: '#4a5568',
   },
   colorIndicator: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   toolbar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
     justifyContent: 'space-around',
   },
   toolButton: {
@@ -1211,7 +1401,6 @@ const styles = StyleSheet.create({
   },
   toolButtonText: {
     fontSize: 16,
-    color: '#4a5568',
     fontWeight: '600',
   },
   activeToolButtonText: {
@@ -1221,18 +1410,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  sparkleText: {
-    fontSize: 18,
-    color: '#4a5568',
-  },
   // Slide Menu Styles
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   slideMenu: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
@@ -1250,7 +1433,6 @@ const styles = StyleSheet.create({
   slideMenuHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#e2e8f0',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 20,
@@ -1258,7 +1440,6 @@ const styles = StyleSheet.create({
   slideMenuTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2d3748',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -1269,7 +1450,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f7fafc',
   },
   menuOptionContent: {
     flexDirection: 'row',
@@ -1278,19 +1458,16 @@ const styles = StyleSheet.create({
   },
   menuOptionText: {
     fontSize: 16,
-    color: '#2d3748',
     fontWeight: '500',
   },
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
     width: '100%',
@@ -1312,12 +1489,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2d3748',
   },
   modalCloseButton: {
     padding: 4,
@@ -1327,14 +1502,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     marginTop: 8,
-    color: '#2d3748',
   },
   // Font Modal Styles
   fontSection: {
     maxHeight: 200,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 8,
   },
   fontOption: {
@@ -1344,17 +1517,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f7fafc',
   },
   selectedFontOption: {
     backgroundColor: '#f7fafc',
   },
   fontText: {
     fontSize: 16,
-    color: '#2d3748',
   },
   selectedFontText: {
-    color: '#4a5568',
     fontWeight: '600',
   },
   fontSizeContainer: {
@@ -1368,17 +1538,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
     minWidth: 50,
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   selectedFontSize: {
-    backgroundColor: '#4a5568',
     borderColor: '#4a5568',
   },
   fontSizeText: {
-    color: '#2d3748',
     fontWeight: '500',
   },
   selectedFontSizeText: {
@@ -1398,16 +1564,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f7fafc',
   },
   selectedTool: {
-    backgroundColor: '#4a5568',
     borderColor: '#4a5568',
   },
   toolLabel: {
     fontSize: 12,
-    color: '#4a5568',
     marginTop: 6,
     fontWeight: '600',
   },
@@ -1426,7 +1588,6 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 3,
-    borderColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1439,7 +1600,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   selectedColor: {
-    borderColor: '#4a5568',
     borderWidth: 4,
   },
   brushSizeScrollView: {
@@ -1456,12 +1616,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f7fafc',
     minWidth: 70,
   },
   selectedBrushSize: {
-    backgroundColor: '#4a5568',
     borderColor: '#4a5568',
   },
   brushPreview: {
@@ -1477,13 +1634,12 @@ const styles = StyleSheet.create({
   },
   brushSizeText: {
     fontSize: 11,
-    color: '#4a5568',
     fontWeight: '600',
   },
   selectedBrushSizeText: {
     color: '#fff',
   },
-  // New Scroll Indicator Styles
+  // Scroll Indicator Styles
   scrollIndicatorContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1496,17 +1652,14 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#cbd5e0',
     opacity: 0.5,
   },
   activeDot: {
-    backgroundColor: '#4a5568',
     opacity: 1,
     transform: [{ scale: 1.3 }],
   },
   // Clear Drawing Button Style
   clearDrawingButton: {
-    backgroundColor: '#d11a2a',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1523,12 +1676,10 @@ const styles = StyleSheet.create({
   },
   savingOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   savingContainer: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 24,
     flexDirection: 'row',
@@ -1543,6 +1694,5 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     fontSize: 18,
     fontWeight: '500',
-    color: '#2d3748',
   },
 });

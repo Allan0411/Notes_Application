@@ -9,8 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 import { useFocusEffect } from '@react-navigation/native';
 
-// Import the ThemeContext directly
-import { ThemeContext } from '../ThemeContext'; // Correct path to your ThemeContext
+// Import the ThemeContext
+import { ThemeContext } from '../ThemeContext';
 
 // Define your color palettes directly in HomeScreen.js
 // This needs to be consistent with what you'd expect for light/dark
