@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // loader state
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -22,16 +23,15 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
+    setLoading(true); // show loader
+
     try {
       const response = await fetch(API_BASE_URL + "/Auth/login", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        })
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
@@ -48,16 +48,15 @@ export default function LoginScreen({ navigation }) {
     } catch (err) {
       console.error("Login error: ", err);
       alert('Login failed');
+    } finally {
+      setLoading(false); // hide loader after API call finishes
     }
   };
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor='#a6b7cfff' />
-      <KeyboardAvoidingView
-        style={styles.container}
-        // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.container}>
         <View style={styles.innerContainer}>
           {/* Header Section */}
           <View style={styles.headerContainer}>
@@ -91,11 +90,16 @@ export default function LoginScreen({ navigation }) {
             </View>
 
             <TouchableOpacity
-              style={styles.loginButton}
+              style={[styles.loginButton, loading && { opacity: 0.8 }]}
               onPress={handleLogin}
               activeOpacity={0.8}
+              disabled={loading} // disable while loading
             >
-              <Text style={styles.loginButtonText}>Login</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
           </View>
 

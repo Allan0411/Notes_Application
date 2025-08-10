@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   StatusBar,
+  ActivityIndicator, // ✅ Import this
 } from 'react-native';
 import { API_BASE_URL } from '../config';
 
@@ -15,28 +15,27 @@ export default function SignupScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading,setIsLoading]=useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async () => {
+    if (isLoading) return;
 
-    if(isLoading)
-        return
     if (!name || !email || !password) {
       alert("Please enter all fields");
       return;
     }
+
     setIsLoading(true);
+
     try {
       const response = await fetch(API_BASE_URL + "/Auth/register", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: name,
           email: email,
           passwordHash: password,
-        })
+        }),
       });
 
       const data = await response.json();
@@ -45,86 +44,63 @@ export default function SignupScreen({ navigation }) {
         alert("Signup successful");
         navigation.navigate('Login');
       } else {
-        console.error("Signup error:", data);
-        alert('Signup failed');
+        alert(data?.message || 'Signup failed');
       }
     } catch (err) {
-      console.error("Signup error: ", err);
       alert('Signup failed');
-    }
-    finally {
-      setIsLoading(false); // <-- 3. STOP loading indicator in all cases
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#a6b7cfff" />
-      <KeyboardAvoidingView
-        style={styles.container}
-        // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.container}>
         <View style={styles.innerContainer}>
-          {/* Header Section */}
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Notes</Text>
-            <Text style={styles.subtitle}>Create your account 📝</Text>
-          </View>
-
-          {/* Form Section */}
+          {/* Form */}
           <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <TextInput
-                placeholder="Full Name"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                style={styles.input}
-                placeholderTextColor="#999"
-              />
-            </View>
+            <TextInput
+              placeholder="Full Name"
+              value={name}
+              onChangeText={setName}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={styles.input}
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <TextInput
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            {/* v-- 4. UPDATE THE BUTTON --v */}
-            
+            {/* ✅ Signup Button with Loader */}
             <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.disabledButton]}
-              onPress={handleLogin}
+              style={[styles.signupButton, isLoading && styles.disabledButton]}
+              onPress={handleSignup}
               activeOpacity={0.8}
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.loginButtonText}>Login</Text>
+                <Text style={styles.signupButtonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
-            {/* ^-- 4. UPDATE THE BUTTON --^ */}
           </View>
 
-          {/* Footer Section */}
+          {/* Footer */}
           <View style={styles.footerContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.loginText}>
@@ -140,46 +116,13 @@ export default function SignupScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#a6b7cfff',
-  },
-  innerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#ffffff',
-    opacity: 0.8,
-  },
+  container: { flex: 1, backgroundColor: '#a6b7cfff' },
+  innerContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
   formContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 24,
     padding: 32,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
     elevation: 8,
-  },
-  inputContainer: {
-    marginBottom: 20,
   },
   input: {
     backgroundColor: '#f8f9fa',
@@ -189,6 +132,7 @@ const styles = StyleSheet.create({
     color: '#333',
     borderWidth: 1,
     borderColor: '#e9ecef',
+    marginBottom: 20,
   },
   signupButton: {
     backgroundColor: '#686f88ff',
@@ -196,29 +140,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
-    shadowColor: '#686f88ff',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
-  signupButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  footerContainer: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  loginText: {
-    color: '#ffffff',
-    fontSize: 16,
-    opacity: 0.9,
-  },
+  disabledButton: { opacity: 0.7 },
+  signupButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  footerContainer: { alignItems: 'center', marginTop: 32 },
+  loginText: { color: '#fff', fontSize: 16, opacity: 0.9 },
   loginLink: {
     color: '#686f88ff',
     fontWeight: 'bold',
