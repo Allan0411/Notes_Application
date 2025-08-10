@@ -2,13 +2,16 @@ import React, { useState, useRef, useContext, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
-  Animated, ActivityIndicator,
+  Animated, ActivityIndicator, Share, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
+import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -59,6 +62,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
@@ -81,6 +85,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [showDrawingModal, setShowDrawingModal] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
  
@@ -110,6 +115,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   // Animations for slide menus
   const slideAnim = useRef(new Animated.Value(300)).current;
   const aiSlideAnim = useRef(new Animated.Value(300)).current;
+  const shareSlideAnim = useRef(new Animated.Value(300)).current;
 
   // ADDED: Monitor drawings state changes for debugging
   useEffect(() => {
@@ -374,11 +380,306 @@ export default function NoteDetailScreen({ route, navigation }) {
     }
   };
 
-  // Menu action functions
+  // ADDED: Format note content for plain text export
+  const formatNoteAsPlainText = () => {
+    let content = '';
+    
+    // Add title
+    if (noteTitle.trim()) {
+      content += `${noteTitle.trim()}\n`;
+      content += '='.repeat(noteTitle.trim().length) + '\n\n';
+    }
+    
+    // Add creation/modification date
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    content += `Created: ${currentDate}\n\n`;
+    
+    // Add text content
+    if (noteText.trim()) {
+      content += 'Content:\n';
+      content += '-'.repeat(8) + '\n';
+      content += noteText.trim() + '\n\n';
+    }
+    
+    // Add checklist items
+    if (checklistItems.length > 0) {
+      content += 'Checklist:\n';
+      content += '-'.repeat(9) + '\n';
+      checklistItems.forEach((item, index) => {
+        const checkbox = item.checked ? '[✓]' : '[ ]';
+        content += `${checkbox} ${item.text || `Item ${index + 1}`}\n`;
+      });
+      content += '\n';
+    }
+    
+    // Add drawings info
+    if (drawings.length > 0) {
+      content += `Drawings: ${drawings.length} drawing(s) attached\n`;
+      content += '(Drawings are not available in plain text format)\n\n';
+    }
+    
+    content += `\n--- End of Note ---\nExported from Notes App`;
+    
+    return content;
+  };
+
+  // ADDED: Format note content for PDF export
+  const formatNoteAsHTML = () => {
+    const fontStyle = `
+      font-family: ${fontFamily === 'System' ? 'Arial, sans-serif' : fontFamily};
+      font-size: ${fontSize}px;
+      font-weight: ${isBold ? 'bold' : 'normal'};
+      font-style: ${isItalic ? 'italic' : 'normal'};
+      text-align: ${textAlign};
+      line-height: 1.6;
+    `;
+    
+    let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${noteTitle || 'Note'}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 40px;
+          color: #333;
+          background: white;
+        }
+        .header {
+          border-bottom: 2px solid #4a5568;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #2d3748;
+          margin-bottom: 10px;
+        }
+        .meta {
+          font-size: 12px;
+          color: #718096;
+          font-style: italic;
+        }
+        .content {
+          ${fontStyle}
+          margin-bottom: 30px;
+          white-space: pre-wrap;
+        }
+        .section-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #4a5568;
+          margin: 30px 0 15px 0;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 5px;
+        }
+        .checklist {
+          list-style: none;
+          padding: 0;
+        }
+        .checklist-item {
+          margin-bottom: 8px;
+          padding: 5px 0;
+          display: flex;
+          align-items: center;
+        }
+        .checkbox {
+          margin-right: 10px;
+          font-weight: bold;
+        }
+        .checked {
+          text-decoration: line-through;
+          color: #718096;
+        }
+        .drawings-info {
+          background: #f7fafc;
+          padding: 15px;
+          border-radius: 8px;
+          border-left: 4px solid #4a5568;
+          margin: 20px 0;
+        }
+        .footer {
+          margin-top: 50px;
+          padding-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          font-size: 10px;
+          color: #a0aec0;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="title">${noteTitle || 'Untitled Note'}</div>
+        <div class="meta">Exported on ${new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}</div>
+      </div>
+    `;
+    
+    // Add text content
+    if (noteText.trim()) {
+      html += `
+        <div class="section-title">Content</div>
+        <div class="content">${noteText.trim().replace(/\n/g, '<br>')}</div>
+      `;
+    }
+    
+    // Add checklist
+    if (checklistItems.length > 0) {
+      html += `<div class="section-title">Checklist</div><ul class="checklist">`;
+      checklistItems.forEach((item) => {
+        const checkbox = item.checked ? '✓' : '☐';
+        const itemClass = item.checked ? 'checked' : '';
+        html += `
+          <li class="checklist-item">
+            <span class="checkbox">${checkbox}</span>
+            <span class="${itemClass}">${item.text || 'Untitled Item'}</span>
+          </li>
+        `;
+      });
+      html += '</ul>';
+    }
+    
+    // Add drawings info
+    if (drawings.length > 0) {
+      html += `
+        <div class="drawings-info">
+          <strong>📝 Drawings:</strong> This note contains ${drawings.length} drawing(s). 
+          Drawings are not included in the PDF export but are preserved in the original note.
+        </div>
+      `;
+    }
+    
+    html += `
+        <div class="footer">
+          Generated by Notes App
+        </div>
+      </body>
+    </html>
+    `;
+    
+    return html;
+  };
+
+  // ADDED: Export as plain text
+  const exportAsPlainText = async () => {
+    try {
+      setIsExporting(true);
+      const content = formatNoteAsPlainText();
+      const fileName = `${(noteTitle || 'Note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      
+      await FileSystem.writeAsStringAsync(fileUri, content, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/plain',
+          dialogTitle: 'Share Note as Text'
+        });
+      } else {
+        // Fallback to native Share API
+        await Share.share({
+          message: content,
+          title: noteTitle || 'Note'
+        });
+      }
+      
+      hideShareMenu();
+    } catch (error) {
+      console.error('Error exporting as text:', error);
+      Alert.alert('Export Error', 'Failed to export note as text file.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // ADDED: Export as PDF
+  const exportAsPDF = async () => {
+    try {
+      setIsExporting(true);
+      const htmlContent = formatNoteAsHTML();
+      const fileName = `${(noteTitle || 'Note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
+      
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false,
+        width: 612,
+        height: 792,
+      });
+      
+      // Move the file to a more permanent location
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.moveAsync({
+        from: uri,
+        to: fileUri,
+      });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Share Note as PDF'
+        });
+      } else {
+        Alert.alert('PDF Created', `PDF saved to: ${fileUri}`);
+      }
+      
+      hideShareMenu();
+    } catch (error) {
+      console.error('Error exporting as PDF:', error);
+      Alert.alert('Export Error', 'Failed to export note as PDF file.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // UPDATED: Enhanced share function with format selection
   function handleSend() {
     hideMenu();
-    Alert.alert('Send Note', 'Feature coming soon! You can share your note via email, messaging apps, or social media.');
+    
+    // Check if note has content
+    if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0) {
+      Alert.alert('Empty Note', 'Please add some content before sharing.');
+      return;
+    }
+    
+    showShareMenu();
   }
+
+  // ADDED: Share menu functions
+  const showShareMenu = () => {
+    setShowShareModal(true);
+    Animated.timing(shareSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideShareMenu = () => {
+    Animated.timing(shareSlideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowShareModal(false);
+    });
+  };
 
   function handleReminder() {
     hideMenu();
@@ -498,11 +799,17 @@ export default function NoteDetailScreen({ route, navigation }) {
     }
   };
 
-  // Menu options (Save is removed)
+  // Menu options (Updated Send label to Share)
   const menuOptions = [
-    { id: 'send', label: 'Send', icon: 'send-outline', action: handleSend },
+    { id: 'send', label: 'Share', icon: 'share-outline', action: handleSend },
     { id: 'reminder', label: 'Reminder', icon: 'alarm-outline', action: handleReminder },
     { id: 'collaborator', label: 'Collaborator', icon: 'people-outline', action: handleCollaborator },
+  ];
+
+  // ADDED: Share format options
+  const shareOptions = [
+    { id: 'text', label: 'Export as Text (.txt)', icon: 'document-text-outline', action: exportAsPlainText },
+    { id: 'pdf', label: 'Export as PDF (.pdf)', icon: 'document-outline', action: exportAsPDF },
   ];
 
   // AI action options
@@ -914,6 +1221,21 @@ export default function NoteDetailScreen({ route, navigation }) {
       ...styles.savingText,
       color: theme.text,
     },
+    shareOption: {
+      ...styles.shareOption,
+      borderBottomColor: theme.borderLight,
+    },
+    shareOptionContent: {
+      ...styles.shareOptionContent,
+    },
+    shareOptionText: {
+      ...styles.shareOptionText,
+      color: theme.text,
+    },
+    shareOptionDescription: {
+      ...styles.shareOptionDescription,
+      color: theme.textMuted,
+    },
   });
 
   return (
@@ -1135,6 +1457,48 @@ export default function NoteDetailScreen({ route, navigation }) {
                 <View style={styles.menuOptionContent}>
                   <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
                   <Text style={themedStyles.menuOptionText}>{option.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ADDED: Share Format Selection Modal */}
+      <Modal visible={showShareModal} transparent animationType="none">
+        <TouchableOpacity
+          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
+          activeOpacity={1}
+          onPress={hideShareMenu}
+        >
+          <Animated.View
+            style={[
+              themedStyles.slideMenu,
+              { transform: [{ translateY: shareSlideAnim }] }
+            ]}
+          >
+            <View style={themedStyles.slideMenuHandle} />
+            <Text style={themedStyles.slideMenuTitle}>Choose Export Format</Text>
+           
+            {shareOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[themedStyles.shareOption]}
+                onPress={option.action}
+                disabled={isExporting}
+              >
+                <View style={themedStyles.shareOptionContent}>
+                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
+                  <View style={styles.shareOptionTextContainer}>
+                    <Text style={themedStyles.shareOptionText}>{option.label}</Text>
+                    <Text style={themedStyles.shareOptionDescription}>
+                      {option.id === 'text' 
+                        ? 'Plain text format with basic formatting preserved'
+                        : 'Professional PDF document with rich formatting'
+                      }
+                    </Text>
+                  </View>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
               </TouchableOpacity>
@@ -1383,16 +1747,31 @@ export default function NoteDetailScreen({ route, navigation }) {
             </View>
         </View>
       </Modal>
+
       {/* AI Processing Overlay */}
-    <Modal
+      <Modal
         transparent={true}
         animationType="fade"
         visible={isAiProcessing}
-    >
+      >
         <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
             <View style={themedStyles.savingContainer}>
                 <ActivityIndicator size="large" color={theme.textSecondary} />
                 <Text style={themedStyles.savingText}>AI is doing its work...</Text>
+            </View>
+        </View>
+      </Modal>
+
+      {/* ADDED: Export Processing Overlay */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isExporting}
+      >
+        <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
+            <View style={themedStyles.savingContainer}>
+                <ActivityIndicator size="large" color={theme.textSecondary} />
+                <Text style={themedStyles.savingText}>Exporting note...</Text>
             </View>
         </View>
       </Modal>
@@ -1605,6 +1984,33 @@ const styles = StyleSheet.create({
   menuOptionText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  // ADDED: Share option styles
+  shareOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+  },
+  shareOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  shareOptionTextContainer: {
+    flex: 1,
+  },
+  shareOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  shareOptionDescription: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   // Modal Styles
   modalOverlay: {
