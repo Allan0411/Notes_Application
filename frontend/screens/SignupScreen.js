@@ -7,7 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   StatusBar,
-  ActivityIndicator, // ✅ Import this
+  ActivityIndicator,
 } from 'react-native';
 import { API_BASE_URL } from '../config';
 
@@ -65,27 +65,30 @@ export default function SignupScreen({ navigation }) {
               placeholder="Full Name"
               value={name}
               onChangeText={setName}
-              style={styles.input}
+              style={[styles.input, isLoading && styles.disabledInput]}
               placeholderTextColor="#999"
+              editable={!isLoading} // disable while loading
             />
             <TextInput
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              style={styles.input}
+              style={[styles.input, isLoading && styles.disabledInput]}
               placeholderTextColor="#999"
+              editable={!isLoading} // disable while loading
             />
             <TextInput
               placeholder="Password"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              style={styles.input}
+              style={[styles.input, isLoading && styles.disabledInput]}
               placeholderTextColor="#999"
+              editable={!isLoading} // disable while loading
             />
 
-            {/* ✅ Signup Button with Loader */}
+            {/* Signup Button with Loader */}
             <TouchableOpacity
               style={[styles.signupButton, isLoading && styles.disabledButton]}
               onPress={handleSignup}
@@ -102,10 +105,26 @@ export default function SignupScreen({ navigation }) {
 
           {/* Footer */}
           <View style={styles.footerContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginText}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Login')}
+              disabled={isLoading} // disable while loading
+              activeOpacity={isLoading ? 1 : 0.7}
+            >
+              <Text
+                style={[
+                  styles.loginText,
+                  isLoading && { opacity: 0.5 }
+                ]}
+              >
                 Already have an account?{' '}
-                <Text style={styles.loginLink}>Login</Text>
+                <Text
+                  style={[
+                    styles.loginLink,
+                    isLoading && { opacity: 0.5 }
+                  ]}
+                >
+                  Login
+                </Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -133,6 +152,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e9ecef',
     marginBottom: 20,
+  },
+  disabledInput: {
+    opacity: 0.6, // dimmed when disabled
   },
   signupButton: {
     backgroundColor: '#686f88ff',
