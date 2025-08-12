@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext, Suspense } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
   SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
@@ -6,14 +6,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const SCREEN_WIDTH = Dimensions.get('window').width;
 import { useFocusEffect } from '@react-navigation/native';
+import * as Speech from 'expo-speech';
 
 // Import the ThemeContext
 import { ThemeContext } from '../ThemeContext';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 // Define your color palettes directly in HomeScreen.js
-// This needs to be consistent with what you'd expect for light/dark
 const lightColors = {
   background: '#edf2f7',
   cardBackground: '#fff',
@@ -64,11 +65,24 @@ export default function HomeScreen({ navigation }) {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+  const [speakingNoteId, setSpeakingNoteId] = useState(null);
 
   const [userInfo, setUserInfo] = useState({
     name: '',
     email: '',
   });
+
+  useEffect(() => {
+    return () => {
+      try {
+        Speech.stop();
+        setSpeakingNoteId(null);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
   //fetching data of user from the database. dont change this guys
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -95,7 +109,7 @@ export default function HomeScreen({ navigation }) {
       }
       catch (err) {
         console.error("Error fetching user info:", err);
-        alert("couldnt fetch user info");
+        // don't spam with alert on background fetches
       }
     };
     fetchUserInfo();
@@ -107,13 +121,13 @@ export default function HomeScreen({ navigation }) {
     try {
       const token = await AsyncStorage.getItem('authToken');
 
-    const response = await fetch(API_BASE_URL+`/notes`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+      const response = await fetch(API_BASE_URL+`/notes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
       const text = await response.text();  // Handle empty or invalid JSON
 
@@ -123,8 +137,19 @@ export default function HomeScreen({ navigation }) {
       }
 
       const notes = text ? JSON.parse(text) : [];
-      console.log('Fetched Notes:', notes);
-      setNotesList(notes); // ✅ Update your noteList state
+      // Normalize note objects (prefer textContents)
+      const normalized = notes.map(n => ({
+        id: n.id ?? n._id ?? null,
+        title: n.title ?? '',
+        textContents: n.textContents ?? n.text ?? '',
+        checklistItems: Array.isArray(n.checklistItems) ? n.checklistItems : (Array.isArray(n.checklist) ? n.checklist : []),
+        drawings: Array.isArray(n.drawings) ? n.drawings : [],
+        createdAt: n.createdAt ?? n.created_at ?? null,
+        updatedAt: n.updatedAt ?? n.updated_at ?? null,
+        ...n
+      }));
+      console.log('Fetched Notes:', normalized);
+      setNotesList(normalized); // ✅ Update your noteList state
     } catch (error) {
       console.error('Fetch Notes error:', error);
     }
@@ -142,7 +167,7 @@ export default function HomeScreen({ navigation }) {
     const newNote = {
       id: null,
       title: '',
-      text: '',
+      textContents: '',
       checklistItems: [],
       drawings: [],
       fontSize: 16,
@@ -158,9 +183,9 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('NoteDetail', {
       note: newNote,
       isNewNote: true,
-      onSave: (updatedNote) => {
-        // Add the new note to the list
-        setNotesList([updatedNote, ...notesList]);
+      onSave: () => {
+        // Re-fetch notes to ensure the list is up-to-date
+        fetchNotes();
       }
     });
   };
@@ -177,14 +202,11 @@ export default function HomeScreen({ navigation }) {
         }
       })
 
-      console.log(response.text());
-      console.log(response.status);
+      console.log('delete status', response.status);
       if (response.ok) {
-        alert("Note deleted successfully ");
         return true;
       }
       else {
-        alert("error handling deletino of notes");
         return false;
       }
 
@@ -197,9 +219,7 @@ export default function HomeScreen({ navigation }) {
 
   const handleDeleteNote = id => {
 
-
-
-    Alert.alert('Delete Note', `Are you sure you want to delete this note?${id}`, [
+    Alert.alert('Delete Note', `Are you sure you want to delete this note?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -208,42 +228,207 @@ export default function HomeScreen({ navigation }) {
           const success = await handleDeleteAPI(id);
           if (success) {
             setNotesList(notesList.filter(note => note.id !== id));
+            alert('Note deleted successfully');
           }
           else {
             alert('Error deleting note.')
           }
-
-
-
         },
       },
     ]);
-
-
   };
 
   const handleEditNote = (note) => {
-    console.log(note);
     navigation.navigate('NoteDetail', {
       note: note,
       isNewNote: false,
-      onSave: (updatedNote) => {
-        // Update the existing note in the list
-        setNotesList(notesList.map(n =>
-          n.id === updatedNote.id ? updatedNote : n
-        ));
+      onSave: () => {
+        // Re-fetch notes to ensure the list is up-to-date
+        fetchNotes();
       }
     });
   };
 
-  const formatDate = dateStr => {
-    const d = new Date(dateStr);
+  // updated formatDate with fallbacks: updatedAt -> createdAt -> now
+  const formatDate = (dateStr, createdAtStr) => {
+    let d = new Date(dateStr);
+    if (isNaN(d.getTime()) && createdAtStr) {
+      d = new Date(createdAtStr);
+    }
+    if (isNaN(d.getTime())) {
+      d = new Date();
+    }
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // Helper: fetch full note from API by id (returns normalized note)
+  const fetchFullNoteById = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) return null;
+      const res = await fetch(API_BASE_URL + `/notes/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) {
+        console.warn('Failed to fetch full note', res.status);
+        return null;
+      }
+      const n = await res.json();
+      const note = {
+        id: n.id ?? n._id ?? null,
+        title: n.title ?? '',
+        textContents: n.textContents ?? n.text ?? '',
+        checklistItems: Array.isArray(n.checklistItems) ? n.checklistItems : (Array.isArray(n.checklist) ? n.checklist : []),
+        drawings: Array.isArray(n.drawings) ? n.drawings : [],
+        createdAt: n.createdAt ?? n.created_at ?? null,
+        updatedAt: n.updatedAt ?? n.updated_at ?? null,
+        ...n
+      };
+      return note;
+    } catch (err) {
+      console.error('fetchFullNoteById error:', err);
+      return null;
+    }
+  };
+
+  // Read Aloud / TTS toggle function - now fetches full note if needed and tracks which note is being spoken
+  const handleReadAloud = async (note) => {
+    try {
+      // If currently speaking this note, stop
+      if (speakingNoteId === note.id) {
+        Speech.stop();
+        setSpeakingNoteId(null);
+        return;
+      }
+
+      // Stop any existing speech before starting new
+      Speech.stop();
+
+      let fullNote = note;
+
+      // If the list item doesn't include text/checklist/drawings, try to fetch full note from API
+      const hasText = fullNote.textContents && String(fullNote.textContents).trim().length > 0;
+      const hasTextAlt = fullNote.text && String(fullNote.text).trim().length > 0;
+      const hasChecklist = Array.isArray(fullNote.checklistItems) && fullNote.checklistItems.length > 0;
+      const hasDrawings = Array.isArray(fullNote.drawings) && fullNote.drawings.length > 0;
+
+      if (!hasText && !hasTextAlt && !hasChecklist && !hasDrawings && fullNote.id) {
+        const fetched = await fetchFullNoteById(fullNote.id);
+        if (fetched) {
+          fullNote = fetched;
+          // also update the list entry so next time we don't need to fetch
+          setNotesList(prev => prev.map(n => n.id === fullNote.id ? fullNote : n));
+        } else {
+          // fallback: try to find in AsyncStorage (if you store notes locally)
+          try {
+            const localRaw = await AsyncStorage.getItem('notes_local') || await AsyncStorage.getItem('NOTES');
+            const parsed = localRaw ? JSON.parse(localRaw) : null;
+            if (parsed) {
+              const found = parsed.find(n => n.id === fullNote.id || n._id === fullNote.id);
+              if (found) {
+                fullNote = {
+                  id: found.id ?? found._id ?? null,
+                  title: found.title ?? '',
+                  textContents: found.textContents ?? found.text ?? '',
+                  checklistItems: Array.isArray(found.checklistItems) ? found.checklistItems : [],
+                  drawings: Array.isArray(found.drawings) ? found.drawings : [],
+                  createdAt: found.createdAt ?? found.created_at ?? null,
+                  updatedAt: found.updatedAt ?? found.updated_at ?? null,
+                  ...found
+                };
+                setNotesList(prev => prev.map(n => n.id === fullNote.id ? fullNote : n));
+              }
+            }
+          } catch (err) {
+            // ignore local fallback errors
+          }
+        }
+      }
+
+      // Build content to speak: title -> textContents/text -> checklist -> drawings -> last updated time
+      const contentParts = [];
+
+      if (fullNote.title && String(fullNote.title).trim()) {
+        contentParts.push(fullNote.title.trim());
+      }
+
+      // Prefer textContents (your API), fallback to text
+      const body = (fullNote.textContents && String(fullNote.textContents).trim()) ? fullNote.textContents.trim() :
+        (fullNote.text && String(fullNote.text).trim()) ? fullNote.text.trim() : '';
+
+      if (body) {
+        contentParts.push(body);
+      }
+
+      if (fullNote.checklistItems && fullNote.checklistItems.length > 0) {
+        const checklistStrings = fullNote.checklistItems.map((it, idx) => {
+          const t = it && (it.text ?? it.title) ? (it.text ?? it.title) : '';
+          const checked = it && (it.checked === true || it.isChecked === true);
+          return `${idx + 1}. ${t}${checked ? ' (completed)' : ''}`;
+        }).filter(Boolean);
+        if (checklistStrings.length) {
+          contentParts.push('Checklist: ' + checklistStrings.join('. '));
+        }
+      }
+
+      if (fullNote.drawings && fullNote.drawings.length > 0) {
+        contentParts.push(`This note contains ${fullNote.drawings.length} drawings.`);
+      }
+
+      // Optionally include the last-updated timestamp for clarity (we do not modify it)
+      const updatedAt = fullNote.updatedAt || fullNote.createdAt || null;
+      if (updatedAt) {
+        try {
+          const d = new Date(updatedAt);
+          if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            contentParts.push(`Last updated on ${dateStr} at ${timeStr}`);
+          }
+        } catch (err) {
+          // ignore formatting errors
+        }
+      }
+
+      const content = contentParts.join('. ').trim();
+
+      // Debug log to verify what's being spoken
+      console.log('TTS content for note id', fullNote.id, ':', content);
+
+      if (content) {
+        setSpeakingNoteId(fullNote.id);
+        Speech.speak(content, {
+          rate: 1.0,
+          pitch: 1.0,
+          onDone: () => setSpeakingNoteId(null),
+          onStopped: () => setSpeakingNoteId(null),
+          onError: (e) => {
+            console.error('Speech error:', e);
+            setSpeakingNoteId(null);
+          },
+        });
+      } else {
+        // Note appears empty
+        setSpeakingNoteId(fullNote.id);
+        Speech.speak('This note is empty.', {
+          onDone: () => setSpeakingNoteId(null),
+          onStopped: () => setSpeakingNoteId(null),
+          onError: () => setSpeakingNoteId(null),
+        });
+      }
+    } catch (err) {
+      console.error('handleReadAloud error:', err);
+      setSpeakingNoteId(null);
+    }
   };
 
   const openDrawer = () => {
@@ -269,12 +454,15 @@ export default function HomeScreen({ navigation }) {
     if (note.title && note.title.trim()) {
       return note.title;
     }
+    if (note.textContents && note.textContents.trim()) {
+      return note.textContents;
+    }
     if (note.text && note.text.trim()) {
       return note.text;
     }
     if (note.checklistItems && note.checklistItems.length > 0) {
       const firstItem = note.checklistItems[0];
-      return `☑️ ${firstItem.text || 'Checklist item'}`;
+      return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
     if (note.drawings && note.drawings.length > 0) {
       return '🎨 Drawing';
@@ -297,9 +485,9 @@ export default function HomeScreen({ navigation }) {
     const searchLower = searchQuery.toLowerCase();
     return (
       (note.title && note.title.toLowerCase().includes(searchLower)) ||
-      (note.text && note.text.toLowerCase().includes(searchLower)) ||
+      ((note.textContents ?? note.text ?? '').toLowerCase().includes(searchLower)) ||
       (note.checklistItems && note.checklistItems.some(item =>
-        item.text && item.text.toLowerCase().includes(searchLower)
+        (item.text ?? item.title ?? '').toLowerCase().includes(searchLower)
       ))
     );
   });
@@ -341,7 +529,7 @@ export default function HomeScreen({ navigation }) {
       {/* Notes List */}
       <FlatList
         data={filteredNotes}
-        keyExtractor={item => item.id}
+        keyExtractor={item => (item.id ? String(item.id) : Math.random().toString())}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
@@ -371,7 +559,9 @@ export default function HomeScreen({ navigation }) {
                   color={colors.iconColor}
                   style={styles.noteIcon}
                 />
-                <Text style={[styles.noteDate, { color: colors.subText }]}>{formatDate(item.updatedAt)}</Text>
+                <Text style={[styles.noteDate, { color: colors.subText }]}>
+                  {formatDate(item.updatedAt, item.createdAt)}
+                </Text>
               </View>
               <View style={styles.noteActions}>
                 <Pressable
@@ -386,6 +576,18 @@ export default function HomeScreen({ navigation }) {
                 >
                   <Ionicons name="trash" size={18} color={colors.deleteIcon} />
                 </Pressable>
+
+                {/* Read Aloud button (toggle) */}
+                <Pressable
+                  onPress={() => handleReadAloud(item)}
+                  style={styles.actionButton}
+                >
+                  <Ionicons
+                    name={speakingNoteId === item.id ? 'volume-mute' : 'volume-high'}
+                    size={18}
+                    color={colors.iconColor}
+                  />
+                </Pressable>
               </View>
             </View>
 
@@ -395,12 +597,12 @@ export default function HomeScreen({ navigation }) {
 
             {/* Show content indicators */}
             <View style={styles.contentIndicators}>
-              {item.text && item.text.trim() && (
+              {(item.textContents ?? item.text ?? '').trim() ? (
                 <View style={styles.indicator}>
                   <Ionicons name="document-text" size={12} color={colors.subText} />
                   <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
                 </View>
-              )}
+              ) : null}
               {item.checklistItems && item.checklistItems.length > 0 && (
                 <View style={styles.indicator}>
                   <Ionicons name="checkbox" size={12} color={colors.subText} />
@@ -452,7 +654,6 @@ export default function HomeScreen({ navigation }) {
                   <View style={[styles.profileImage, { backgroundColor: colors.headerBackground }]}>
                     <Ionicons name="person" size={20} color={colors.headerText} />
                   </View>
-                  {/* <View style={[styles.onlineIndicator, { backgroundColor: colors.onlineIndicator, borderColor: colors.cardBackground }]} /> */}
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={[styles.userName, { color: colors.text }]}>{userInfo.name} </Text>
@@ -740,15 +941,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // onlineIndicator: {
-  //   position: 'absolute',
-  //   bottom: 2,
-  //   right: 2,
-  //   width: 12,
-  //   height: 12,
-  //   borderRadius: 6,
-  //   borderWidth: 2,
-  // },
   userInfo: {
     flex: 1,
   },
@@ -799,5 +991,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     marginTop: 10,
   },
-  // No specific `logoutText` style needed here as it's directly applied with `color` prop
 });
