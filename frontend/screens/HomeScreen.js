@@ -14,7 +14,7 @@ import { ThemeContext } from '../ThemeContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Define your color palettes directly in HomeScreen.js
+// Defined theme color palette for HomeScreen
 const lightColors = {
   background: '#edf2f7',
   cardBackground: '#fff',
@@ -53,7 +53,6 @@ const darkColors = {
   logoutText: '#fc8181',
 };
 
-
 export default function HomeScreen({ navigation }) {
   // Use useContext to get the values provided by ThemeContext.Provider
   const { activeTheme } = useContext(ThemeContext);
@@ -62,6 +61,7 @@ export default function HomeScreen({ navigation }) {
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
 
   const [notesList, setNotesList] = useState([]);
+  const [deletedNotes, setDeletedNotes] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
@@ -82,6 +82,78 @@ export default function HomeScreen({ navigation }) {
       }
     };
   }, []);
+
+  // Auto-cleanup old deleted notes (30 days)
+  const cleanupOldDeletedNotes = async () => {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const filteredNotes = deletedNotes.filter(note => {
+        if (!note.deletedAt) return true; // Keep notes without deletion date
+        const deletedDate = new Date(note.deletedAt);
+        return deletedDate > thirtyDaysAgo; // Keep notes deleted less than 30 days ago
+      });
+
+      // If any notes were removed, update storage
+      if (filteredNotes.length !== deletedNotes.length) {
+        const removedCount = deletedNotes.length - filteredNotes.length;
+        setDeletedNotes(filteredNotes);
+        await saveDeletedNotes(filteredNotes);
+        
+        console.log(`Auto-deleted ${removedCount} notes older than 30 days`);
+        
+        // Optional: Show notification to user
+        if (removedCount > 0) {
+          // You could show a toast or subtle notification here
+          // Alert.alert('Cleanup', `${removedCount} old notes were automatically deleted`);
+        }
+      }
+    } catch (error) {
+      console.error('Error during auto-cleanup:', error);
+    }
+  };
+
+  // Load deleted notes from AsyncStorage and perform cleanup
+  const loadDeletedNotes = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('deletedNotes');
+      if (stored) {
+        const notes = JSON.parse(stored);
+        setDeletedNotes(notes);
+        
+        // Perform auto-cleanup after loading
+        setTimeout(() => {
+          cleanupOldDeletedNotes();
+        }, 1000); // Delay cleanup by 1 second to avoid blocking UI
+      }
+    } catch (error) {
+      console.error('Error loading deleted notes:', error);
+    }
+  };
+
+  // Save deleted notes to AsyncStorage
+  const saveDeletedNotes = async (notes) => {
+    try {
+      await AsyncStorage.setItem('deletedNotes', JSON.stringify(notes));
+    } catch (error) {
+      console.error('Error saving deleted notes:', error);
+    }
+  };
+
+  // Load deleted notes on component mount and set up periodic cleanup
+  useEffect(() => {
+    loadDeletedNotes();
+    
+    // Set up periodic cleanup (runs every hour when app is active)
+    const cleanupInterval = setInterval(() => {
+      if (deletedNotes.length > 0) {
+        cleanupOldDeletedNotes();
+      }
+    }, 60 * 60 * 1000); // 1 hour
+
+    return () => clearInterval(cleanupInterval);
+  }, [deletedNotes.length]);
 
   //fetching data of user from the database. dont change this guys
   useEffect(() => {
@@ -158,10 +230,26 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       fetchNotes();
-      // (OPTIONAL) fetchUserInfo() if needed, too.
+      loadDeletedNotes(); // Also reload deleted notes when screen comes into focus
+      
+      // Optional: Show a brief message if there are restored notes
+      const checkForRestoredNotes = async () => {
+        try {
+          const restoredFlag = await AsyncStorage.getItem('noteRestored');
+          if (restoredFlag === 'true') {
+            // Clear the flag
+            await AsyncStorage.removeItem('noteRestored');
+            // You could show a toast or brief message here if desired
+            // Alert.alert('Note Restored', 'Your note has been restored successfully');
+          }
+        } catch (error) {
+          // Ignore errors
+        }
+      };
+      
+      checkForRestoredNotes();
     }, [])
   );
-
 
   const handleAddNote = () => {
     const newNote = {
@@ -191,16 +279,15 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleDeleteAPI = async (id) => {
-
-    const token=await AsyncStorage.getItem('authToken');
-    try{
-      const response=await fetch(API_BASE_URL+`/notes/${id}`,{
-        method:'DELETE',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':`Bearer ${token}`
+    const token = await AsyncStorage.getItem('authToken');
+    try {
+      const response = await fetch(API_BASE_URL+`/notes/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      })
+      });
 
       console.log('delete status', response.status);
       if (response.ok) {
@@ -217,25 +304,164 @@ export default function HomeScreen({ navigation }) {
     }
   }
 
-  const handleDeleteNote = id => {
-
-    Alert.alert('Delete Note', `Are you sure you want to delete this note?`, [
+  // Enhanced delete function that moves notes to bin instead of permanently deleting
+  const handleDeleteNote = (id) => {
+    Alert.alert('Move to Bin', `Are you sure you want to move this note to the bin?`, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
+        text: 'Move to Bin',
         style: 'destructive',
         onPress: async () => {
-          const success = await handleDeleteAPI(id);
-          if (success) {
-            setNotesList(notesList.filter(note => note.id !== id));
-            alert('Note deleted successfully');
+          // Find the note to delete
+          const noteToDelete = notesList.find(note => note.id === id);
+          if (!noteToDelete) {
+            Alert.alert('Error', 'Note not found');
+            return;
           }
-          else {
-            alert('Error deleting note.')
+
+          // Add deletion timestamp for tracking
+          const deletedNote = {
+            ...noteToDelete,
+            deletedAt: new Date().toISOString()
+          };
+
+          // Add to deleted notes
+          const updatedDeletedNotes = [...deletedNotes, deletedNote];
+          setDeletedNotes(updatedDeletedNotes);
+          await saveDeletedNotes(updatedDeletedNotes);
+
+          // Try to delete from API (but keep in local bin regardless)
+          const apiSuccess = await handleDeleteAPI(id);
+          
+          if (apiSuccess) {
+            // Remove from active notes list
+            setNotesList(notesList.filter(note => note.id !== id));
+            Alert.alert('Success', 'Note moved to bin successfully');
+          } else {
+            // Even if API fails, we keep it in local bin and remove from active list
+            // This ensures the user experience is consistent
+            setNotesList(notesList.filter(note => note.id !== id));
+            Alert.alert('Note Moved', 'Note moved to bin (will sync when connection is restored)');
           }
         },
       },
     ]);
+  };
+
+  // Function to restore a note from the bin
+  const restoreNote = async (noteId) => {
+    try {
+      const noteToRestore = deletedNotes.find(note => note.id === noteId);
+      if (!noteToRestore) {
+        Alert.alert('Error', 'Note not found in bin');
+        return;
+      }
+
+      // Create a clean note object without deletion timestamp
+      const { deletedAt, ...cleanNote } = noteToRestore;
+      cleanNote.updatedAt = new Date().toISOString();
+
+      // Try to restore to API (create new note since original was deleted)
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        try {
+          const response = await fetch(API_BASE_URL + '/notes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              title: cleanNote.title || '',
+              textContents: cleanNote.textContents || cleanNote.text || '',
+              checklistItems: cleanNote.checklistItems || [],
+              drawings: cleanNote.drawings || [],
+              // Include any other fields your API expects
+            })
+          });
+
+          if (response.ok) {
+            const newNote = await response.json();
+            // Use the new note data from API (with new ID)
+            const normalizedNote = {
+              id: newNote.id ?? newNote._id ?? null,
+              title: newNote.title ?? cleanNote.title ?? '',
+              textContents: newNote.textContents ?? newNote.text ?? cleanNote.textContents ?? cleanNote.text ?? '',
+              checklistItems: Array.isArray(newNote.checklistItems) ? newNote.checklistItems : (cleanNote.checklistItems || []),
+              drawings: Array.isArray(newNote.drawings) ? newNote.drawings : (cleanNote.drawings || []),
+              createdAt: newNote.createdAt ?? new Date().toISOString(),
+              updatedAt: newNote.updatedAt ?? new Date().toISOString(),
+              ...newNote
+            };
+
+            // Add to notes list
+            setNotesList(prev => [normalizedNote, ...prev]);
+            
+            // Remove from deleted notes
+            const updatedDeletedNotes = deletedNotes.filter(note => note.id !== noteId);
+            setDeletedNotes(updatedDeletedNotes);
+            await saveDeletedNotes(updatedDeletedNotes);
+
+            // Set flag for restored note
+            await AsyncStorage.setItem('noteRestored', 'true');
+
+            Alert.alert('Success', 'Note restored successfully');
+            return;
+          } else {
+            console.warn('API restore failed:', response.status);
+          }
+        } catch (apiError) {
+          console.error('API restore error:', apiError);
+        }
+      }
+
+      // Fallback: restore locally even if API fails
+      // Generate a new temporary ID for the restored note
+      const tempId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      const localRestoredNote = {
+        ...cleanNote,
+        id: cleanNote.id || tempId, // Keep original ID if exists, otherwise use temp
+        tempRestore: true, // Flag to indicate this needs to be synced to server
+      };
+
+      // Add to notes list
+      setNotesList(prev => [localRestoredNote, ...prev]);
+      
+      // Remove from deleted notes
+      const updatedDeletedNotes = deletedNotes.filter(note => note.id !== noteId);
+      setDeletedNotes(updatedDeletedNotes);
+      await saveDeletedNotes(updatedDeletedNotes);
+
+      // Set flag for restored note
+      await AsyncStorage.setItem('noteRestored', 'true');
+
+      Alert.alert('Restored Locally', 'Note restored locally. Will sync when connection is available.');
+      
+    } catch (error) {
+      console.error('Restore error:', error);
+      Alert.alert('Error', 'Failed to restore note');
+    }
+  };
+
+  // Function to permanently delete a note from bin
+  const permanentlyDeleteNote = async (noteId) => {
+    Alert.alert(
+      'Permanently Delete',
+      'This action cannot be undone. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            const updatedDeletedNotes = deletedNotes.filter(note => note.id !== noteId);
+            setDeletedNotes(updatedDeletedNotes);
+            await saveDeletedNotes(updatedDeletedNotes);
+            Alert.alert('Deleted', 'Note permanently deleted');
+          },
+        },
+      ]
+    );
   };
 
   const handleEditNote = (note) => {
@@ -676,7 +902,12 @@ export default function HomeScreen({ navigation }) {
               <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
-                  navigation.navigate('DeletedNotes');
+                  navigation.navigate('DeletedNotes', { 
+                    deletedNotes: deletedNotes,
+                    onRestore: restoreNote,
+                    onPermanentDelete: permanentlyDeleteNote,
+                    onCleanupOld: cleanupOldDeletedNotes
+                  });
                 }}
                 style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
               >
@@ -684,6 +915,11 @@ export default function HomeScreen({ navigation }) {
                   <Ionicons name="trash-outline" size={20} color={colors.iconColor} />
                 </View>
                 <Text style={[styles.drawerItemText, { color: colors.text }]}>Deleted Notes</Text>
+                {deletedNotes.length > 0 && (
+                  <View style={[styles.notificationBadge, { backgroundColor: colors.deleteIcon }]}>
+                    <Text style={styles.badgeText}>{deletedNotes.length}</Text>
+                  </View>
+                )}
                 <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
@@ -894,7 +1130,7 @@ const styles = StyleSheet.create({
   drawer: {
     position: 'absolute',
     top: 0,
-    width: SCREEN_WIDTH * 0.65, // Increased width to 65%
+    width: SCREEN_WIDTH * 0.65,
     height: '100%',
     elevation: 10,
     shadowColor: '#000',
@@ -902,7 +1138,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: -2, height: 0 },
     shadowRadius: 8,
   },
-  // Enhanced Drawer Styles
   drawerHeader: {
     paddingTop: 30,
     paddingHorizontal: 20,
@@ -982,6 +1217,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
     fontWeight: '500',
+  },
+  notificationBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   menuSpacer: {
     flex: 1,
