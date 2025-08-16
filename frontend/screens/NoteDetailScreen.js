@@ -13,6 +13,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Theme configuration
@@ -58,17 +59,18 @@ const themes = {
 export default function NoteDetailScreen({ route, navigation }) {
   const { activeTheme } = useContext(ThemeContext);
   const theme = themes[activeTheme] || themes.light;
-  
+
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // Note content states
   const [noteText, setNoteText] = useState(note?.textContents || '');
   const [noteTitle, setNoteTitle] = useState(note?.title || '');
   const [checklistItems, setChecklistItems] = useState(note?.checklistItems || []);
-  
+  const [updatedAt, setUpdatedAt] = useState(note?.updatedAt || new Date().toISOString());
+
   // UPDATED: Better drawings initialization with validation
   const [drawings, setDrawings] = useState(() => {
     if (note?.drawings && Array.isArray(note.drawings)) {
@@ -313,7 +315,7 @@ export default function NoteDetailScreen({ route, navigation }) {
     }
   };
 
-  // UPDATED: Save note function with complete data
+  // UPDATED: Save note function with complete data and updatedAt
   const saveNote = async () => {
     console.log("Save button clicked");
     if (isSaving) return; // Prevent double taps
@@ -325,7 +327,7 @@ export default function NoteDetailScreen({ route, navigation }) {
    
     setIsSaving(true);
     
-    // UPDATED: Include all note data including drawings
+    // UPDATED: Include all note data including drawings and new updatedAt
     let notePayload = {
       title: noteTitle || 'Untitled Note',
       textContents: noteText,
@@ -337,7 +339,8 @@ export default function NoteDetailScreen({ route, navigation }) {
       isItalic: isItalic,
       textAlign: textAlign,
       isArchived: false,
-      isPrivate: false
+      isPrivate: false,
+      updatedAt: new Date().toISOString() // Set new updated time
     };
 
     console.log('Saving note with:', {
@@ -372,6 +375,8 @@ export default function NoteDetailScreen({ route, navigation }) {
           { text: 'OK', onPress: () => navigation.goBack() }
         ]);
       }
+      // Update local state after successful save
+      setUpdatedAt(notePayload.updatedAt);
 
     } catch (err) {
       Alert.alert('Error', 'There was a problem saving your note: ' + err.message);
@@ -391,14 +396,14 @@ export default function NoteDetailScreen({ route, navigation }) {
     }
     
     // Add creation/modification date
-    const currentDate = new Date().toLocaleDateString('en-US', {
+    const formattedDate = new Date(updatedAt).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-    content += `Created: ${currentDate}\n\n`;
+    content += `Last Updated: ${formattedDate}\n\n`;
     
     // Add text content
     if (noteText.trim()) {
@@ -440,6 +445,14 @@ export default function NoteDetailScreen({ route, navigation }) {
       line-height: 1.6;
     `;
     
+    const formattedDate = new Date(updatedAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     let html = `
     <!DOCTYPE html>
     <html>
@@ -520,13 +533,7 @@ export default function NoteDetailScreen({ route, navigation }) {
     <body>
       <div class="header">
         <div class="title">${noteTitle || 'Untitled Note'}</div>
-        <div class="meta">Exported on ${new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</div>
+        <div class="meta">Last Updated: ${formattedDate}</div>
       </div>
     `;
     
@@ -1287,6 +1294,10 @@ export default function NoteDetailScreen({ route, navigation }) {
           placeholderTextColor={theme.placeholder}
           editable={!drawingMode}
         />
+
+        <Text style={[styles.updatedDate, {color: theme.textMuted}]}>
+          Last Updated: {new Date(updatedAt).toLocaleString()}
+        </Text>
 
         {/* Combined Text and Drawing Area */}
         {activeTab === 'text' && (
@@ -2247,4 +2258,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
   },
+  updatedDate: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 10,
+    marginTop: -5,
+  }
 });
