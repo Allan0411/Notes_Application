@@ -6,36 +6,38 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
+  Platform,
   StatusBar,
-  ActivityIndicator,
 } from 'react-native';
 import { API_BASE_URL } from '../config';
+import styles from '../styleSheets/SignupScreenStyles'; // Import styles from the stylesheet
 
 export default function SignupScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading,setIsLoading]=useState(false);
 
   const handleSignup = async () => {
-    if (isLoading) return;
 
+    if(isLoading)
+        return
     if (!name || !email || !password) {
       alert("Please enter all fields");
       return;
     }
-
     setIsLoading(true);
-
     try {
       const response = await fetch(API_BASE_URL + "/Auth/register", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           username: name,
           email: email,
           passwordHash: password,
-        }),
+        })
       });
 
       const data = await response.json();
@@ -44,87 +46,83 @@ export default function SignupScreen({ navigation }) {
         alert("Signup successful");
         navigation.navigate('Login');
       } else {
-        alert(data?.message || 'Signup failed');
+        console.error("Signup error:", data);
+        alert('Signup failed');
       }
     } catch (err) {
+      console.error("Signup error: ", err);
       alert('Signup failed');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+    }
+    finally {
+      setIsLoading(false); // <-- 3. STOP loading indicator in all cases
     }
   };
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#a6b7cfff" />
-      <KeyboardAvoidingView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.innerContainer}>
-          {/* Form */}
-          <View style={styles.formContainer}>
-            <TextInput
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-              style={[styles.input, isLoading && styles.disabledInput]}
-              placeholderTextColor="#999"
-              editable={!isLoading} // disable while loading
-            />
-            <TextInput
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              style={[styles.input, isLoading && styles.disabledInput]}
-              placeholderTextColor="#999"
-              editable={!isLoading} // disable while loading
-            />
-            <TextInput
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              style={[styles.input, isLoading && styles.disabledInput]}
-              placeholderTextColor="#999"
-              editable={!isLoading} // disable while loading
-            />
+          {/* Header Section */}
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Notes</Text>
+            <Text style={styles.subtitle}>Create your account 📝</Text>
+          </View>
 
-            {/* Signup Button with Loader */}
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Full Name"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                style={styles.input}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.input}
+                placeholderTextColor="#999"
+              />
+            </View>
+
             <TouchableOpacity
-              style={[styles.signupButton, isLoading && styles.disabledButton]}
+              style={styles.signupButton}
               onPress={handleSignup}
               activeOpacity={0.8}
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.signupButtonText}>Sign Up</Text>
-              )}
+              <Text style={styles.signupButtonText}>Create Account</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Footer */}
+          {/* Footer Section */}
           <View style={styles.footerContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Login')}
-              disabled={isLoading} // disable while loading
-              activeOpacity={isLoading ? 1 : 0.7}
-            >
-              <Text
-                style={[
-                  styles.loginText,
-                  isLoading && { opacity: 0.5 }
-                ]}
-              >
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.loginText}>
                 Already have an account?{' '}
-                <Text
-                  style={[
-                    styles.loginLink,
-                    isLoading && { opacity: 0.5 }
-                  ]}
-                >
-                  Login
-                </Text>
+                <Text style={styles.loginLink}>Login</Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -134,42 +132,3 @@ export default function SignupScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#a6b7cfff' },
-  innerContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
-  formContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 32,
-    elevation: 8,
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    fontSize: 16,
-    color: '#333',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    marginBottom: 20,
-  },
-  disabledInput: {
-    opacity: 0.6, // dimmed when disabled
-  },
-  signupButton: {
-    backgroundColor: '#686f88ff',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  disabledButton: { opacity: 0.7 },
-  signupButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  footerContainer: { alignItems: 'center', marginTop: 32 },
-  loginText: { color: '#fff', fontSize: 16, opacity: 0.9 },
-  loginLink: {
-    color: '#686f88ff',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
-});

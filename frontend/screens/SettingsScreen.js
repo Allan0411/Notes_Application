@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../ThemeContext';
+import styles from '../styleSheets/SettingsScreenStyles'; // Import styles from the stylesheet
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
@@ -85,38 +86,4 @@ const SettingsScreen = () => {
 
 export default SettingsScreen;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContainer: {
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  headerText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    marginTop: 25,
-    marginBottom: 10,
-    fontWeight: '600',
-  },
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderColor: '#999',
-  },
-  optionText: {
-    fontSize: 16,
-  },
-});
+
