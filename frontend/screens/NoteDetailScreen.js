@@ -13,6 +13,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import styles from '../styleSheets/NoteDetailScreenStyles'; // Import styles from the stylesheet
+import { requestAIAction } from '../services/aiService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -718,6 +719,9 @@ export default function NoteDetailScreen({ route, navigation }) {
     });
   };
 
+
+  //@note ai feature over here
+
   // Menu options
   const openAiMenu = () => {
     setShowAiModal(true);
@@ -749,6 +753,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     );
   }
 
+
+
   const handleAiAction = async (actionType) => {
     closeAiMenu();
     if (!noteText) {
@@ -756,55 +762,18 @@ export default function NoteDetailScreen({ route, navigation }) {
       return;
     }
     setIsAiProcessing(true);
-
     try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      console.log(actionType);
-      const endpoint = `${API_BASE_URL}/${actionType}`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: noteText })
-      });
-      console.log("response: ", response);
-
-      const text = await response.text();
-      let data = null;
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch (err) {
-          console.error('JSON parse error:', err);
-          Alert.alert('Error', 'Server response not JSON!');
-          return;
-        }
-      } else {
-        Alert.alert('Error', 'No response from server.');
-        return;
-      }
-
-      if (response.ok) {
-        if (data && data.aiResponse) {
-          handleAiResult(data.aiResponse, setNoteText, noteText);
-        } else {
-          Alert.alert('AI Result', JSON.stringify(data));
-        }
-      } else {
-        Alert.alert('AI Error', data?.message || 'Could not process AI action.');
-      }
-
+      // Directly use requestAIAction, passing the actionType and noteText
+      const aiText = await requestAIAction(actionType, noteText);
+      handleAiResult(aiText, setNoteText, noteText);
     } catch (err) {
       console.error('AI API error:', err);
-      Alert.alert('Error', 'There was a problem contacting the AI API.');
+      Alert.alert('Error', err.message || 'There was a problem contacting the AI API.');
     } finally {
       setIsAiProcessing(false);
     }
   };
+  
 
   // Menu options (Updated Send label to Share)
   const menuOptions = [
