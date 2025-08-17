@@ -170,8 +170,7 @@ export default function HomeScreen({ navigation }) {
       const notes= await apiFetchNotes();
       const normalized=Array.isArray(notes)
         ?notes.map(normalizeNote):[];
-      
-      console.log("fetched notes: ",normalized);
+
       setNotesList(normalized);
     }
     catch(error){

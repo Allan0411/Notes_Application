@@ -17,6 +17,12 @@ import { requestAIAction } from '../services/aiService';
 
 import { parseChecklistItems } from '../utils/parseChecklistItems';
 import {noteDetailsthemes as themes} from '../utils/themeColors'
+
+import {toNDigits as toNDecimals,getStrokeProperties,createDrawingObject,isPointNearPath} from '../utils/drawingUtils'
+import DrawingCanvas from '../components/DrawingCanvas';
+
+//@note imports
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 
@@ -794,171 +800,40 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // @note drawing logic
   // Get stroke properties based on selected tool - Updated for eraser
-  const getStrokeProperties = () => {
-    switch (selectedTool) {
-      case 'brush':
-        return {
-          strokeWidth: brushSize * 2,
-          strokeOpacity: 0.8,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        };
-      case 'highlighter':
-        return {
-          strokeWidth: brushSize * 3,
-          strokeOpacity: 0.4,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        };
-      case 'eraser':
-        return {
-          strokeWidth: eraserSize,
-          strokeOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        };
-      default: // pen
-        return {
-          strokeWidth: brushSize,
-          strokeOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        };
-    }
-  };
 
-  // Improved drawing creation function
-  const createDrawingObject = (path, tool = selectedTool) => {
-    const baseDrawing = {
-      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
-      path: path,
-      color: selectedColor,
-      tool: tool,
-      timestamp: new Date().toISOString(),
-      ...getStrokeProperties()
-    };
-    switch (tool) {
-      case 'brush':
-        return { ...baseDrawing, size: brushSize * 2 };
-      case 'highlighter':
-        return { ...baseDrawing, size: brushSize * 3 };
-      case 'eraser':
-        return { ...baseDrawing, size: eraserSize };
-      default: // pen
-        return { ...baseDrawing, size: brushSize };
-    }
-  };
 
-  // Helper function to check if a point is within eraser distance of a path
-  const isPointNearPath = (x, y, pathString, eraserRadius) => {
-    const pathPoints = pathString.match(/\d+\.?\d*/g);
-    if (!pathPoints || pathPoints.length < 2) return false;
-    for (let i = 0; i < pathPoints.length - 1; i += 2) {
-      const px = parseFloat(pathPoints[i]);
-      const py = parseFloat(pathPoints[i + 1]);
-      const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
-      if (distance <= eraserRadius) {
-        return true;
-      }
-    }
-    return false;
-  };
 
-  function to3Decimals(num) {
-    return Number(num).toFixed(3);
-  }
-  
-
-  // Drawing functions with eraser support and improved drawing creation
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => drawingMode,
-    onMoveShouldSetPanResponder: () => drawingMode,
-    onPanResponderGrant: (evt) => {
-      if (!drawingMode) return;
-      setIsDrawing(true);
-      const { locationX, locationY } = evt.nativeEvent;
-      if (selectedTool === 'eraser') {
-        const updatedDrawings = drawings.filter(drawing =>
-          !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
-        );
-        if (updatedDrawings.length !== drawings.length) {
-          console.log('Erased drawings, remaining:', updatedDrawings.length);
-          setDrawings(updatedDrawings);
-        }
-      } else {
-        pathRef.current = `M${to3Decimals(locationX)},${to3Decimals(locationY)}`;
-        const newDrawing = {
-          path: pathRef.current,
-          color: selectedColor,
-          tool: selectedTool,
-          ...getStrokeProperties(),
-        };
-        setCurrentDrawing(newDrawing);
-      }
-    },
-    onPanResponderMove: (evt) => {
-      if (!isDrawing || !drawingMode) return;
-      const now = Date.now();
-      if (now - lastUpdateTime.current < 16) return; // ~60 FPS
-      lastUpdateTime.current = now;
-      const { locationX, locationY } = evt.nativeEvent;
-      if (selectedTool === 'eraser') {
-        const updatedDrawings = drawings.filter(drawing =>
-          !isPointNearPath(locationX, locationY, drawing.path, eraserSize / 2)
-        );
-        if (updatedDrawings.length !== drawings.length) {
-          setDrawings(updatedDrawings);
-        }
-      } else {
-        pathRef.current += ` L${locationX},${locationY}`;
-        setCurrentDrawing(prev => ({
-          ...prev,
-          path: pathRef.current,
-        }));
-      }
-    },
-    onPanResponderRelease: () => {
-      if (isDrawing && drawingMode) {
-        if (selectedTool !== 'eraser' && currentDrawing && pathRef.current) {
-          const finalDrawing = createDrawingObject(pathRef.current);
-          console.log('Adding drawing:', finalDrawing.id, 'Tool:', finalDrawing.tool);
-          setDrawings(prev => {
-            const newDrawings = [...prev, finalDrawing];
-            console.log('Total drawings after add:', newDrawings.length);
-            return newDrawings;
-          });
-          setCurrentDrawing(null);
-          pathRef.current = '';
-        }
-        setIsDrawing(false);
-      }
-    },
-  });
 
   // Clear drawing with better confirmation
-  const clearDrawing = () => {
-    Alert.alert(
-      'Clear Drawing',
-      `Are you sure you want to clear all ${drawings.length} drawings?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: () => {
-            console.log('Clearing all drawings');
-            setDrawings([]);
-            setCurrentDrawing(null);
-            pathRef.current = '';
-          },
+// @note clearDrawings handler
+const clearDrawing = () => {
+  Alert.alert(
+    'Clear Drawing',
+    `Are you sure you want to clear all ${drawings.length} drawings?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: () => {
+          setDrawings([]);                 // clear all strokes
+          setCurrentDrawing(null);         // clear preview/unfinished stroke
+          // Optional: clean up backup data if needed
+          const backupKey = `note_drawings_${note?.id || 'new'}`;
+          AsyncStorage.removeItem(backupKey);
+          // Optionally: clear out pathRef if used locally
+          // pathRef.current = '';
         },
-      ]
-    );
-  };
+      },
+    ],
+  );
+};
+
 
   // Toggle drawing mode
   const toggleDrawingMode = () => {
     setDrawingMode(!drawingMode);
+    console.log("isdrawing on?",drawingMode);
     if (!drawingMode) {
       setShowDrawingModal(true);
     }
@@ -1228,7 +1103,7 @@ export default function NoteDetailScreen({ route, navigation }) {
 
         {/* @note text/drawing area */}
         {activeTab === 'text' && (
-          <View style={styles.combinedTextDrawingArea} {...panResponder.panHandlers}>
+          <View style={styles.combinedTextDrawingArea} >
             {/* Text Input */}
             <TextInput
               style={[themedStyles.textInput, getTextStyle()]}
@@ -1242,40 +1117,21 @@ export default function NoteDetailScreen({ route, navigation }) {
            
             {/* Drawing Overlay */}
             <View style={styles.drawingOverlay} pointerEvents={drawingMode ? 'auto' : 'none'}>
-              <Svg height="100%" width="100%" style={styles.svgOverlay}>
-                {/* UPDATED: Better drawing rendering with validation */}
-                {drawings
-                  .filter(drawing => 
-                    drawing && 
-                    drawing.path && 
-                    drawing.path.length > 0 &&
-                    drawing.color
-                  )
-                  .map((drawing, index) => (
-                    <Path
-                      key={drawing.id || `drawing_${index}`}
-                      d={drawing.path}
-                      stroke={drawing.color}
-                      strokeWidth={drawing.strokeWidth || 2}
-                      strokeOpacity={drawing.strokeOpacity || 1}
-                      strokeLinecap={drawing.strokeLinecap || 'round'}
-                      strokeLinejoin={drawing.strokeLinejoin || 'round'}
-                      fill="none"
-                    />
-                  ))
-                }
-                {currentDrawing && selectedTool !== 'eraser' && (
-                  <Path
-                    d={currentDrawing.path}
-                    stroke={currentDrawing.color}
-                    strokeWidth={currentDrawing.strokeWidth}
-                    strokeOpacity={currentDrawing.strokeOpacity}
-                    strokeLinecap={currentDrawing.strokeLinecap}
-                    strokeLinejoin={currentDrawing.strokeLinejoin}
-                    fill="none"
-                  />
-                )}
-              </Svg>
+              {/*@note drawing canvas;*/}
+
+            <DrawingCanvas
+              drawings={drawings}
+              setDrawings={setDrawings}
+              currentDrawing={currentDrawing}
+              setCurrentDrawing={setCurrentDrawing}
+              selectTool={selectedTool}
+              selectedColor={selectedColor}
+              brushSize={brushSize}
+              eraserSize={eraserSize}
+              drawingMode={drawingMode}
+              style={styles.svgOverlay}
+              // ...any other relevant drawing props
+            />
             </View>
           </View>
         )}

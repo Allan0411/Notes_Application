@@ -2,7 +2,7 @@
 
 import { StyleSheet } from 'react-native';
 
-const styles = StyleSheet.create({
+  const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingBottom: 35
@@ -75,12 +75,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     borderWidth: 1,
   },
+  // BOOKMARK: drawingOverlay
   drawingOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    zIndex:10,
     backgroundColor: 'transparent',
   },
   svgOverlay: {
@@ -469,5 +471,7 @@ const styles = StyleSheet.create({
     marginTop: -5,
   }
 });
+
+
 
 export default styles;
