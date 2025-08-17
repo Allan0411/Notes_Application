@@ -18,8 +18,8 @@ import { requestAIAction } from '../services/aiService';
 import { parseChecklistItems } from '../utils/parseChecklistItems';
 import {noteDetailsthemes as themes} from '../utils/themeColors'
 
-import {toNDigits as toNDecimals,getStrokeProperties,createDrawingObject,isPointNearPath} from '../utils/drawingUtils'
 import DrawingCanvas from '../components/DrawingCanvas';
+import Checklist from '../components/Checklist';
 
 //@note imports
 
@@ -773,6 +773,11 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // @note checklist
   // Checklist functions
+  useEffect(() => {
+    setChecklistItems(parseChecklistItems(note?.checklistItems));
+  }, [note?.checklistItems]);
+  
+
   const addChecklistItem = () => {
     const newItem = {
       id: Date.now().toString(),
@@ -826,6 +831,7 @@ const clearDrawing = () => {
         },
       },
     ],
+
   );
 };
 
@@ -1137,35 +1143,18 @@ const clearDrawing = () => {
         )}
 
         {/* @note checklist */}
-        {activeTab === 'checklist' && (
-          <View style={themedStyles.checklistContainer}>
-            {checklistItems.map((item) => (
-              <View key={item.id} style={styles.checklistItem}>
-                <TouchableOpacity onPress={() => toggleChecklistItem(item.id)}>
-                  <Ionicons
-                    name={item.checked ? "checkbox" : "square-outline"}
-                    size={20}
-                    color={item.checked ? theme.textSecondary : theme.textMuted}
-                  />
-                </TouchableOpacity>
-                <TextInput
-                  style={[themedStyles.checklistText, item.checked && styles.checkedText]}
-                  value={item.text}
-                  onChangeText={(text) => updateChecklistItem(item.id, text)}
-                  placeholder="Add item..."
-                  placeholderTextColor={theme.placeholder}
-                />
-                <TouchableOpacity onPress={() => deleteChecklistItem(item.id)}>
-                  <Ionicons name="trash" size={18} color={theme.danger} />
-                </TouchableOpacity>
-              </View>
-            ))}
-            <TouchableOpacity style={styles.addButton} onPress={addChecklistItem}>
-              <Ionicons name="add" size={20} color={theme.textSecondary} />
-              <Text style={themedStyles.addButtonText}>Add Item</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+      {activeTab === 'checklist' && (
+        <Checklist
+          items={checklistItems}
+          addItem={addChecklistItem}
+          updateItem={updateChecklistItem}
+          toggleItem={toggleChecklistItem}
+          deleteItem={deleteChecklistItem}
+          theme={theme}
+          themedStyles={themedStyles}
+          styles={styles}
+        />
+      )}
       </ScrollView>
 
       {/* @note toolbar */}
