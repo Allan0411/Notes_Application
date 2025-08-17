@@ -5,8 +5,6 @@ import {
   Animated, ActivityIndicator, Share, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
 import * as FileSystem from 'expo-file-system';
@@ -21,6 +19,12 @@ import {noteDetailsthemes as themes} from '../utils/themeColors'
 import DrawingCanvas from '../components/DrawingCanvas';
 import Checklist from '../components/Checklist';
 
+import {createNote,updateNote} from '../services/noteService';
+import { buildNotePayload } from '../utils/buildNotePayload';
+
+import {formatNoteAsHTML,formatNoteAsPlainText} from '../utils/formatNote';
+
+import { buildThemedStyles } from '../utils/buildThemedStyles';
 //@note imports
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -29,7 +33,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function NoteDetailScreen({ route, navigation }) {
   const { activeTheme } = useContext(ThemeContext);
   const theme = themes[activeTheme] || themes.light;
-
+  const themedStyles=buildThemedStyles(theme,styles);
   // @note navigation/params/state
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
@@ -63,11 +67,32 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [drawingMode, setDrawingMode] = useState(false);
 
   // @note text formatting state
-  const [fontSize, setFontSize] = useState(note?.fontSize || 16);
-  const [fontFamily, setFontFamily] = useState(note?.fontFamily || 'System');
-  const [isBold, setIsBold] = useState(note?.isBold || false);
-  const [isItalic, setIsItalic] = useState(note?.isItalic || false);
-  const [textAlign, setTextAlign] = useState(note?.textAlign || 'left');
+  // Parse formatting JSON if present, otherwise fallback to note fields or defaults
+  let formatting = {};
+  if (note?.formatting) {
+    try {
+      formatting = typeof note.formatting === 'string'
+        ? JSON.parse(note.formatting)
+        : note.formatting;
+    } catch (e) {
+      formatting = {};
+    }
+  }
+  const [fontSize, setFontSize] = useState(
+    formatting.fontSize ?? note?.fontSize ?? 16
+  );
+  const [fontFamily, setFontFamily] = useState(
+    formatting.fontFamily ?? note?.fontFamily ?? 'System'
+  );
+  const [isBold, setIsBold] = useState(
+    formatting.isBold ?? note?.isBold ?? false
+  );
+  const [isItalic, setIsItalic] = useState(
+    formatting.isItalic ?? note?.isItalic ?? false
+  );
+  const [textAlign, setTextAlign] = useState(
+    formatting.textAlign ?? note?.textAlign ?? 'left'
+  );
 
   // @note drawing tool state
   const [selectedTool, setSelectedTool] = useState('pen');
@@ -217,122 +242,6 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // @note crud
   // POST: Create new note
-  const createNote = async (note) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const normalizedNote = {
-        title: String(note.title ?? ''),
-        textContents: String(note.textContents ?? ''),
-        drawings: JSON.stringify(Array.isArray(note.drawings) ? note.drawings : []),
-        checklistItems: JSON.stringify(Array.isArray(note.checklistItems) ? note.checklistItems : []),
-        ...(note.fontSize || note.fontFamily || note.isBold || note.isItalic || note.textAlign
-          ? {
-              formatting: JSON.stringify({
-                fontSize: note.fontSize,
-                fontFamily: note.fontFamily,
-                isBold: note.isBold,
-                isItalic: note.isItalic,
-                textAlign: note.textAlign,
-              })
-            }
-          : {}),
-        isArchived: Boolean(note.isArchived),
-        isPrivate: Boolean(note.isPrivate),
-        ...(note.creatorUserId ? { creatorUserId: note.creatorUserId } : {})
-      };
-
-      console.log('createNote normalizedNote:', normalizedNote);
-
-      const response = await fetch(API_BASE_URL + '/notes', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(normalizedNote)
-      });
-
-      const text = await response.text();
-
-      console.log('createNote response status:', response.status);
-      console.log('createNote response text:', text);
-
-      if (!response.ok) {
-        let errorData;
-        try { errorData = text ? JSON.parse(text) : {}; } catch { errorData = text; }
-        throw new Error(errorData?.error || errorData?.message || 'Error creating note');
-      }
-
-      if (!text) {
-        throw new Error('Empty response from server');
-      }
-
-      return JSON.parse(text);
-
-    } catch (err) {
-      console.error('Error creating note:', err);
-      throw err;
-    }
-  };
-
-  // PUT: Update a note by id
-  const updateNote = async (id, note) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const normalizedNote = {
-        ...note,
-        drawings: JSON.stringify(Array.isArray(note.drawings) ? note.drawings : []),
-        checklistItems: JSON.stringify(Array.isArray(note.checklistItems) ? note.checklistItems : []),
-        ...(note.fontSize || note.fontFamily || note.isBold || note.isItalic || note.textAlign
-          ? {
-              formatting: JSON.stringify({
-                fontSize: note.fontSize,
-                fontFamily: note.fontFamily,
-                isBold: note.isBold,
-                isItalic: note.isItalic,
-                textAlign: note.textAlign,
-              })
-            }
-          : {}),
-      };
-      delete normalizedNote.fontSize;
-      delete normalizedNote.fontFamily;
-      delete normalizedNote.isBold;
-      delete normalizedNote.isItalic;
-      delete normalizedNote.textAlign;
-
-      console.log('updateNote normalizedNote:', normalizedNote);
-
-      const response = await fetch(`${API_BASE_URL + '/notes'}/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(normalizedNote)
-      });
-
-      const text = await response.text();
-      console.log("updateNote response status:", response.status);
-      console.log("updateNote response text:", text);
-
-      if (!response.ok) {
-        let errorData;
-        try { errorData = text ? JSON.parse(text) : {}; } catch { errorData = text; }
-        throw new Error(errorData?.error || errorData?.message || 'Error updating note');
-      }
-
-      if (!text) {
-        return true;
-      }
-      return JSON.parse(text);
-    } catch (err) {
-      console.error('Error updating note:', err);
-      throw err;
-    }
-  };
-
   // @note save
   // Save note function
   const saveNote = async () => {
@@ -345,21 +254,20 @@ export default function NoteDetailScreen({ route, navigation }) {
 
     setIsSaving(true);
 
-    let notePayload = {
+    const notePayload = buildNotePayload({
       title: noteTitle || 'Untitled Note',
       textContents: noteText,
-      checklistItems: checklistItems,
-      drawings: drawings,
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      isBold: isBold,
-      isItalic: isItalic,
-      textAlign: textAlign,
+      drawings,
+      checklistItems,
+      fontSize,
+      fontFamily,
+      isBold,
+      isItalic,
+      textAlign,
       isArchived: false,
       isPrivate: false,
-      updatedAt: new Date().toISOString()
-    };
-
+      creatorUserId: note?.creatorUserId,
+    });
     try {
       if (isNewNote) {
         const created = await createNote(notePayload);
@@ -372,7 +280,26 @@ export default function NoteDetailScreen({ route, navigation }) {
         Alert.alert('Success', 'Note created successfully!', [
           { text: 'OK', onPress: () => navigation.goBack() }
         ]);
-      } else {
+      } 
+      
+      else {
+        const notePayload = buildNotePayload({
+          title: noteTitle || 'Untitled Note',
+          textContents: noteText,
+          drawings,
+          checklistItems,
+          fontSize,
+          fontFamily,
+          isBold,
+          isItalic,
+          textAlign,
+          isArchived: note?.isArchived || false,
+          isPrivate: note?.isPrivate || false,
+          creatorUserId: note?.creatorUserId,
+          updatedAt: new Date().toISOString(),
+          // Add other fields if needed
+        });
+
         const updated = await updateNote(note?.id, notePayload);
         if (onSave) {
           if (updated === true || updated == null) {
@@ -394,189 +321,23 @@ export default function NoteDetailScreen({ route, navigation }) {
     }
   };
 
-  // @note export formatting
-  // Format note content for plain text export
-  const formatNoteAsPlainText = () => {
-    let content = '';
-    if (noteTitle.trim()) {
-      content += `${noteTitle.trim()}\n`;
-      content += '='.repeat(noteTitle.trim().length) + '\n\n';
-    }
-    const formattedDate = new Date(updatedAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    content += `Last Updated: ${formattedDate}\n\n`;
-    if (noteText.trim()) {
-      content += 'Content:\n';
-      content += '-'.repeat(8) + '\n';
-      content += noteText.trim() + '\n\n';
-    }
-    if (checklistItems.length > 0) {
-      content += 'Checklist:\n';
-      content += '-'.repeat(9) + '\n';
-      checklistItems.forEach((item, index) => {
-        const checkbox = item.checked ? '[✓]' : '[ ]';
-        content += `${checkbox} ${item.text || `Item ${index + 1}`}\n`;
-      });
-      content += '\n';
-    }
-    if (drawings.length > 0) {
-      content += `Drawings: ${drawings.length} drawing(s) attached\n`;
-      content += '(Drawings are not available in plain text format)\n\n';
-    }
-    content += `\n--- End of Note ---\nExported from Notes App`;
-    return content;
-  };
-
-  // Format note content for PDF export
-  const formatNoteAsHTML = () => {
-    const fontStyle = `
-      font-family: ${fontFamily === 'System' ? 'Arial, sans-serif' : fontFamily};
-      font-size: ${fontSize}px;
-      font-weight: ${isBold ? 'bold' : 'normal'};
-      font-style: ${isItalic ? 'italic' : 'normal'};
-      text-align: ${textAlign};
-      line-height: 1.6;
-    `;
-    const formattedDate = new Date(updatedAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    let html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>${noteTitle || 'Note'}</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          margin: 40px;
-          color: #333;
-          background: white;
-        }
-        .header {
-          border-bottom: 2px solid #4a5568;
-          padding-bottom: 20px;
-          margin-bottom: 30px;
-        }
-        .title {
-          font-size: 24px;
-          font-weight: bold;
-          color: #2d3748;
-          margin-bottom: 10px;
-        }
-        .meta {
-          font-size: 12px;
-          color: #718096;
-          font-style: italic;
-        }
-        .content {
-          ${fontStyle}
-          margin-bottom: 30px;
-          white-space: pre-wrap;
-        }
-        .section-title {
-          font-size: 18px;
-          font-weight: bold;
-          color: #4a5568;
-          margin: 30px 0 15px 0;
-          border-bottom: 1px solid #e2e8f0;
-          padding-bottom: 5px;
-        }
-        .checklist {
-          list-style: none;
-          padding: 0;
-        }
-        .checklist-item {
-          margin-bottom: 8px;
-          padding: 5px 0;
-          display: flex;
-          align-items: center;
-        }
-        .checkbox {
-          margin-right: 10px;
-          font-weight: bold;
-        }
-        .checked {
-          text-decoration: line-through;
-          color: #718096;
-        }
-        .drawings-info {
-          background: #f7fafc;
-          padding: 15px;
-          border-radius: 8px;
-          border-left: 4px solid #4a5568;
-          margin: 20px 0;
-        }
-        .footer {
-          margin-top: 50px;
-          padding-top: 20px;
-          border-top: 1px solid #e2e8f0;
-          font-size: 10px;
-          color: #a0aec0;
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="title">${noteTitle || 'Untitled Note'}</div>
-        <div class="meta">Last Updated: ${formattedDate}</div>
-      </div>
-    `;
-    if (noteText.trim()) {
-      html += `
-        <div class="section-title">Content</div>
-        <div class="content">${noteText.trim().replace(/\n/g, '<br>')}</div>
-      `;
-    }
-    if (checklistItems.length > 0) {
-      html += `<div class="section-title">Checklist</div><ul class="checklist">`;
-      checklistItems.forEach((item) => {
-        const checkbox = item.checked ? '✓' : '☐';
-        const itemClass = item.checked ? 'checked' : '';
-        html += `
-          <li class="checklist-item">
-            <span class="checkbox">${checkbox}</span>
-            <span class="${itemClass}">${item.text || 'Untitled Item'}</span>
-          </li>
-        `;
-      });
-      html += '</ul>';
-    }
-    if (drawings.length > 0) {
-      html += `
-        <div class="drawings-info">
-          <strong>📝 Drawings:</strong> This note contains ${drawings.length} drawing(s). 
-          Drawings are not included in the PDF export but are preserved in the original note.
-        </div>
-      `;
-    }
-    html += `
-        <div class="footer">
-          Generated by Notes App
-        </div>
-      </body>
-    </html>
-    `;
-    return html;
-  };
 
   // @note export
   // Export as plain text
   const exportAsPlainText = async () => {
     try {
       setIsExporting(true);
-      const content = formatNoteAsPlainText();
+      const content = formatNoteAsPlainText({
+        noteTitle,
+        noteText,
+        checklistItems,
+        drawings,
+        updatedAt,
+        fontSize,
+        fontFamily,
+        isBold,
+        isItalic,
+        textAlign});
       const fileName = `${(noteTitle || 'Note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(fileUri, content, {
@@ -606,7 +367,24 @@ export default function NoteDetailScreen({ route, navigation }) {
   const exportAsPDF = async () => {
     try {
       setIsExporting(true);
-      const htmlContent = formatNoteAsHTML();
+      console.log("noteTitle", noteTitle);
+      console.log("noteText", noteText);
+console.log("checklistItems", checklistItems);
+console.log("drawings", drawings);
+
+      const htmlContent = formatNoteAsHTML({
+        noteTitle,
+        noteText,
+        checklistItems,
+        drawings,
+        updatedAt,
+        fontSize,
+        fontFamily,
+        isBold,
+        isItalic,
+        textAlign}
+      );
+      console.log(htmlContent);
       const fileName = `${(noteTitle || 'Note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
       const { uri } = await Print.printToFileAsync({
         html: htmlContent,
@@ -803,6 +581,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
+  
+
   // @note drawing logic
   // Get stroke properties based on selected tool - Updated for eraser
 
@@ -876,182 +656,7 @@ const clearDrawing = () => {
   };
 
   // @note themed styles
-  const themedStyles = StyleSheet.create({
-    container: {
-      ...styles.container,
-      backgroundColor: theme.background,
-    },
-    header: {
-      ...styles.header,
-      backgroundColor: theme.surface,
-      borderBottomColor: theme.border,
-    },
-    headerTitle: {
-      ...styles.headerTitle,
-      color: theme.text,
-    },
-    drawingModeBanner: {
-      ...styles.drawingModeBanner,
-      backgroundColor: theme.drawingBanner,
-    },
-    titleInput: {
-      ...styles.titleInput,
-      backgroundColor: theme.surface,
-      borderColor: theme.border,
-      color: theme.text,
-    },
-    textInput: {
-      ...styles.textInput,
-      backgroundColor: theme.surface,
-      borderColor: theme.border,
-      color: theme.text,
-    },
-    checklistContainer: {
-      ...styles.checklistContainer,
-      backgroundColor: theme.surface,
-      borderColor: theme.border,
-    },
-    checklistText: {
-      ...styles.checklistText,
-      color: theme.text,
-      borderBottomColor: theme.border,
-    },
-    addButtonText: {
-      ...styles.addButtonText,
-      color: theme.textSecondary,
-    },
-    toolbar: {
-      ...styles.toolbar,
-      backgroundColor: theme.surface,
-      borderTopColor: theme.border,
-    },
-    toolButtonText: {
-      ...styles.toolButtonText,
-      color: theme.textSecondary,
-    },
-    activeToolButton: {
-      ...styles.activeToolButton,
-      backgroundColor: theme.primary,
-    },
-    slideMenu: {
-      ...styles.slideMenu,
-      backgroundColor: theme.surface,
-    },
-    slideMenuTitle: {
-      ...styles.slideMenuTitle,
-      color: theme.text,
-    },
-    slideMenuHandle: {
-      ...styles.slideMenuHandle,
-      backgroundColor: theme.border,
-    },
-    menuOptionText: {
-      ...styles.menuOptionText,
-      color: theme.text,
-    },
-    modalContent: {
-      ...styles.modalContent,
-      backgroundColor: theme.surface,
-    },
-    modalTitle: {
-      ...styles.modalTitle,
-      color: theme.text,
-    },
-    sectionTitle: {
-      ...styles.sectionTitle,
-      color: theme.text,
-    },
-    fontOption: {
-      ...styles.fontOption,
-      borderBottomColor: theme.borderLight,
-    },
-    selectedFontOption: {
-      ...styles.selectedFontOption,
-      backgroundColor: theme.surfaceSecondary,
-    },
-    fontText: {
-      ...styles.fontText,
-      color: theme.text,
-    },
-    selectedFontText: {
-      ...styles.selectedFontText,
-      color: theme.textSecondary,
-    },
-    fontSizeOption: {
-      ...styles.fontSizeOption,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-    },
-    selectedFontSize: {
-      ...styles.selectedFontSize,
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
-    },
-    fontSizeText: {
-      ...styles.fontSizeText,
-      color: theme.text,
-    },
-    toolOption: {
-      ...styles.toolOption,
-      borderColor: theme.border,
-      backgroundColor: theme.surfaceSecondary,
-    },
-    selectedTool: {
-      ...styles.selectedTool,
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
-    },
-    toolLabel: {
-      ...styles.toolLabel,
-      color: theme.textSecondary,
-    },
-    brushSizeOption: {
-      ...styles.brushSizeOption,
-      borderColor: theme.border,
-      backgroundColor: theme.surfaceSecondary,
-    },
-    selectedBrushSize: {
-      ...styles.selectedBrushSize,
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
-    },
-    brushSizeText: {
-      ...styles.brushSizeText,
-      color: theme.textSecondary,
-    },
-    scrollDot: {
-      ...styles.scrollDot,
-      backgroundColor: theme.border,
-    },
-    activeDot: {
-      ...styles.activeDot,
-      backgroundColor: theme.primary,
-    },
-    savingContainer: {
-      ...styles.savingContainer,
-      backgroundColor: theme.surface,
-    },
-    savingText: {
-      ...styles.savingText,
-      color: theme.text,
-    },
-    shareOption: {
-      ...styles.shareOption,
-      borderBottomColor: theme.borderLight,
-    },
-    shareOptionContent: {
-      ...styles.shareOptionContent,
-    },
-    shareOptionText: {
-      ...styles.shareOptionText,
-      color: theme.text,
-    },
-    shareOptionDescription: {
-      ...styles.shareOptionDescription,
-      color: theme.textMuted,
-    },
-  });
-
+  
   // @note render
   return (
     <>
