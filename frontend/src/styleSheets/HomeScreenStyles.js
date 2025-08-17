@@ -256,6 +256,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     marginTop: 10,
   },
+  savingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  savingContainer: {
+    borderRadius: 12,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
 });
 
 export default styles;

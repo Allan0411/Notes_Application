@@ -98,3 +98,46 @@ export async function deleteNote(id) {
     return false;
   }
 }
+
+// PATCH isPrivate for a note by ID
+export async function updateNoteIsPrivate(id, isPrivate) {
+    const token = await getAuthToken();
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes/${id}/private`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(isPrivate) // just true or false, as per your backend
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || 'Failed to update isPrivate');
+      // You can return the updated note, or just true on success
+      return text ? JSON.parse(text) : true;
+    } catch (err) {
+      console.error('Error updating isPrivate:', err);
+      throw err;
+    }
+  }
+  
+  // PATCH isArchived for a note by ID
+  export async function updateNoteIsArchived(id, isArchived) {
+    const token = await getAuthToken();
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes/${id}/archive`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(isArchived) // just true or false
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || 'Failed to update isArchived');
+      return text ? JSON.parse(text) : true;
+    } catch (err) {
+      console.error('Error updating isArchived:', err);
+      throw err;
+    }
+  }

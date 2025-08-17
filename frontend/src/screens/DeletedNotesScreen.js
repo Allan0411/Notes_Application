@@ -12,7 +12,11 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../ThemeContext';
-import styles from '../styleSheets/DeletedNotesScreenStyles'; // Import styles from the stylesheet
+import styles from '../styleSheets/DeletedNotesScreenStyles';
+import { deleteNote, updateNoteIsPrivate } from '../services/noteService';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { buildThemedStyles } from '../utils/buildThemedStyles';
+import { noteDetailsthemes as themes } from '../utils/themeColors';
 
 export default function DeletedNotesScreen() {
   const { activeTheme } = useContext(ThemeContext);
@@ -22,12 +26,15 @@ export default function DeletedNotesScreen() {
   // Get functions and data from route params
   const { 
     deletedNotes = [], 
-    onRestore,
-    onPermanentDelete,
-    onCleanupOld // Add this for manual cleanup
+    onCleanupOld
   } = route.params || {};
 
   const [localDeletedNotes, setLocalDeletedNotes] = useState(deletedNotes);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Theme setup
+  const theme = themes[activeTheme] || themes.light;
+  const themedStyles = buildThemedStyles(theme, styles);
 
   // Check for expired notes and show warning
   const getExpiredNotesCount = () => {
@@ -57,6 +64,7 @@ export default function DeletedNotesScreen() {
     restoreColor: '#38a169',
     deleteColor: '#e53e3e',
     iconColor: isDark ? '#cbd5e0' : '#4a5568',
+    overlay: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)',
   };
 
   const formatDate = (dateStr) => {
@@ -124,6 +132,7 @@ export default function DeletedNotesScreen() {
     return 'document-text';
   };
 
+  // Restore note by setting isPrivate to false
   const handleRestore = (noteId) => {
     Alert.alert(
       'Restore Note',
@@ -134,18 +143,18 @@ export default function DeletedNotesScreen() {
           text: 'Restore',
           style: 'default',
           onPress: async () => {
+            if (isProcessing) return;
+            setIsProcessing(true);
             try {
-              if (onRestore) {
-                await onRestore(noteId);
-                // Remove from local list
-                setLocalDeletedNotes(prev => prev.filter(note => note.id !== noteId));
-                
-                // Optional: Navigate back to home to see the restored note
-                // navigation.goBack();
-              }
+              await updateNoteIsPrivate(noteId, false);
+              setLocalDeletedNotes(prev => prev.filter(note => note.id !== noteId));
+              Alert.alert('Success', 'Note restored successfully');
+              navigation.goBack();
             } catch (error) {
               Alert.alert('Error', 'Failed to restore note');
               console.error('Restore error:', error);
+            } finally {
+              setIsProcessing(false);
             }
           },
         },
@@ -153,6 +162,7 @@ export default function DeletedNotesScreen() {
     );
   };
 
+  // Permanent delete using API
   const handlePermanentDelete = (noteId) => {
     Alert.alert(
       'Permanently Delete',
@@ -163,15 +173,21 @@ export default function DeletedNotesScreen() {
           text: 'Delete Forever',
           style: 'destructive',
           onPress: async () => {
+            if (isProcessing) return;
+            setIsProcessing(true);
             try {
-              if (onPermanentDelete) {
-                await onPermanentDelete(noteId);
-                // Remove from local list
+              const success = await deleteNote(noteId);
+              if (success) {
                 setLocalDeletedNotes(prev => prev.filter(note => note.id !== noteId));
+                Alert.alert('Success', 'Note permanently deleted');
+              } else {
+                Alert.alert('Error', 'Failed to delete note permanently');
               }
             } catch (error) {
               Alert.alert('Error', 'Failed to delete note permanently');
               console.error('Permanent delete error:', error);
+            } finally {
+              setIsProcessing(false);
             }
           },
         },
@@ -203,20 +219,34 @@ export default function DeletedNotesScreen() {
           </View>
         </View>
         
-        {/* Minimalist action buttons */}
+        {/* Action buttons */}
         <View style={styles.miniActions}>
           <TouchableOpacity
-            style={[styles.miniActionButton, { backgroundColor: colors.restoreColor + '15' }]}
+            style={[
+              styles.miniActionButton, 
+              { 
+                backgroundColor: colors.restoreColor + '15',
+                opacity: isProcessing ? 0.5 : 1
+              }
+            ]}
             onPress={() => handleRestore(item.id)}
             activeOpacity={0.7}
+            disabled={isProcessing}
           >
             <Ionicons name="refresh" size={16} color={colors.restoreColor} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.miniActionButton, { backgroundColor: colors.deleteColor + '15' }]}
+            style={[
+              styles.miniActionButton, 
+              { 
+                backgroundColor: colors.deleteColor + '15',
+                opacity: isProcessing ? 0.5 : 1
+              }
+            ]}
             onPress={() => handlePermanentDelete(item.id)}
             activeOpacity={0.7}
+            disabled={isProcessing}
           >
             <Ionicons name="trash" size={16} color={colors.deleteColor} />
           </TouchableOpacity>
@@ -272,7 +302,7 @@ export default function DeletedNotesScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      {/* Empty state with better visual hierarchy */}
+      {/* Empty state */}
       {localDeletedNotes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={[styles.emptyIconContainer, { backgroundColor: colors.iconColor + '10' }]}>
@@ -307,7 +337,7 @@ export default function DeletedNotesScreen() {
               </View>
             </View>
             
-            {/* Show warning for expired notes */}
+            {/* Warning for expired notes */}
             {expiredCount > 0 && (
               <View style={[styles.warningContainer, { backgroundColor: colors.deleteColor + '15' }]}>
                 <Ionicons name="warning-outline" size={16} color={colors.deleteColor} />
@@ -320,14 +350,26 @@ export default function DeletedNotesScreen() {
 
           <FlatList
             data={localDeletedNotes}
-            keyExtractor={(item) => item.id ? String(item.id) : Math.random().toString()}
+            keyExtractor={(item, index) => {
+              if (item && item.id) return `note-${item.id}`;
+              if (item && item.deletedAt) return `deletedAt-${item.deletedAt}-${index}`;
+              return `note-fallback-${index}`;
+            }}
             contentContainerStyle={styles.listContainer}
             renderItem={renderNoteItem}
             showsVerticalScrollIndicator={false}
           />
         </>
       )}
+
+      {/* Loading overlay for processing */}
+      <LoadingOverlay
+        visible={isProcessing}
+        text="Processing..."
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+      />
     </SafeAreaView>
   );
 }
-
