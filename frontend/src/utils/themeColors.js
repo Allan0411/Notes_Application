@@ -1,0 +1,81 @@
+// src/utils/themeColors.js
+
+export const lightColors = {
+    background: '#edf2f7',
+    cardBackground: '#fff',
+    text: '#2d3748',
+    subText: '#718096',
+    headerBackground: '#4a5568',
+    headerText: '#fff',
+    iconColor: '#4a5568',
+    borderColor: '#e2e8f0',
+    drawerBackground: '#fff',
+    drawerHeaderBackground: '#f8fafc',
+    searchBackground: '#fff',
+    searchText: '#2d3748',
+    searchPlaceholder: '#a0aec0',
+    deleteIcon: '#d11a2a',
+    onlineIndicator: '#38a169',
+    logoutText: '#e53e3e',
+  };
+  
+  export const darkColors = {
+    background: '#1a202c',
+    cardBackground: '#2d3748',
+    text: '#e2e8f0',
+    subText: '#a0aec0',
+    headerBackground: '#2d3748',
+    headerText: '#fff',
+    iconColor: '#cbd5e0',
+    borderColor: '#4a5568',
+    drawerBackground: '#2d3748',
+    drawerHeaderBackground: '#1a202c',
+    searchBackground: '#4a5568',
+    searchText: '#e2e8f0',
+    searchPlaceholder: '#cbd5e0',
+    deleteIcon: '#fc8181',
+    onlineIndicator: '#48bb78',
+    logoutText: '#fc8181',
+  };
+
+  //note details
+  export const noteDetailsthemes = {
+    light: {
+      background: '#edf2f7',
+      surface: '#ffffff',
+      surfaceSecondary: '#f7fafc',
+      primary: '#4a5568',
+      primaryLight: '#718096',
+      text: '#2d3748',
+      textSecondary: '#4a5568',
+      textMuted: '#718096',
+      border: '#e2e8f0',
+      borderLight: '#f7fafc',
+      accent: '#38a169',
+      danger: '#d11a2a',
+      overlay: 'rgba(0,0,0,0.5)',
+      placeholder: '#718096',
+      drawingBanner: '#4a5568',
+      statusBar: 'dark-content',
+    },
+    dark: {
+      background: '#1a202c',
+      surface: '#2d3748',
+      surfaceSecondary: '#4a5568',
+      primary: '#e2e8f0',
+      primaryLight: '#cbd5e0',
+      text: '#f7fafc',
+      textSecondary: '#e2e8f0',
+      textMuted: '#a0aec0',
+      border: '#4a5568',
+      borderLight: '#2d3748',
+      accent: '#48bb78',
+      danger: '#fc8181',
+      overlay: 'rgba(0,0,0,0.7)',
+      placeholder: '#a0aec0',
+      drawingBanner: '#2d3748',
+      statusBar: 'light-content',
+    },
+  };
+  
+  

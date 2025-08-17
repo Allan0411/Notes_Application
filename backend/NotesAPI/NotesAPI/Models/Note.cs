@@ -10,7 +10,6 @@ namespace NotesAPI.Models
     public class Note
     {
         [Key]
-        
         [Column("id")]
         public int Id { get; set; }
 
@@ -21,9 +20,6 @@ namespace NotesAPI.Models
         [Column("textContents")]
         public string? TextContents { get; set; }
 
-        [Column("s3Contents")]
-        public string? S3Contents { get; set; }
-
         [Column("createdAt")]
         [JsonIgnore]
         [BindNever]
@@ -32,12 +28,18 @@ namespace NotesAPI.Models
         [Column("lastAccessed")]
         [JsonIgnore]
         [BindNever]
-        public DateTime? LastAccessed { get; set; } // Renamed to match usage
+        public DateTime? LastAccessed { get; set; }
 
-        [Column("userEmail")]
-        [JsonIgnore]
-        [BindNever]
-        public string? Note_Email { get; set; }
+        [Column("isArchived")]
+        public bool IsArchived { get; set; }
 
+        [Column("isPrivate")]
+        public bool IsPrivate { get; set; }
+
+        [Column("creatorUserId")]
+        public int CreatorUserId { get; set; }
+
+        // Navigation property if needed (optional for EF relationships)
+        // public virtual User CreatorUser { get; set; }
     }
 }
