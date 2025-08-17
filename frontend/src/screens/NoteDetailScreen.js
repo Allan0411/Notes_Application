@@ -25,6 +25,11 @@ import { buildNotePayload } from '../utils/buildNotePayload';
 import {formatNoteAsHTML,formatNoteAsPlainText} from '../utils/formatNote';
 
 import { buildThemedStyles } from '../utils/buildThemedStyles';
+import LoadingOverlay from '../components/LoadingOverlay';
+import MenuModal from '../components/MenuModal';
+import DrawingToolsModal from '../components/DrawingToolsModal';
+import FontPickerModal from '../components/FontPickerModal';
+
 //@note imports
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -581,14 +586,6 @@ console.log("drawings", drawings);
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
-  
-
-  // @note drawing logic
-  // Get stroke properties based on selected tool - Updated for eraser
-
-
-
-
   // Clear drawing with better confirmation
 // @note clearDrawings handler
 const clearDrawing = () => {
@@ -655,7 +652,7 @@ const clearDrawing = () => {
     return stats;
   };
 
-  // @note themed styles
+ 
   
   // @note render
   return (
@@ -822,335 +819,106 @@ const clearDrawing = () => {
       </View>
 
       {/* @note menu modal */}
-      <Modal visible={showMenuModal} transparent animationType="none">
-        <TouchableOpacity
-          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
-          activeOpacity={1}
-          onPress={hideMenu}
-        >
-          <Animated.View
-            style={[
-              themedStyles.slideMenu,
-              { transform: [{ translateY: slideAnim }] }
-            ]}
-          >
-            <View style={themedStyles.slideMenuHandle} />
-            <Text style={themedStyles.slideMenuTitle}>Note Options</Text>
-           
-            {menuOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[styles.menuOption, { borderBottomColor: theme.borderLight }]}
-                onPress={option.action}
-              >
-                <View style={styles.menuOptionContent}>
-                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
-                  <Text style={themedStyles.menuOptionText}>{option.label}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
+      <MenuModal
+        visible={showMenuModal}
+        onClose={hideMenu}
+        title="Note Options"
+        options={menuOptions} // [{id,icon,label,action}]
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+        slideAnim={slideAnim}
+      />
 
       {/* @note share modal */}
-      <Modal visible={showShareModal} transparent animationType="none">
-        <TouchableOpacity
-          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
-          activeOpacity={1}
-          onPress={hideShareMenu}
-        >
-          <Animated.View
-            style={[
-              themedStyles.slideMenu,
-              { transform: [{ translateY: shareSlideAnim }] }
-            ]}
-          >
-            <View style={themedStyles.slideMenuHandle} />
-            <Text style={themedStyles.slideMenuTitle}>Choose Export Format</Text>
-           
-            {shareOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[themedStyles.shareOption]}
-                onPress={option.action}
-                disabled={isExporting}
-              >
-                <View style={themedStyles.shareOptionContent}>
-                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
-                  <View style={styles.shareOptionTextContainer}>
-                    <Text style={themedStyles.shareOptionText}>{option.label}</Text>
-                    <Text style={themedStyles.shareOptionDescription}>
-                      {option.id === 'text' 
-                        ? 'Plain text format with basic formatting preserved'
-                        : 'Professional PDF document with rich formatting'
-                      }
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
+      <MenuModal
+      visible={showShareModal}
+      onClose={hideShareMenu}
+      title="Choose Export Format"
+      options={shareOptions.map(opt=>({...opt,description: opt.id === 'text'
+        ? 'Plain text format with basic formatting preserved'
+        : 'Professional PDF document with rich formatting'}))}
+      themedStyles={themedStyles}
+      styles={styles}
+      theme={theme}
+      slideAnim={shareSlideAnim}
+      optionType="share"
+      disabled={isExporting}
+    />
 
       {/* @note font modal */}
-      <Modal visible={showFontModal} transparent animationType="slide">
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}
-          activeOpacity={1}
-          onPress={() => setShowFontModal(false)}
-        >
-          <View style={themedStyles.modalContent} onStartShouldSetResponder={() => true}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
-              <Text style={themedStyles.modalTitle}>Choose Font & Size</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setShowFontModal(false)}
-              >
-                <Ionicons name="close" size={24} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-           
-            {/* Font Family Section */}
-            <Text style={themedStyles.sectionTitle}>Font Family</Text>
-            <ScrollView style={[styles.fontSection, { borderColor: theme.border }]} showsVerticalScrollIndicator={false}>
-              {fonts.map((font) => (
-                <TouchableOpacity
-                  key={font.value}
-                  style={[
-                    themedStyles.fontOption,
-                    fontFamily === font.value && themedStyles.selectedFontOption
-                  ]}
-                  onPress={() => setFontFamily(font.value)}
-                >
-                  <Text style={[
-                    themedStyles.fontText,
-                    { fontFamily: font.value === 'System' ? undefined : font.value },
-                    fontFamily === font.value && themedStyles.selectedFontText
-                  ]}>
-                    {font.name}
-                  </Text>
-                  {fontFamily === font.value && (
-                    <Ionicons name="checkmark" size={20} color={theme.textSecondary} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* Font Size Section */}
-            <Text style={themedStyles.sectionTitle}>Font Size</Text>
-            <View style={styles.fontSizeContainer}>
-              {fontSizes.map((size) => (
-                <TouchableOpacity
-                  key={size}
-                  style={[themedStyles.fontSizeOption, fontSize === size && themedStyles.selectedFontSize]}
-                  onPress={() => setFontSize(size)}
-                >
-                  <Text style={[themedStyles.fontSizeText, fontSize === size && styles.selectedFontSizeText]}>
-                    {size}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        <FontPickerModal
+          visible={showFontModal}
+          onClose={() => setShowFontModal(false)}
+          themedStyles={themedStyles}
+          styles={styles}
+          theme={theme}
+          fonts={fonts}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          fontSizes={fontSizes}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+        />
 
       {/* @note drawing tools modal */}
-      <Modal visible={showDrawingModal} transparent animationType="slide">
-        <TouchableOpacity
-          style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}
-          activeOpacity={1}
-          onPress={() => setShowDrawingModal(false)}
-        >
-          <View style={themedStyles.modalContent} onStartShouldSetResponder={() => true}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
-              <Text style={themedStyles.modalTitle}>Drawing Tools</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setShowDrawingModal(false)}
-              >
-                <Ionicons name="close" size={24} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-           
-            {/* Tool Selection */}
-            <Text style={themedStyles.sectionTitle}>Tools</Text>
-            <View style={styles.toolsContainer}>
-              {drawingTools.map((tool) => (
-                <TouchableOpacity
-                  key={tool.name}
-                  style={[themedStyles.toolOption, selectedTool === tool.name && themedStyles.selectedTool]}
-                  onPress={() => setSelectedTool(tool.name)}
-                >
-                  <Ionicons
-                    name={tool.icon}
-                    size={24}
-                    color={selectedTool === tool.name ? '#fff' : theme.textSecondary}
-                  />
-                  <Text style={[themedStyles.toolLabel, selectedTool === tool.name && styles.selectedToolLabel]}>
-                    {tool.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Color Selection - Hidden for Eraser */}
-            {selectedTool !== 'eraser' && (
-              <>
-                <Text style={themedStyles.sectionTitle}>Colors</Text>
-                <View style={styles.colorsContainer}>
-                  {colors.map((color) => (
-                    <TouchableOpacity
-                      key={color}
-                      style={[
-                        styles.colorOption,
-                        { backgroundColor: color, borderColor: theme.border },
-                        selectedColor === color && [styles.selectedColor, { borderColor: theme.primary }]
-                      ]}
-                      onPress={() => setSelectedColor(color)}
-                    >
-                      {selectedColor === color && (
-                        <Ionicons name="checkmark" size={16} color={color === '#000000' ? '#fff' : color === '#ffffff' ? '#000' : '#fff'} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Size Selection with Scroll Indicators */}
-            <Text style={themedStyles.sectionTitle}>
-              {selectedTool === 'eraser' ? 'Eraser Size' : 'Brush Size'}
-            </Text>
-            <ScrollView 
-              ref={brushScrollRef}
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              style={styles.brushSizeScrollView}
-              onScroll={handleBrushScroll}
-              scrollEventThrottle={16}
-            >
-              <View style={styles.brushSizeContainer}>
-                {(selectedTool === 'eraser' ? eraserSizes : brushSizes).map((size) => (
-                  <TouchableOpacity
-                    key={size}
-                    style={[
-                      themedStyles.brushSizeOption,
-                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && themedStyles.selectedBrushSize
-                    ]}
-                    onPress={() => selectedTool === 'eraser' ? setEraserSize(size) : setBrushSize(size)}
-                  >
-                    <View style={[
-                      styles.brushPreview,
-                      {
-                        width: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
-                        height: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8),
-                        backgroundColor: selectedTool === 'eraser' ? theme.surfaceSecondary : selectedColor,
-                        borderRadius: Math.max(size / (selectedTool === 'eraser' ? 2 : 1), 8) / 2,
-                        borderWidth: selectedTool === 'eraser' ? 2 : 0,
-                        borderColor: selectedTool === 'eraser' ? theme.textSecondary : 'transparent'
-                      }
-                    ]} />
-                    <Text style={[
-                      themedStyles.brushSizeText,
-                      (selectedTool === 'eraser' ? eraserSize === size : brushSize === size) && styles.selectedBrushSizeText
-                    ]}>
-                      {size}px
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-
-            {/* Scroll Indicators */}
-            {brushContentWidth > brushScrollWidth && (
-              <View style={styles.scrollIndicatorContainer}>
-                {getScrollIndicators().map((dot) => (
-                  <View
-                    key={dot.key}
-                    style={[
-                      themedStyles.scrollDot,
-                      dot.active && themedStyles.activeDot
-                    ]}
-                  />
-                ))}
-              </View>
-            )}
-
-            {/* Clear Drawing Button */}
-            <TouchableOpacity style={[styles.clearDrawingButton, { backgroundColor: theme.danger }]} onPress={clearDrawing}>
-              <Ionicons name="trash" size={20} color="#fff" />
-              <Text style={styles.clearDrawingText}>Clear All Drawings</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      <DrawingToolsModal
+        visible={showDrawingModal}
+        onClose={() => setShowDrawingModal(false)}
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+        drawingTools={drawingTools}
+        selectedTool={selectedTool}
+        setSelectedTool={setSelectedTool}
+        colors={colors}
+        selectedColor={selectedColor}
+        setSelectedColor={setSelectedColor}
+        brushSizes={brushSizes}
+        brushSize={brushSize}
+        setBrushSize={setBrushSize}
+        eraserSizes={eraserSizes}
+        eraserSize={eraserSize}
+        setEraserSize={setEraserSize}
+        brushScrollRef={brushScrollRef}
+        handleBrushScroll={handleBrushScroll}
+        brushScrollWidth={brushScrollWidth}
+        brushContentWidth={brushContentWidth}
+        getScrollIndicators={getScrollIndicators}
+        clearDrawing={clearDrawing}
+      />
 
       {/* @note ai modal */}
-      <Modal visible={showAiModal} transparent animationType="none">
-        <TouchableOpacity
-          style={[styles.menuOverlay, { backgroundColor: theme.overlay }]}
-          activeOpacity={1}
-          onPress={closeAiMenu}
-        >
-          <Animated.View
-            style={[
-              themedStyles.slideMenu,
-              { transform: [{ translateY: aiSlideAnim }] }
-            ]}
-          >
-            <View style={themedStyles.slideMenuHandle} />
-            <Text style={themedStyles.slideMenuTitle}>AI Actions</Text>
-           
-            {aiOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[styles.menuOption, { borderBottomColor: theme.borderLight }]}
-                onPress={option.action}
-              >
-                <View style={styles.menuOptionContent}>
-                  <Ionicons name={option.icon} size={22} color={theme.textSecondary} />
-                  <Text style={themedStyles.menuOptionText}>{option.label}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
+      <MenuModal
+        visible={showAiModal}
+        onClose={closeAiMenu}
+        title="AI Actions"
+        options={aiOptions} // [{ id, label, icon, action }]
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+        slideAnim={aiSlideAnim}
+      />
+
     </SafeAreaView>
      {/* @note overlays */}
       {/* Saving Overlay */}
-      <Modal
-        transparent={true}
-        animationType="fade"
+      <LoadingOverlay
         visible={isSaving}
-      >
-        <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
-            <View style={themedStyles.savingContainer}>
-                <ActivityIndicator size="large" color={theme.textSecondary} />
-                <Text style={themedStyles.savingText}>Saving...</Text>
-            </View>
-        </View>
-      </Modal>
+        text="Saving the note..."
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+      />
 
       {/* AI Processing Overlay */}
-      <Modal
-        transparent={true}
-        animationType="fade"
+      <LoadingOverlay
         visible={isAiProcessing}
-      >
-        <View style={[styles.savingOverlay, { backgroundColor: theme.overlay }]}>
-            <View style={themedStyles.savingContainer}>
-                <ActivityIndicator size="large" color={theme.textSecondary} />
-                <Text style={themedStyles.savingText}>AI is doing its work...</Text>
-            </View>
-        </View>
-      </Modal>
+        text="AI is doing it's work"
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+      />
 
       {/* Export Processing Overlay */}
       <Modal
