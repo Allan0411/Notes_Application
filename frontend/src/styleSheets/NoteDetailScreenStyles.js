@@ -13,7 +13,7 @@ import { StyleSheet } from 'react-native';
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: 46,
+    paddingTop: 40,
     borderBottomWidth: 1,
   },
   headerTitle: {

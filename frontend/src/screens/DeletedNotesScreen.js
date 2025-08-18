@@ -102,6 +102,21 @@ export default function DeletedNotesScreen() {
     }
   };
 
+  // Helper function to parse checklist items consistently
+  const parseChecklistItems = (checklistItems) => {
+    if (!checklistItems) return [];
+    if (Array.isArray(checklistItems)) return checklistItems;
+    if (typeof checklistItems === 'string') {
+      try {
+        const parsed = JSON.parse(checklistItems);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const getPreviewText = (note) => {
     if (note.title && note.title.trim()) {
       return note.title.trim();
@@ -112,24 +127,21 @@ export default function DeletedNotesScreen() {
     if (note.text && note.text.trim()) {
       return note.text.trim();
     }
-    if (note.checklistItems && note.checklistItems.length > 0) {
-      const firstItem = note.checklistItems[0];
+    
+    const checklistItems = parseChecklistItems(note.checklistItems);
+    if (checklistItems.length > 0) {
+      const firstItem = checklistItems[0];
       return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
-    if (note.drawings && note.drawings.length > 0) {
+    
+    // Check if drawing tool was used and saved in note
+    if (note.drawings && (
+      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+    )) {
       return '🎨 Drawing';
     }
     return 'Empty note';
-  };
-
-  const getNoteTypeIcon = (note) => {
-    if (note.drawings && note.drawings.length > 0) {
-      return 'brush';
-    }
-    if (note.checklistItems && note.checklistItems.length > 0) {
-      return 'checkbox';
-    }
-    return 'document-text';
   };
 
   // Restore note by setting isPrivate to false
@@ -195,93 +207,98 @@ export default function DeletedNotesScreen() {
     );
   };
 
-  const renderNoteItem = ({ item }) => (
-    <TouchableOpacity 
-      style={[styles.noteCard, { backgroundColor: colors.cardBg }]}
-      activeOpacity={0.7}
-    >
-      <View style={styles.noteHeader}>
-        <View style={styles.noteInfo}>
-          <View style={[styles.noteTypeIndicator, { backgroundColor: colors.iconColor + '20' }]}>
-            <Ionicons
-              name={getNoteTypeIcon(item)}
-              size={14}
-              color={colors.iconColor}
-            />
+  const renderNoteItem = ({ item }) => {
+    const checklistItems = parseChecklistItems(item.checklistItems);
+    const hasText = !!(item.textContents ?? item.text ?? '').trim();
+    const hasChecklist = checklistItems.length > 0;
+    
+    // Check if drawing tool was used and saved in note
+    const hasDrawings = !!(item.drawings && (
+      (Array.isArray(item.drawings) && item.drawings.length > 0) ||
+      (typeof item.drawings === 'string' && item.drawings.trim() !== '' && item.drawings !== '[]')
+    ));
+
+    return (
+      <TouchableOpacity 
+        style={[styles.noteCard, { backgroundColor: colors.cardBg }]}
+        activeOpacity={0.7}
+      >
+        <View style={styles.noteHeader}>
+          <View style={styles.noteInfo}>
+            <View style={styles.noteDetails}>
+              <Text style={[styles.noteDate, { color: colors.subTextColor }]}>
+                Deleted {formatDate(item.deletedAt)}
+              </Text>
+              <Text style={[styles.expiryText, { color: colors.deleteColor }]}>
+                {getDaysUntilDeletion(item.deletedAt)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.noteDetails}>
-            <Text style={[styles.noteDate, { color: colors.subTextColor }]}>
-              Deleted {formatDate(item.deletedAt)}
-            </Text>
-            <Text style={[styles.expiryText, { color: colors.deleteColor }]}>
-              {getDaysUntilDeletion(item.deletedAt)}
-            </Text>
+          
+          {/* Action buttons */}
+          <View style={styles.miniActions}>
+            <TouchableOpacity
+              style={[
+                styles.miniActionButton, 
+                { 
+                  backgroundColor: colors.restoreColor + '15',
+                  opacity: isProcessing ? 0.5 : 1
+                }
+              ]}
+              onPress={() => handleRestore(item.id)}
+              activeOpacity={0.7}
+              disabled={isProcessing}
+            >
+              <Ionicons name="refresh" size={16} color={colors.restoreColor} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.miniActionButton, 
+                { 
+                  backgroundColor: colors.deleteColor + '15',
+                  opacity: isProcessing ? 0.5 : 1
+                }
+              ]}
+              onPress={() => handlePermanentDelete(item.id)}
+              activeOpacity={0.7}
+              disabled={isProcessing}
+            >
+              <Ionicons name="trash" size={16} color={colors.deleteColor} />
+            </TouchableOpacity>
           </View>
         </View>
         
-        {/* Action buttons */}
-        <View style={styles.miniActions}>
-          <TouchableOpacity
-            style={[
-              styles.miniActionButton, 
-              { 
-                backgroundColor: colors.restoreColor + '15',
-                opacity: isProcessing ? 0.5 : 1
-              }
-            ]}
-            onPress={() => handleRestore(item.id)}
-            activeOpacity={0.7}
-            disabled={isProcessing}
-          >
-            <Ionicons name="refresh" size={16} color={colors.restoreColor} />
-          </TouchableOpacity>
+        <Text style={[styles.notePreview, { color: colors.textColor }]} numberOfLines={3}>
+          {getPreviewText(item)}
+        </Text>
 
-          <TouchableOpacity
-            style={[
-              styles.miniActionButton, 
-              { 
-                backgroundColor: colors.deleteColor + '15',
-                opacity: isProcessing ? 0.5 : 1
-              }
-            ]}
-            onPress={() => handlePermanentDelete(item.id)}
-            activeOpacity={0.7}
-            disabled={isProcessing}
-          >
-            <Ionicons name="trash" size={16} color={colors.deleteColor} />
-          </TouchableOpacity>
+        {/* Content indicators */}
+        <View style={styles.contentIndicators}>
+          {hasText && (
+            <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
+              <Ionicons name="document-text" size={10} color={colors.subTextColor} />
+              <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>Text</Text>
+            </View>
+          )}
+          {hasChecklist && (
+            <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
+              <Ionicons name="checkmark-circle" size={10} color={colors.subTextColor} />
+              <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>
+                {checklistItems.length} items
+              </Text>
+            </View>
+          )}
+          {hasDrawings && (
+            <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
+              <Ionicons name="brush" size={10} color={colors.subTextColor} />
+              <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>Drawing</Text>
+            </View>
+          )}
         </View>
-      </View>
-      
-      <Text style={[styles.notePreview, { color: colors.textColor }]} numberOfLines={3}>
-        {getPreviewText(item)}
-      </Text>
-
-      {/* Content indicators */}
-      <View style={styles.contentIndicators}>
-        {(item.textContents ?? item.text ?? '').trim() && (
-          <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
-            <Ionicons name="document-text" size={10} color={colors.subTextColor} />
-            <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>Text</Text>
-          </View>
-        )}
-        {item.checklistItems && item.checklistItems.length > 0 && (
-          <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
-            <Ionicons name="checkbox" size={10} color={colors.subTextColor} />
-            <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>
-              {item.checklistItems.length} items
-            </Text>
-          </View>
-        )}
-        {item.drawings && item.drawings.length > 0 && (
-          <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
-            <Ionicons name="brush" size={10} color={colors.subTextColor} />
-            <Text style={[styles.indicatorText, { color: colors.subTextColor }]}>Drawing</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -372,4 +389,4 @@ export default function DeletedNotesScreen() {
       />
     </SafeAreaView>
   );
-}
+};

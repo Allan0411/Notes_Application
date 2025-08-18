@@ -50,8 +50,6 @@ export default function HomeScreen({ navigation }) {
     };
   }, []);
 
-
-
   const saveDeletedNotes = async (notes) => {
     try {
       await AsyncStorage.setItem('deletedNotes', JSON.stringify(notes));
@@ -140,8 +138,6 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-
-
   const handleEditNote = (note) => {
     navigation.navigate('NoteDetail', {
       note: note,
@@ -177,6 +173,7 @@ export default function HomeScreen({ navigation }) {
       return null;
     }
   };
+
   const openDrawer = () => {
     setDrawerVisible(true);
     Animated.timing(slideAnim, {
@@ -196,6 +193,21 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
+  // Helper function to parse checklist items consistently
+  const parseChecklistItems = (checklistItems) => {
+    if (!checklistItems) return [];
+    if (Array.isArray(checklistItems)) return checklistItems;
+    if (typeof checklistItems === 'string') {
+      try {
+        const parsed = JSON.parse(checklistItems);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const getPreviewText = (note) => {
     if (note.title && note.title.trim()) {
       return note.title;
@@ -206,41 +218,26 @@ export default function HomeScreen({ navigation }) {
     if (note.text && note.text.trim()) {
       return note.text;
     }
-    if (note.checklistItems && note.checklistItems.length > 0) {
-      const firstItem = note.checklistItems[0];
+    
+    const checklistItems = parseChecklistItems(note.checklistItems);
+    if (checklistItems.length > 0) {
+      const firstItem = checklistItems[0];
       return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
-    if (note.drawings && note.drawings.length > 0) {
+    
+    // Check if drawing tool was used and saved in note
+    if (note.drawings && (
+      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+    )) {
       return '🎨 Drawing';
     }
     return 'Empty note';
   };
 
-  const getNoteTypeIcon = (note) => {
-    if (note.drawings && note.drawings.length > 0) {
-      return 'brush';
-    }
-    if (note.checklistItems && note.checklistItems.length > 0) {
-      return 'checkbox';
-    }
-    return 'document-text';
-  };
-
   const filteredNotes = notesList.filter(note => {
     const searchLower = searchQuery.toLowerCase();
-
-    let checklistItems = [];
-    if (note.checklistItems) {
-      if (typeof note.checklistItems === 'string') {
-        try {
-          checklistItems = JSON.parse(note.checklistItems);
-        } catch (e) {
-          checklistItems = [];
-        }
-      } else if (Array.isArray(note.checklistItems)) {
-        checklistItems = note.checklistItems;
-      }
-    }
+    const checklistItems = parseChecklistItems(note.checklistItems);
 
     return (
       (note.title && note.title.toLowerCase().includes(searchLower)) ||
@@ -305,83 +302,89 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => handleEditNote(item)}
-            style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
-          >
-            <View style={styles.noteHeader}>
-              <View style={styles.noteInfo}>
-                <Ionicons
-                  name={getNoteTypeIcon(item)}
-                  size={16}
-                  color={colors.iconColor}
-                  style={styles.noteIcon}
-                />
-                <Text style={[styles.noteDate, { color: colors.subText }]}>
-                  {formatDate(item.updatedAt, item.createdAt)}
-                </Text>
-              </View>
-              <View style={styles.noteActions}>
-                <Pressable
-                  onPress={() => handleEditNote(item)}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="create" size={18} color={colors.iconColor} />
-                </Pressable>
-                <Pressable
-                  onPress={() => handleDeleteNote(item.id)}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="trash" size={18} color={colors.deleteIcon} />
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    handleReadAloud({
-                      note: item,
-                      speakingNoteId,
-                      setSpeakingNoteId,
-                      fetchFullNoteById,
-                      setNotesList
-                    });
-                  }}
-                  style={styles.actionButton}
-                >
-                  <Ionicons
-                    name={speakingNoteId === item.id ? 'volume-mute' : 'volume-high'}
-                    size={18}
-                    color={colors.iconColor}
-                  />
-                </Pressable>
-              </View>
-            </View>
-            <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
-              {getPreviewText(item)}
-            </Text>
-            <View style={styles.contentIndicators}>
-              {(item.textContents ?? item.text ?? '').trim() ? (
-                <View style={styles.indicator}>
-                  <Ionicons name="document-text" size={12} color={colors.subText} />
-                  <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
-                </View>
-              ) : null}
-              {item.checklistItems && item.checklistItems.length > 0 && (
-                <View style={styles.indicator}>
-                  <Ionicons name="checkbox" size={12} color={colors.subText} />
-                  <Text style={[styles.indicatorText, { color: colors.subText }]}>
-                    {item.checklistItems.length} items
+        renderItem={({ item }) => {
+          const checklistItems = parseChecklistItems(item.checklistItems);
+          const hasText = !!(item.textContents ?? item.text ?? '').trim();
+          const hasChecklist = checklistItems.length > 0;
+          
+          // Check if drawing tool was used and saved in note
+          const hasDrawings = !!(item.drawings && (
+            (Array.isArray(item.drawings) && item.drawings.length > 0) ||
+            (typeof item.drawings === 'string' && item.drawings.trim() !== '' && item.drawings !== '[]')
+          ));
+
+          return (
+            <TouchableOpacity
+              onPress={() => handleEditNote(item)}
+              style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
+            >
+              <View style={styles.noteHeader}>
+                <View style={styles.noteInfo}>
+                  <Text style={[styles.noteDate, { color: colors.subText }]}>
+                    {formatDate(item.updatedAt, item.createdAt)}
                   </Text>
                 </View>
-              )}
-              {item.drawings && item.drawings.length > 0 && (
-                <View style={styles.indicator}>
-                  <Ionicons name="brush" size={12} color={colors.subText} />
-                  <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
+                <View style={styles.noteActions}>
+                  <Pressable
+                    onPress={() => handleEditNote(item)}
+                    style={styles.actionButton}
+                  >
+                    <Ionicons name="create" size={18} color={colors.iconColor} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleDeleteNote(item.id)}
+                    style={styles.actionButton}
+                  >
+                    <Ionicons name="trash" size={18} color={colors.deleteIcon} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      handleReadAloud({
+                        note: item,
+                        speakingNoteId,
+                        setSpeakingNoteId,
+                        fetchFullNoteById,
+                        setNotesList
+                      });
+                    }}
+                    style={styles.actionButton}
+                  >
+                    <Ionicons
+                      name={speakingNoteId === item.id ? 'volume-mute' : 'volume-high'}
+                      size={18}
+                      color={colors.iconColor}
+                    />
+                  </Pressable>
                 </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
+              </View>
+              <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
+                {getPreviewText(item)}
+              </Text>
+              <View style={styles.contentIndicators}>
+                {hasText && (
+                  <View style={styles.indicator}>
+                    <Ionicons name="document-text" size={12} color={colors.subText} />
+                    <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
+                  </View>
+                )}
+                {hasChecklist && (
+                  <View style={styles.indicator}>
+                    <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
+                    <Text style={[styles.indicatorText, { color: colors.subText }]}>
+                      {checklistItems.length} items
+                    </Text>
+                  </View>
+                )}
+                {hasDrawings && (
+                  <View style={styles.indicator}>
+                    <Ionicons name="brush" size={12} color={colors.subText} />
+                    <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
       
       {/* Floating Add Note Button */}

@@ -281,5 +281,3 @@ export default function CollaboratorModal ({
     </Modal>
   );
 };
-
-//export default CollaboratorModal;

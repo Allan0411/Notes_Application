@@ -17,11 +17,11 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1 },
     elevation: 2,
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
+  // backButton: {
+  //   padding: 8,
+  //   borderRadius: 12,
+  //   backgroundColor: 'rgba(255,255,255,0.1)',
+  // },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
