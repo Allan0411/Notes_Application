@@ -469,6 +469,133 @@ import { StyleSheet } from 'react-native';
     textAlign: 'center',
     marginBottom: 10,
     marginTop: -5,
+  },
+  collaboratorModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  collaboratorModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+  },
+  collaboratorModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  collaboratorModalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  inviteSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  emailInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  roleSelection: {
+    marginBottom: 20,
+  },
+  roleLabel: {
+    fontSize: 14,
+    marginBottom: 10,
+    fontWeight: '500',
+  },
+  roleButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  roleButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  roleButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  inviteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
+    gap: 8,
+  },
+  inviteButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  collaboratorsSection: {
+    flex: 1,
+  },
+  collaboratorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+  },
+  collaboratorInfo: {
+    flex: 1,
+  },
+  collaboratorName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  collaboratorEmail: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  roleTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  removeButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  emptySubText: {
+    marginTop: 5,
+    fontSize: 14,
+    textAlign: 'center',
   }
 });
 

@@ -26,51 +26,15 @@ export default function App() {
   );
 }
 
-// Helper: Simulate token validation (replace with real logic)
-async function isTokenValid() {
-  try {
-    const token = await AsyncStorage.getItem('authToken');
-    // For demo: token exists and is not expired (add real validation as needed)
-    if (token) {
-      // Optionally, check expiry here
-      return true;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
 function Main() {
   const { currentTheme } = useContext(ThemeContext);
   const isDark = currentTheme === 'dark';
-
-  const [initialRoute, setInitialRoute] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // On mount, check token and set initial route accordingly
-    (async () => {
-      const valid = await isTokenValid();
-      setInitialRoute(valid ? 'Home' : 'Login');
-      setLoading(false);
-    })();
-  }, []);
-
-  if (loading || !initialRoute) {
-    // Show splash/loading while checking token
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDark ? '#000' : '#fff' }}>
-        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
-      </View>
-    );
-  }
 
   return (
     <>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <NavigationContainer theme={isDark ? DarkTheme : DefaultTheme}>
-        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />

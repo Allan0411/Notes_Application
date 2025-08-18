@@ -29,6 +29,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import MenuModal from '../components/MenuModal';
 import DrawingToolsModal from '../components/DrawingToolsModal';
 import FontPickerModal from '../components/FontPickerModal';
+import CollaboratorModal from '../components/CollaboratorModal';
 
 //@note imports
 
@@ -70,6 +71,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
 
   // @note text formatting state
   // Parse formatting JSON if present, otherwise fallback to note fields or defaults
@@ -457,9 +459,13 @@ console.log("drawings", drawings);
   }
 
   function handleCollaborator() {
-    hideMenu();
-    Alert.alert('Add Collaborator', 'Feature coming soon! You can invite others to view and edit this note together.');
+  hideMenu();
+  if (!note?.id) {
+    Alert.alert('Cannot Add Collaborators', 'Please save the note first before adding collaborators.');
+    return;
   }
+  setShowCollaboratorModal(true);
+}
 
   // @note menu show/hide
   const showMenu = () => {
@@ -933,6 +939,16 @@ const clearDrawing = () => {
             </View>
         </View>
       </Modal>
+
+      {/* @note collaborator modal */}
+      <CollaboratorModal
+       visible={showCollaboratorModal}
+       onClose={() => setShowCollaboratorModal(false)}
+       noteId={note?.id}
+       theme={theme}
+       themedStyles={themedStyles}
+       styles={styles}
+      />
     </>
   );
 }
