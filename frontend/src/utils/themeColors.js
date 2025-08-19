@@ -57,6 +57,10 @@ export const lightColors = {
       placeholder: '#718096',
       drawingBanner: '#4a5568',
       statusBar: 'dark-content',
+      success: '#38a169',
+      warning: '#d69e2e',
+      error: '#e53e3e',
+      overlay: 'rgba(0,0,0,0.5)',
     },
     dark: {
       background: '#1a202c',
@@ -75,7 +79,40 @@ export const lightColors = {
       placeholder: '#a0aec0',
       drawingBanner: '#2d3748',
       statusBar: 'light-content',
-    },
+      success: '#48bb78',
+      warning: '#f6e05e',
+      error: '#fc8181',
+      overlay: 'rgba(0,0,0,0.7)',
+    }
   };
   
-  
+  export const remindersthemes = {
+  light: {
+    background: '#ffffff',
+    surface: '#f8f9fa',
+    text: '#333333',
+    textSecondary: '#666666',
+    textMuted: '#999999',
+    accent: '#3182ce',
+    border: '#e2e8f0',
+    placeholder: '#a0aec0',
+    success: '#38a169',
+    warning: '#d69e2e',
+    error: '#e53e3e',
+    statusBar: 'dark-content',
+  },
+  dark: {
+    background: '#1a1a1a',
+    surface: '#2d3748',
+    text: '#e2e8f0',
+    textSecondary: '#a0aec0',
+    textMuted: '#718096',
+    accent: '#63b3ed',
+    border: '#4a5568',
+    placeholder: '#718096',
+    success: '#48bb78',
+    warning: '#f6e05e',
+    error: '#fc8181',
+    statusBar: 'light-content',
+  }
+};

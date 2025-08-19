@@ -30,6 +30,8 @@ import MenuModal from '../components/MenuModal';
 import DrawingToolsModal from '../components/DrawingToolsModal';
 import FontPickerModal from '../components/FontPickerModal';
 import CollaboratorModal from '../components/CollaboratorModal';
+import ReminderModal from '../components/ReminderModal';
+import reminderService from '../services/reminderService';
 
 //@note imports
 
@@ -45,6 +47,8 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [isSaving, setIsSaving] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [noteReminders, setNoteReminders] = useState([]);
 
   // @note note content state
   const [noteText, setNoteText] = useState(note?.textContents || '');
@@ -122,6 +126,27 @@ export default function NoteDetailScreen({ route, navigation }) {
   const slideAnim = useRef(new Animated.Value(300)).current;
   const aiSlideAnim = useRef(new Animated.Value(300)).current;
   const shareSlideAnim = useRef(new Animated.Value(300)).current;
+
+  // @note reminder service
+  useEffect(() => {
+   const loadNoteReminders = async () => {
+     if (note?.id) {
+       try {
+         const reminders = await reminderService.getRemindersForNote(note.id);
+         setNoteReminders(reminders);
+        } catch (error) {
+         console.error('Error loading note reminders:', error);
+        }
+      }
+    };
+    loadNoteReminders();
+  }, [note?.id]);
+
+  // Add this function for handling reminder creation:
+  const handleReminderCreated = (newReminder) => {
+   setNoteReminders([...noteReminders, newReminder]);
+   setShowReminderModal(false);
+  };
 
   // @note drawings debug
   useEffect(() => {
@@ -454,9 +479,13 @@ console.log("drawings", drawings);
 
   // @note reminder/collaborator
   function handleReminder() {
-    hideMenu();
-    Alert.alert('Set Reminder', 'Feature coming soon! You can set reminders for this note to notify you at specific times.');
+  hideMenu();
+  if (!noteTitle.trim() && !noteText.trim()) {
+    Alert.alert('Empty Note', 'Please add a title or content before setting a reminder.');
+    return;
   }
+  setShowReminderModal(true);
+}
 
   function handleCollaborator() {
   hideMenu();
@@ -949,6 +978,28 @@ const clearDrawing = () => {
        themedStyles={themedStyles}
        styles={styles}
       />
+
+      {/* @note Reminder Modal */}
+      <ReminderModal
+        visible={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        noteId={note?.id}
+        noteTitle={noteTitle}
+        theme={theme}
+        themedStyles={themedStyles}
+        styles={styles}
+        onReminderCreated={handleReminderCreated}
+      />
+
+      {/* Show reminder indicator if reminders exist */}
+      {noteReminders.length > 0 && (
+        <View style={[styles.reminderIndicator, { backgroundColor: theme.accent }]}>
+          <Ionicons name="alarm" size={16} color="#fff" />
+          <Text style={styles.reminderIndicatorText}>
+            {noteReminders.length} reminder{noteReminders.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+      )}
     </>
   );
 }
