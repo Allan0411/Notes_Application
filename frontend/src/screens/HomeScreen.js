@@ -26,8 +26,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function HomeScreen({ navigation }) {
   const { activeTheme } = useContext(ThemeContext);
-  // Get voiceSpeed, speak, and stop from the ReadAloudContext
-  const { voiceSpeed, speak, stop } = useContext(ReadAloudContext); 
+  const { speak, stop } = useContext(ReadAloudContext); 
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
@@ -41,6 +40,9 @@ export default function HomeScreen({ navigation }) {
   const [isFetchingNotes, setIsFetchingNotes] = useState(false);
   const [isMovingToBin, setIsMovingToBin] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+
+  // Add state for sorting
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
 
   useEffect(() => {
     return () => {
@@ -238,7 +240,14 @@ export default function HomeScreen({ navigation }) {
     return 'Empty note';
   };
 
-  const filteredNotes = notesList.filter(note => {
+  // Sort notes based on the sortOrder state
+  const sortedNotes = [...notesList].sort((a, b) => {
+    const dateA = new Date(a.updatedAt || a.createdAt);
+    const dateB = new Date(b.updatedAt || b.createdAt);
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
+  const filteredNotes = sortedNotes.filter(note => {
     const searchLower = searchQuery.toLowerCase();
     const checklistItems = parseChecklistItems(note.checklistItems);
 
@@ -251,19 +260,47 @@ export default function HomeScreen({ navigation }) {
     );
   });
 
+  // Group notes by month
+  const groupedNotes = filteredNotes.reduce((acc, note) => {
+    const noteDate = new Date(note.updatedAt || note.createdAt);
+    const month = noteDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (!acc[month]) {
+      acc[month] = [];
+    }
+    acc[month].push(note);
+    return acc;
+  }, {});
+
+  const months = Object.keys(groupedNotes);
+  const sortedMonths = months.sort((a, b) => {
+    const dateA = new Date(a.replace(/(\w+) (\d+)/, '$1 1, $2'));
+    const dateB = new Date(b.replace(/(\w+) (\d+)/, '$1 1, $2'));
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.headerText === '#fff' ? 'light-content' : 'dark-content'} backgroundColor={colors.headerBackground} />
       
-      {/* Header */}
+      {/* Header with Sort Button */}
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
           <Ionicons name="book" size={28} color={colors.headerText} />
           <Text style={[styles.headerTitle, { color: colors.headerText }]}>My Notes</Text>
         </View>
-        <TouchableOpacity onPress={openDrawer}>
-          <Ionicons name="menu" size={26} color={colors.headerText} />
-        </TouchableOpacity>
+        <View style={styles.headerRightButtons}>
+          <TouchableOpacity onPress={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}>
+            <Ionicons
+              name={sortOrder === 'newest' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
+              size={26}
+              color={colors.headerText}
+              style={{ marginRight: 10 }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openDrawer}>
+            <Ionicons name="menu" size={26} color={colors.headerText} />
+          </TouchableOpacity>
+        </View>
       </View>
       
       {/* Search Bar */}
@@ -285,11 +322,10 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
       
-      {/* Notes List */}
+      {/* Notes List grouped by month */}
       <FlatList
-        data={filteredNotes}
-        keyExtractor={item => (item.id ? String(item.id) : Math.random().toString())}
-        contentContainerStyle={styles.listContainer}
+        data={sortedMonths}
+        keyExtractor={item => item}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -305,91 +341,95 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         }
-        renderItem={({ item }) => {
-          const checklistItems = parseChecklistItems(item.checklistItems);
-          const hasText = !!(item.textContents ?? item.text ?? '').trim();
-          const hasChecklist = checklistItems.length > 0;
-          
-          // Check if drawing tool was used and saved in note
-          const hasDrawings = !!(item.drawings && (
-            (Array.isArray(item.drawings) && item.drawings.length > 0) ||
-            (typeof item.drawings === 'string' && item.drawings.trim() !== '' && item.drawings !== '[]')
-          ));
+        renderItem={({ item: month }) => (
+          <View key={month}>
+            <Text style={[styles.monthHeader, { color: colors.subText }]}>{month}</Text>
+            {groupedNotes[month].map((note, index) => {
+              const checklistItems = parseChecklistItems(note.checklistItems);
+              const hasText = !!(note.textContents ?? note.text ?? '').trim();
+              const hasChecklist = checklistItems.length > 0;
+              const hasDrawings = !!(note.drawings && (
+                (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+                (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+              ));
 
-          return (
-            <TouchableOpacity
-              onPress={() => handleEditNote(item)}
-              style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
-            >
-              <View style={styles.noteHeader}>
-                <View style={styles.noteInfo}>
-                  <Text style={[styles.noteDate, { color: colors.subText }]}>
-                    {formatDate(item.updatedAt, item.createdAt)}
+              return (
+                <TouchableOpacity
+                  key={note.id}
+                  onPress={() => handleEditNote(note)}
+                  style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
+                >
+                  <View style={styles.noteHeader}>
+                    <View style={styles.noteInfo}>
+                      <Text style={[styles.noteDate, { color: colors.subText }]}>
+                        {formatDate(note.updatedAt, note.createdAt)}
+                      </Text>
+                    </View>
+                    <View style={styles.noteActions}>
+                      <Pressable
+                        onPress={() => handleEditNote(note)}
+                        style={styles.actionButton}
+                      >
+                        <Ionicons name="create" size={18} color={colors.iconColor} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleDeleteNote(note.id)}
+                        style={styles.actionButton}
+                      >
+                        <Ionicons name="trash" size={18} color={colors.deleteIcon} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          handleReadAloud({
+                            note: note,
+                            speakingNoteId,
+                            setSpeakingNoteId,
+                            fetchFullNoteById,
+                            setNotesList,
+                            speak,
+                            stop
+                          });
+                        }}
+                        style={styles.actionButton}
+                      >
+                        <Ionicons
+                          name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
+                          size={18}
+                          color={colors.iconColor}
+                        />
+                      </Pressable>
+                    </View>
+                  </View>
+                  <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
+                    {getPreviewText(note)}
                   </Text>
-                </View>
-                <View style={styles.noteActions}>
-                  <Pressable
-                    onPress={() => handleEditNote(item)}
-                    style={styles.actionButton}
-                  >
-                    <Ionicons name="create" size={18} color={colors.iconColor} />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleDeleteNote(item.id)}
-                    style={styles.actionButton}
-                  >
-                    <Ionicons name="trash" size={18} color={colors.deleteIcon} />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      handleReadAloud({
-                        note: item,
-                        speakingNoteId,
-                        setSpeakingNoteId,
-                        fetchFullNoteById,
-                        setNotesList,
-                        speak,
-                        stop
-                      });
-                    }}
-                    style={styles.actionButton}
-                  >
-                    <Ionicons
-                      name={speakingNoteId === item.id ? 'volume-mute' : 'volume-high'}
-                      size={18}
-                      color={colors.iconColor}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-              <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
-                {getPreviewText(item)}
-              </Text>
-              <View style={styles.contentIndicators}>
-                {hasText && (
-                  <View style={styles.indicator}>
-                    <Ionicons name="document-text" size={12} color={colors.subText} />
-                    <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
+                  <View style={styles.contentIndicators}>
+                    {hasText && (
+                      <View style={styles.indicator}>
+                        <Ionicons name="document-text" size={12} color={colors.subText} />
+                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
+                      </View>
+                    )}
+                    {hasChecklist && (
+                      <View style={styles.indicator}>
+                        <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
+                        <Text style={[styles.indicatorText, { color: colors.subText }]}>
+                          {checklistItems.length} items
+                        </Text>
+                      </View>
+                    )}
+                    {hasDrawings && (
+                      <View style={styles.indicator}>
+                        <Ionicons name="brush" size={12} color={colors.subText} />
+                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-                {hasChecklist && (
-                  <View style={styles.indicator}>
-                    <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
-                    <Text style={[styles.indicatorText, { color: colors.subText }]}>
-                      {checklistItems.length} items
-                    </Text>
-                  </View>
-                )}
-                {hasDrawings && (
-                  <View style={styles.indicator}>
-                    <Ionicons name="brush" size={12} color={colors.subText} />
-                    <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        }}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       />
       
       {/* Floating Add Note Button */}

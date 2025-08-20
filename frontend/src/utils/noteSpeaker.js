@@ -20,8 +20,6 @@ export async function handleReadAloud({
 
     let fullNote = note;
 
-    // --- FIX APPLIED HERE ---
-    // Always fetch the latest note data to get the correct content.
     const fetched = await fetchFullNoteById(fullNote.id);
     if (fetched) {
       fullNote = fetched;
@@ -29,7 +27,6 @@ export async function handleReadAloud({
         prev.map(n => n.id === fullNote.id ? fullNote : n)
       );
     } else {
-      // Fallback: try AsyncStorage
       try {
         const localRaw = await AsyncStorage.getItem('notes_local') || await AsyncStorage.getItem('NOTES');
         const parsed = localRaw ? JSON.parse(localRaw) : null;
@@ -98,9 +95,27 @@ export async function handleReadAloud({
         contentParts.push('Checklist: ' + checklistStrings.join('. '));
       }
     }
-
-    if (fullNote.drawings && fullNote.drawings.length > 0) {
-      contentParts.push(`This note contains ${fullNote.drawings.length} drawings.`);
+    
+    // --- FIX APPLIED HERE ---
+    let drawingsArray = [];
+    if (Array.isArray(fullNote.drawings)) {
+      drawingsArray = fullNote.drawings;
+    } else if (
+      typeof fullNote.drawings === 'string' &&
+      fullNote.drawings.trim().startsWith('[')
+    ) {
+      try {
+        drawingsArray = JSON.parse(fullNote.drawings);
+      } catch (e) {
+        drawingsArray = [];
+      }
+    }
+    
+    if (drawingsArray.length > 0) {
+      // Change the message to a more general "a drawing" or "multiple drawings"
+      const drawingCount = drawingsArray.length;
+      const drawingMessage = drawingCount === 1 ? 'a drawing' : `${drawingCount} drawings`;
+      contentParts.push(`This note contains ${drawingMessage}.`);
     }
 
     // Optionally include last updated timestamp

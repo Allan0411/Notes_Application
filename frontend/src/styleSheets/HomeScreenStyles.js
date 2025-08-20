@@ -1,5 +1,3 @@
-// NotesListScreenStyleSheet.js
-
 import { StyleSheet, Dimensions } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -26,6 +24,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
+  // --- ADD THIS NEW STYLE ---
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // -------------------------
   searchContainer: {
     padding: 16,
   },
