@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   View, Text, FlatList, Pressable,
-  SafeAreaView, Alert, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput
+  SafeAreaView, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput, StyleSheet
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import styles from '../styleSheets/HomeScreenStyles';
@@ -12,17 +11,15 @@ import { handleReadAloud } from '../utils/noteSpeaker';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { buildThemedStyles } from '../utils/buildThemedStyles';
 import { noteDetailsthemes as themes } from '../utils/themeColors';
-
 import { ThemeContext } from '../ThemeContext';
-import { ReadAloudContext } from '../ReadAloudContext'; // Import the correct context
-
-import { deleteNote, fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from '../services/noteService';
+import { ReadAloudContext } from '../ReadAloudContext'; 
+import { fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from '../services/noteService';
 import { fetchUserInfo } from '../services/userService';
-
 import { lightColors, darkColors } from '../utils/themeColors';
 import { normalizeNote } from '../utils/normalizeNote';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export default function HomeScreen({ navigation }) {
   const { activeTheme } = useContext(ThemeContext);
@@ -40,15 +37,23 @@ export default function HomeScreen({ navigation }) {
   const [isFetchingNotes, setIsFetchingNotes] = useState(false);
   const [isMovingToBin, setIsMovingToBin] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [sortOption, setSortOption] = useState('updatedAt');
+  const [sortMenuVisible, setSortMenuVisible] = useState(false);
+  const slideUpAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Add state for sorting
-  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
+  // New states and refs for undo functionality
+  const [pendingDeletedNote, setPendingDeletedNote] = useState(null);
+  const [undoBarVisible, setUndoBarVisible] = useState(false);
+  const undoTimeout = useRef(null);
 
   useEffect(() => {
     return () => {
       try {
         stop();
         setSpeakingNoteId(null);
+        if (undoTimeout.current) {
+          clearTimeout(undoTimeout.current);
+        }
       } catch (e) {
         // ignore
       }
@@ -115,17 +120,15 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
-  const handleDeleteNote = async (noteId) => {
-    if (!noteId) {
-      console.error("Note does not have a valid id or _id:", noteId);
-      return;
-    }
+  // New function to finalize deletion after timeout
+  const confirmDeletion = async (noteId) => {
+    if (!noteId) return;
+
     setIsMovingToBin(true);
     try {
       await updateNoteIsPrivate(noteId, true);
-      let noteToDelete = notesList.find(n => (n.id ?? n._id) === noteId);
-      if (!noteToDelete) noteToDelete = {};
-      setNotesList(prevNotes => prevNotes.filter(n => (n.id ?? n._id) !== noteId));
+      const noteToDelete = notesList.find(n => (n.id ?? n._id) === noteId) || {};
+      
       const deletedNote = {
         ...noteToDelete,
         deletedAt: new Date().toISOString(),
@@ -136,10 +139,52 @@ export default function HomeScreen({ navigation }) {
         saveDeletedNotes(newDeleted);
         return newDeleted;
       });
+      setPendingDeletedNote(null);
     } catch (error) {
       console.error("Error moving note to bin:", error);
     } finally {
       setIsMovingToBin(false);
+    }
+  };
+
+  // Modified function to trigger the undo bar
+  const handleDeleteNote = (noteId) => {
+    if (!noteId) {
+      console.error("Note does not have a valid id or _id:", noteId);
+      return;
+    }
+
+    const noteToHide = notesList.find(n => (n.id ?? n._id) === noteId);
+    if (!noteToHide) return;
+
+    // Remove the note from the display list immediately
+    setNotesList(prevNotes => prevNotes.filter(n => (n.id ?? n._id) !== noteId));
+
+    // Store the note to be potentially restored
+    setPendingDeletedNote(noteToHide);
+    setUndoBarVisible(true);
+
+    // Start a timer to permanently delete the note after 5 seconds
+    if (undoTimeout.current) {
+      clearTimeout(undoTimeout.current);
+    }
+    undoTimeout.current = setTimeout(() => {
+      setUndoBarVisible(false);
+      confirmDeletion(noteId);
+    }, 5000); // 5 seconds
+  };
+  
+  // New function to undo the deletion
+  const handleUndoDeletion = () => {
+    if (undoTimeout.current) {
+      clearTimeout(undoTimeout.current);
+    }
+    setUndoBarVisible(false);
+    
+    if (pendingDeletedNote) {
+      // Restore the note to the main list
+      setNotesList(prevNotes => [pendingDeletedNote, ...prevNotes]);
+      setPendingDeletedNote(null);
     }
   };
 
@@ -153,17 +198,24 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
-  const formatDate = (dateStr, createdAtStr) => {
-    let d = new Date(dateStr);
-    if (isNaN(d.getTime()) && createdAtStr) {
-      d = new Date(createdAtStr);
+  const formatDate = (dateStr) => {
+    if (dateStr && dateStr.length > 0) {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
     }
-    if (isNaN(d.getTime())) {
-      d = new Date();
-    }
-    return d.toLocaleDateString('en-US', {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -198,7 +250,23 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
-  // Helper function to parse checklist items consistently
+  const openSortMenu = () => {
+    setSortMenuVisible(true);
+    Animated.timing(slideUpAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeSortMenu = () => {
+    Animated.timing(slideUpAnim, {
+      toValue: SCREEN_HEIGHT,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setSortMenuVisible(false));
+  };
+  
   const parseChecklistItems = (checklistItems) => {
     if (!checklistItems) return [];
     if (Array.isArray(checklistItems)) return checklistItems;
@@ -230,7 +298,6 @@ export default function HomeScreen({ navigation }) {
       return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
     
-    // Check if drawing tool was used and saved in note
     if (note.drawings && (
       (Array.isArray(note.drawings) && note.drawings.length > 0) ||
       (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
@@ -240,17 +307,20 @@ export default function HomeScreen({ navigation }) {
     return 'Empty note';
   };
 
-  // Sort notes based on the sortOrder state
+  const handleSortSelection = (option) => {
+    setSortOption(option);
+    closeSortMenu();
+  };
+
   const sortedNotes = [...notesList].sort((a, b) => {
-    const dateA = new Date(a.updatedAt || a.createdAt);
-    const dateB = new Date(b.updatedAt || b.createdAt);
-    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    const dateA = new Date(a[sortOption]);
+    const dateB = new Date(b[sortOption]);
+    return dateB - dateA;
   });
 
   const filteredNotes = sortedNotes.filter(note => {
     const searchLower = searchQuery.toLowerCase();
     const checklistItems = parseChecklistItems(note.checklistItems);
-
     return (
       (note.title && note.title.toLowerCase().includes(searchLower)) ||
       ((note.textContents ?? note.text ?? '').toLowerCase().includes(searchLower)) ||
@@ -260,7 +330,6 @@ export default function HomeScreen({ navigation }) {
     );
   });
 
-  // Group notes by month
   const groupedNotes = filteredNotes.reduce((acc, note) => {
     const noteDate = new Date(note.updatedAt || note.createdAt);
     const month = noteDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -271,27 +340,21 @@ export default function HomeScreen({ navigation }) {
     return acc;
   }, {});
 
-  const months = Object.keys(groupedNotes);
-  const sortedMonths = months.sort((a, b) => {
-    const dateA = new Date(a.replace(/(\w+) (\d+)/, '$1 1, $2'));
-    const dateB = new Date(b.replace(/(\w+) (\d+)/, '$1 1, $2'));
-    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-  });
+  const groupedNotesArray = Object.entries(groupedNotes);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.headerText === '#fff' ? 'light-content' : 'dark-content'} backgroundColor={colors.headerBackground} />
       
-      {/* Header with Sort Button */}
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
           <Ionicons name="book" size={28} color={colors.headerText} />
           <Text style={[styles.headerTitle, { color: colors.headerText }]}>My Notes</Text>
         </View>
         <View style={styles.headerRightButtons}>
-          <TouchableOpacity onPress={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}>
+          <TouchableOpacity onPress={openSortMenu}>
             <Ionicons
-              name={sortOrder === 'newest' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
+              name={'swap-vertical-outline'}
               size={26}
               color={colors.headerText}
               style={{ marginRight: 10 }}
@@ -302,8 +365,7 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-      
-      {/* Search Bar */}
+
       <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.searchBar, { backgroundColor: colors.searchBackground }]}>
           <Ionicons name="search" size={20} color={colors.subText} style={styles.searchIcon} />
@@ -322,10 +384,9 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
       
-      {/* Notes List grouped by month */}
       <FlatList
-        data={sortedMonths}
-        keyExtractor={item => item}
+        data={groupedNotesArray}
+        keyExtractor={([month]) => month}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
@@ -342,10 +403,10 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         }
-        renderItem={({ item: month }) => (
+        renderItem={({ item: [month, notes] }) => (
           <View key={month}>
             <Text style={[styles.monthHeader, { color: colors.subText }]}>{month}</Text>
-            {groupedNotes[month].map((note, index) => {
+            {notes.map((note, index) => {
               const checklistItems = parseChecklistItems(note.checklistItems);
               const hasText = !!(note.textContents ?? note.text ?? '').trim();
               const hasChecklist = checklistItems.length > 0;
@@ -353,7 +414,6 @@ export default function HomeScreen({ navigation }) {
                 (Array.isArray(note.drawings) && note.drawings.length > 0) ||
                 (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
               ));
-
               return (
                 <TouchableOpacity
                   key={note.id}
@@ -363,7 +423,7 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.noteHeader}>
                     <View style={styles.noteInfo}>
                       <Text style={[styles.noteDate, { color: colors.subText }]}>
-                        {formatDate(note.updatedAt, note.createdAt)}
+                        {formatDate(note[sortOption], note.createdAt)}
                       </Text>
                     </View>
                     <View style={styles.noteActions}>
@@ -433,12 +493,52 @@ export default function HomeScreen({ navigation }) {
         )}
       />
       
-      {/* Floating Add Note Button */}
       <TouchableOpacity style={[styles.fabButton, { backgroundColor: colors.headerBackground }]} onPress={handleAddNote}>
         <Ionicons name="add" size={28} color={colors.headerText} />
       </TouchableOpacity>
+
+      {sortMenuVisible && (
+        <TouchableWithoutFeedback onPress={closeSortMenu}>
+          <View style={localStyles.fullScreenOverlay}>
+            <Animated.View style={[localStyles.bottomSheet, { backgroundColor: colors.cardBackground, transform: [{ translateY: slideUpAnim }] }]}>
+              <View style={[localStyles.bottomSheetHandle, { backgroundColor: colors.subText }]} />
+              <Text style={[localStyles.bottomSheetTitle, { color: colors.text }]}>Sort Notes By</Text>
+              
+              <TouchableOpacity
+                style={localStyles.sortItem}
+                onPress={() => handleSortSelection('updatedAt')}
+              >
+                <Text style={[localStyles.sortText, { color: colors.text }]}>Date Modified</Text>
+                {sortOption === 'updatedAt' && (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={localStyles.sortItem}
+                onPress={() => handleSortSelection('createdAt')}
+              >
+                <Text style={[localStyles.sortText, { color: colors.text }]}>Date Created</Text>
+                {sortOption === 'createdAt' && (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
+                )}
+              </TouchableOpacity>
+              
+            </Animated.View>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* New Undo Bar Component */}
+      {undoBarVisible && (
+        <View style={[localStyles.undoBar, { backgroundColor: colors.searchBackground }]}>
+          <Text style={[localStyles.undoText, { color: colors.text }]}>Note moved to bin</Text>
+          <TouchableOpacity onPress={handleUndoDeletion}>
+            <Text style={[localStyles.undoButton, { color: colors.accentColor }]}>UNDO</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       
-      {/* Right-side slide drawer */}
       {drawerVisible && (
         <>
           <TouchableWithoutFeedback onPress={closeDrawer}>
@@ -554,7 +654,6 @@ export default function HomeScreen({ navigation }) {
         </>
       )}
       
-      {/* Loading Overlays */}
       <LoadingOverlay
         visible={isFetchingNotes}
         text="Fetching notes..."
@@ -572,3 +671,67 @@ export default function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  fullScreenOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
+    zIndex: 99,
+  },
+  bottomSheet: {
+    width: '100%',
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    marginBottom: 16,
+  },
+  bottomSheetTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 24,
+    width: '100%',
+    textAlign: 'left',
+  },
+  sortItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+  },
+  sortText: {
+    fontSize: 16,
+  },
+  undoBar: {
+    position: 'absolute',
+    bottom: 20, // Adjusted for padding
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 8,
+    elevation: 5,
+    zIndex: 100,
+  },
+  undoText: {
+    fontSize: 14,
+    flex: 1,
+    marginRight: 10,
+  },
+  undoButton: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});

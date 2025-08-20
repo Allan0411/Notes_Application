@@ -15,6 +15,7 @@ import LogoutScreen from './src/screens/LogoutScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import UserProfile from './src/screens/UserProfile';
+import HelpArticleScreen from './src/screens/HelpArticleScreen'; // Import the new screen
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,7 @@ function Main() {
           <Stack.Screen name="Reminders" component={RemindersScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="HelpFeedback" component={HelpFeedbackScreen} />
+          <Stack.Screen name="HelpArticle" component={HelpArticleScreen} />
           <Stack.Screen name="LogoutScreen" component={LogoutScreen} />
           <Stack.Screen name="UserProfile" component={UserProfile} />
         </Stack.Navigator>
