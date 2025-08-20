@@ -12,20 +12,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../ThemeContext';
-import styles from '../styleSheets/SettingsScreenStyles'; // Import styles from the stylesheet
+import { ReadAloudContext } from '../ReadAloudContext'; // Assuming file name is ReadAloudContext.js
+import styles from '../styleSheets/SettingsScreenStyles';
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
-  const [addToBottom, setAddToBottom] = useState(true);
-  const [tickToBottom, setTickToBottom] = useState(true);
-  const [linkPreview, setLinkPreview] = useState(true);
   const [enableSharing, setEnableSharing] = useState(true);
 
+  // Get voiceSpeed and setVoiceSpeed from the context
+  const { voiceSpeed, setVoiceSpeed } = useContext(ReadAloudContext); 
   const { themeMode, setThemeMode, activeTheme } = useContext(ThemeContext);
   const isDark = activeTheme === 'dark';
 
   const themeOptions = ['System', 'Light', 'Dark'];
-
   const backgroundColor = isDark ? '#1a202c' : '#f8f9fa';
   const textColor = isDark ? '#ffffff' : '#000000';
 
@@ -33,7 +32,6 @@ const SettingsScreen = () => {
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
@@ -41,22 +39,20 @@ const SettingsScreen = () => {
           <Text style={[styles.headerText, { color: textColor }]}>Settings</Text>
         </View>
 
-        {/* Display Options */}
-        <Text style={[styles.sectionTitle, { color: textColor }]}>Display options</Text>
+        <Text style={[styles.sectionTitle, { color: textColor }]}>Voice</Text>
         <View style={styles.optionRow}>
-          <Text style={[styles.optionText, { color: textColor }]}>Add new items to bottom</Text>
-          <Switch value={addToBottom} onValueChange={setAddToBottom} />
-        </View>
-        <View style={styles.optionRow}>
-          <Text style={[styles.optionText, { color: textColor }]}>Move ticked items to bottom</Text>
-          <Switch value={tickToBottom} onValueChange={setTickToBottom} />
-        </View>
-        <View style={styles.optionRow}>
-          <Text style={[styles.optionText, { color: textColor }]}>Display rich link previews</Text>
-          <Switch value={linkPreview} onValueChange={setLinkPreview} />
+          <Text style={[styles.optionText, { color: textColor }]}>Voice Speed</Text>
+          <View style={localStyles.speedControl}>
+            <TouchableOpacity onPress={() => setVoiceSpeed(prev => Math.max(0.5, prev - 0.1))}>
+              <Text style={[localStyles.speedButton, { color: textColor }]}>-</Text>
+            </TouchableOpacity>
+            <Text style={[localStyles.speedValue, { color: textColor }]}>{voiceSpeed.toFixed(1)}x</Text>
+            <TouchableOpacity onPress={() => setVoiceSpeed(prev => Math.min(2.0, prev + 0.1))}>
+              <Text style={[localStyles.speedButton, { color: textColor }]}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Theme */}
         <Text style={[styles.sectionTitle, { color: textColor }]}>Theme</Text>
         {themeOptions.map((option) => (
           <TouchableOpacity
@@ -71,7 +67,6 @@ const SettingsScreen = () => {
           </TouchableOpacity>
         ))}
 
-        {/* Sharing */}
         <Text style={[styles.sectionTitle, { color: textColor }]}>Sharing</Text>
         <View style={styles.optionRow}>
           <Text style={[styles.optionText, { color: textColor }]}>Enable sharing</Text>
@@ -86,4 +81,19 @@ const SettingsScreen = () => {
 
 export default SettingsScreen;
 
-
+const localStyles = StyleSheet.create({
+  speedControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: 100,
+  },
+  speedButton: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+  },
+  speedValue: {
+    fontSize: 16,
+  },
+});

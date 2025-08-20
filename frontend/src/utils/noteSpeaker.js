@@ -1,67 +1,61 @@
-import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Main read aloud function for notes
 export async function handleReadAloud({
   note,
   speakingNoteId,
   setSpeakingNoteId,
   fetchFullNoteById,
-  setNotesList
+  setNotesList,
+  speak,
+  stop
 }) {
   try {
-    // Stop speech if already reading this note
     if (speakingNoteId === note.id) {
-      Speech.stop();
+      stop();
       setSpeakingNoteId(null);
       return;
     }
 
-    Speech.stop();
+    stop();
 
     let fullNote = note;
 
-    // Try to fetch full note data if shallow
-    const hasText = fullNote.textContents && String(fullNote.textContents).trim().length > 0;
-    const hasTextAlt = fullNote.text && String(fullNote.text).trim().length > 0;
-    const hasChecklist = Array.isArray(fullNote.checklistItems) && fullNote.checklistItems.length > 0;
-    const hasDrawings = Array.isArray(fullNote.drawings) && fullNote.drawings.length > 0;
-
-    if (!hasText && !hasTextAlt && !hasChecklist && !hasDrawings && fullNote.id) {
-      const fetched = await fetchFullNoteById(fullNote.id);
-      if (fetched) {
-        fullNote = fetched;
-        setNotesList && setNotesList(prev =>
-          prev.map(n => n.id === fullNote.id ? fullNote : n)
-        );
-      } else {
-        // Fallback: try AsyncStorage
-        try {
-          const localRaw = await AsyncStorage.getItem('notes_local') || await AsyncStorage.getItem('NOTES');
-          const parsed = localRaw ? JSON.parse(localRaw) : null;
-          if (parsed) {
-            const found = parsed.find(n => n.id === fullNote.id || n._id === fullNote.id);
-            if (found) {
-              fullNote = {
-                id: found.id ?? found._id ?? null,
-                title: found.title ?? '',
-                textContents: found.textContents ?? found.text ?? '',
-                checklistItems: Array.isArray(found.checklistItems) ? found.checklistItems : [],
-                drawings: Array.isArray(found.drawings) ? found.drawings : [],
-                createdAt: found.createdAt ?? found.created_at ?? null,
-                updatedAt: found.updatedAt ?? found.updated_at ?? null,
-                ...found,
-              };
-              setNotesList && setNotesList(prev =>
-                prev.map(n => n.id === fullNote.id ? fullNote : n)
-              );
-            }
+    // --- FIX APPLIED HERE ---
+    // Always fetch the latest note data to get the correct content.
+    const fetched = await fetchFullNoteById(fullNote.id);
+    if (fetched) {
+      fullNote = fetched;
+      setNotesList && setNotesList(prev =>
+        prev.map(n => n.id === fullNote.id ? fullNote : n)
+      );
+    } else {
+      // Fallback: try AsyncStorage
+      try {
+        const localRaw = await AsyncStorage.getItem('notes_local') || await AsyncStorage.getItem('NOTES');
+        const parsed = localRaw ? JSON.parse(localRaw) : null;
+        if (parsed) {
+          const found = parsed.find(n => n.id === fullNote.id || n._id === fullNote.id);
+          if (found) {
+            fullNote = {
+              id: found.id ?? found._id ?? null,
+              title: found.title ?? '',
+              textContents: fullNote.textContents ?? fullNote.text ?? '',
+              checklistItems: Array.isArray(found.checklistItems) ? found.checklistItems : [],
+              drawings: Array.isArray(found.drawings) ? found.drawings : [],
+              createdAt: found.createdAt ?? found.created_at ?? null,
+              updatedAt: found.updatedAt ?? found.updated_at ?? null,
+              ...found,
+            };
+            setNotesList && setNotesList(prev =>
+              prev.map(n => n.id === fullNote.id ? fullNote : n)
+            );
           }
-        } catch (err) {
-          // Ignore local fallback errors
         }
+      } catch (err) {
+        // Ignore local fallback errors
       }
     }
+  
 
     // Build TTS content
     const contentParts = [];
@@ -129,9 +123,7 @@ export async function handleReadAloud({
 
     if (content) {
       setSpeakingNoteId && setSpeakingNoteId(fullNote.id);
-      Speech.speak(content, {
-        rate: 1.0,
-        pitch: 1.0,
+      speak(content, {
         onDone: () => setSpeakingNoteId && setSpeakingNoteId(null),
         onStopped: () => setSpeakingNoteId && setSpeakingNoteId(null),
         onError: (e) => {
@@ -141,7 +133,7 @@ export async function handleReadAloud({
       });
     } else {
       setSpeakingNoteId && setSpeakingNoteId(fullNote.id);
-      Speech.speak('This note is empty.', {
+      speak('This note is empty.', {
         onDone: () => setSpeakingNoteId && setSpeakingNoteId(null),
         onStopped: () => setSpeakingNoteId && setSpeakingNoteId(null),
         onError: () => setSpeakingNoteId && setSpeakingNoteId(null),

@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Speech from 'expo-speech';
 import styles from '../styleSheets/HomeScreenStyles';
 import { handleReadAloud } from '../utils/noteSpeaker';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -15,6 +14,8 @@ import { buildThemedStyles } from '../utils/buildThemedStyles';
 import { noteDetailsthemes as themes } from '../utils/themeColors';
 
 import { ThemeContext } from '../ThemeContext';
+import { ReadAloudContext } from '../ReadAloudContext'; // Import the correct context
+
 import { deleteNote, fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from '../services/noteService';
 import { fetchUserInfo } from '../services/userService';
 
@@ -25,6 +26,8 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function HomeScreen({ navigation }) {
   const { activeTheme } = useContext(ThemeContext);
+  // Get voiceSpeed, speak, and stop from the ReadAloudContext
+  const { voiceSpeed, speak, stop } = useContext(ReadAloudContext); 
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
@@ -42,7 +45,7 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     return () => {
       try {
-        Speech.stop();
+        stop();
         setSpeakingNoteId(null);
       } catch (e) {
         // ignore
@@ -344,7 +347,9 @@ export default function HomeScreen({ navigation }) {
                         speakingNoteId,
                         setSpeakingNoteId,
                         fetchFullNoteById,
-                        setNotesList
+                        setNotesList,
+                        speak,
+                        stop
                       });
                     }}
                     style={styles.actionButton}

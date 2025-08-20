@@ -19,7 +19,7 @@
     },
     "production": {
       "autoIncrement": true
-      // No "buildType" specified: default is "aab" (for Play Store)
+      
     }
   },
   "submit": {

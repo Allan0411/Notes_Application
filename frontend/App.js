@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, ThemeContext } from './src/ThemeContext';
-import { StatusBar, ActivityIndicator, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ReadAloudProvider } from './src/ReadAloudContext';
+import { StatusBar } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import NoteDetailScreen from './src/screens/NoteDetailScreen';
@@ -21,7 +21,9 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <ThemeProvider>
-      <Main />
+      <ReadAloudProvider>
+        <Main />
+      </ReadAloudProvider>
     </ThemeProvider>
   );
 }
