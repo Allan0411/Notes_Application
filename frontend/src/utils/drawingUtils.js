@@ -79,3 +79,17 @@ export function createDrawingObject(
     }
   }
   
+export function isPointNearPath (x, y, pathString, eraserRadius) {
+    const pathPoints = pathString.match(/\d+\.?\d*/g);
+    if (!pathPoints || pathPoints.length < 2) return false;
+   
+    for (let i = 0; i < pathPoints.length - 1; i += 2) {
+      const px = parseFloat(pathPoints[i]);
+      const py = parseFloat(pathPoints[i + 1]);
+      const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+      if (distance <= eraserRadius) {
+        return true;
+      }
+    }
+    return false;
+};

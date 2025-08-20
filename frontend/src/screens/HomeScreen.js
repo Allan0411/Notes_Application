@@ -327,6 +327,7 @@ export default function HomeScreen({ navigation }) {
         data={sortedMonths}
         keyExtractor={item => item}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={64} color={colors.subText} />
@@ -403,7 +404,7 @@ export default function HomeScreen({ navigation }) {
                   <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
                     {getPreviewText(note)}
                   </Text>
-                  <View style={styles.contentIndicators}>
+                  <View style={[styles.contentIndicators, { borderTopColor: colors.borderColor }]}>
                     {hasText && (
                       <View style={styles.indicator}>
                         <Ionicons name="document-text" size={12} color={colors.subText} />
