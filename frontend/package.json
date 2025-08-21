@@ -20,9 +20,11 @@
     "@shopify/react-native-skia": "^2.0.0-next.4",
     "expo": "^53.0.20",
     "expo-calendar": "~14.1.4",
+    "expo-dev-client": "~5.2.4",
     "expo-file-system": "^18.1.11",
     "expo-notifications": "^0.31.4",
     "expo-print": "~14.1.4",
+    "expo-screen-capture": "~7.2.0",
     "expo-sharing": "^13.1.5",
     "expo-speech": "^13.1.7",
     "expo-status-bar": "~2.2.3",
@@ -35,7 +37,9 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
-    "expo-dev-client": "~5.2.4"
+    "expo-image-picker": "~16.1.4",
+    "expo-image-manipulator": "~13.1.7",
+    "react-native-view-shot": "4.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
