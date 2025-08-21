@@ -92,7 +92,7 @@ export const lightColors = {
     surface: '#f8f9fa',
     text: '#333333',
     textSecondary: '#666666',
-    textMuted: '#999999',
+    textMuted: '#4a5568',
     accent: '#3182ce',
     border: '#e2e8f0',
     placeholder: '#a0aec0',
@@ -102,7 +102,7 @@ export const lightColors = {
     statusBar: 'dark-content',
   },
   dark: {
-    background: '#1a1a1a',
+    background: '#1a202c',
     surface: '#2d3748',
     text: '#e2e8f0',
     textSecondary: '#a0aec0',

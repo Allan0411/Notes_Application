@@ -1,45 +1,48 @@
-//styleSheets/RemindersScreenStyles.js
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    // Change to add the gray background color to the header.
+    backgroundColor: '#a56161b9',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 24,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  headerIcon: {
+    padding: 4,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 10,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 10,
+    paddingHorizontal: 10,
     fontSize: 16,
-    color: '#333',
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    padding: 4,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   tab: {
     flex: 1,
@@ -47,25 +50,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 8,
-    position: 'relative',
+    borderRadius: 10,
+    marginHorizontal: 4,
   },
   activeTab: {
-    backgroundColor: '#3182ce',
+    backgroundColor: 'transparent',
   },
   tabText: {
     marginLeft: 6,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
+    fontWeight: '600',
   },
   activeTabText: {
     color: '#fff',
   },
   tabBadge: {
     position: 'absolute',
-    top: 4,
-    right: 8,
+    top: 5,
+    right: 5,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -75,127 +77,133 @@ const styles = StyleSheet.create({
   },
   tabBadgeText: {
     color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   contentContainer: {
     flex: 1,
   },
   remindersContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
   },
   reminderCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  reminderCardHeader: {
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  reminderCardTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   statusIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 8,
+    marginRight: 10,
   },
-  reminderCardNoteTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flexShrink: 1,
   },
-  reminderCardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  reminderAction: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  reminderCardMessage: {
+  cardMessage: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 12,
-    lineHeight: 20,
   },
-  reminderCardFooter: {
+  cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderTopWidth: 1,
+    paddingTop: 12,
   },
-  reminderDateTime: {
+  dateTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
-  reminderCardDate: {
+  cardDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  actionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconMargin: {
+    marginLeft: 8,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+    borderTopWidth: 1,
+    paddingTop: 10,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
     marginLeft: 4,
-    fontSize: 13,
-    fontWeight: '500',
   },
-  reminderType: {
-    flexDirection: 'row',
+  completeButton: {
+  },
+  deleteButton: {
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    paddingVertical: 50,
   },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
     paddingHorizontal: 40,
   },
   emptyStateTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8,
+    fontWeight: 'bold',
+    marginTop: 20,
     textAlign: 'center',
   },
   emptyStateMessage: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 14,
+    marginTop: 8,
     textAlign: 'center',
-    lineHeight: 22,
   },
   infoSection: {
-    padding: 20,
     marginTop: 20,
-    backgroundColor: '#f8f9fa',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
   },
   infoTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   infoText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
     lineHeight: 20,
-  }
+  },
 });
 
-export default styles ;
+export default styles;

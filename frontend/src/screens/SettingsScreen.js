@@ -31,14 +31,15 @@ const SettingsScreen = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={{ backgroundColor: '#4a5568', paddingLeft: 10 }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={textColor} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerIcon}>
+            <Ionicons name="arrow-back" size={24} color={'#FFFFFF'} />
           </TouchableOpacity>
-          <Text style={[styles.headerText, { color: textColor }]}>Settings</Text>
+          <Text style={[styles.headerText, { color: '#FFFFFF' }]}>Settings</Text>
         </View>
-
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={[styles.sectionTitle, { color: textColor }]}>Voice</Text>
         <View style={styles.optionRow}>
           <Text style={[styles.optionText, { color: textColor }]}>Voice Speed</Text>

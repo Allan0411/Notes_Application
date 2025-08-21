@@ -125,11 +125,14 @@ Easily share notes with friends, family, or colleagues.
         backgroundColor={isDark ? '#1e1e1e' : '#4a5568'}
       />
 
-      <View style={[styles.header, { borderBottomColor: isDark ? '#333' : '#e8eaed' }]}>
+      <View style={[styles.header, {
+        borderBottomColor: isDark ? '#333' : '#e8eaed',
+        backgroundColor: '#4a5568',
+      }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Ionicons name="arrow-back" size={24} color={isDark ? '#ffffff' : '#202124'} />
+          <Ionicons name="arrow-back" size={24} color={'#FFFFFF'} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#202124' }]}>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>
           Help & Feedback
         </Text>
         <View style={styles.menuButton} />
@@ -148,7 +151,7 @@ Easily share notes with friends, family, or colleagues.
               onPress={() => handleResourcePress(resource)}
             >
               <View style={[styles.iconContainer, { backgroundColor: resource.color }]}>
-                <Ionicons name={resource.icon} size={20} color="#ffffff" />
+                <Ionicons name="help-circle-outline" size={20} color="#ffffff" />
               </View>
               <Text style={[styles.resourceText, { color: isDark ? '#e8eaed' : '#202124' }]}>
                 {resource.title}
