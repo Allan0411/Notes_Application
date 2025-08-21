@@ -17,7 +17,7 @@ import { fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from 
 import { fetchUserInfo } from '../services/userService';
 import { lightColors, darkColors } from '../utils/themeColors';
 import { normalizeNote } from '../utils/normalizeNote';
-
+import CollabNotes from './CollabNotes';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -28,6 +28,9 @@ export default function HomeScreen({ navigation }) {
   const themedStyles = buildThemedStyles(theme, styles);
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
 
+  
+  const [collaboratedNotes, setCollaboratedNotes] = useState([]);
+  
   const [notesList, setNotesList] = useState([]);
   const [deletedNotes, setDeletedNotes] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -45,7 +48,8 @@ export default function HomeScreen({ navigation }) {
   const [pendingDeletedNote, setPendingDeletedNote] = useState(null);
   const [undoBarVisible, setUndoBarVisible] = useState(false);
   const undoTimeout = useRef(null);
-
+  
+  
   useEffect(() => {
     return () => {
       try {
@@ -68,23 +72,47 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    fetchUserInfo();
-  }, []);
+useEffect(() => {
+  
+  const fetchUserInfo1 = async () => {
+    try {
+      const user = await fetchUserInfo();  // Make sure this is your actual async function
+      if (user) {
+        setUserInfo({
+          name: user.username || 'Guest',
+          email: user.email || 'email@example.com',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+ 
+  fetchUserInfo1();
+}, []);
+
 
   const fetchNotes = async () => {
     setIsFetchingNotes(true);
     try {
+      const userIdStr = await AsyncStorage.getItem('userId');
+      console.log('userIdStr:', userIdStr);
+      if(userIdStr){
+          const userId = userIdStr ? parseInt(userIdStr, 10) : null;
       const notes = await apiFetchNotes();
       const normalized = Array.isArray(notes) ? notes.map(normalizeNote) : [];
-      const activeNotes = normalized.filter(note => note.isPrivate === false);
+      const activeNotes = normalized.filter(note => note.isPrivate === false && note.creatorUserId === userId);
       const binNotes = normalized.filter(note => note.isPrivate === true).map(note => ({
         ...note,
         deletedAt: note.deletedAt || new Date().toISOString()
       }));
+
+
       setNotesList(activeNotes);
       setDeletedNotes(binNotes);
       await saveDeletedNotes(binNotes);
+      }
+    
     } catch (error) {
       console.error('Fetch Notes error: ', error);
     } finally {
@@ -97,6 +125,7 @@ export default function HomeScreen({ navigation }) {
       fetchNotes();
     }, [])
   );
+
 
   const handleAddNote = () => {
     const newNote = {
@@ -199,6 +228,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const formatDate = (dateStr) => {
+    console.log('formatDate called with:', dateStr);
     if (dateStr && dateStr.length > 0) {
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
@@ -423,7 +453,8 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.noteHeader}>
                     <View style={styles.noteInfo}>
                       <Text style={[styles.noteDate, { color: colors.subText }]}>
-                        {formatDate(note[sortOption], note.createdAt)}
+                        {formatDate(note[sortOption] || note.createdAt || note.lastAccessed)}
+
                       </Text>
                     </View>
                     <View style={styles.noteActions}>
@@ -596,6 +627,23 @@ export default function HomeScreen({ navigation }) {
                 )}
                 <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
+
+              {/* collab list */}
+                <TouchableOpacity
+                  onPress={() => {
+                    closeDrawer();
+                    navigation.navigate('CollabNotes',{collaboratedNotes: collaboratedNotes});
+                  }}
+                  style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
+                >
+                  <View style={styles.menuIconContainer}>
+                    <Ionicons name="people-outline" size={20} color={colors.iconColor} />
+                  </View>
+                  <Text style={[styles.drawerItemText, { color: colors.text }]}>My Collabs</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.subText} />
+                </TouchableOpacity>
+
+
               <TouchableOpacity
                 onPress={() => {
                   closeDrawer();
@@ -661,13 +709,7 @@ export default function HomeScreen({ navigation }) {
         styles={styles}
         theme={theme}
       />
-      <LoadingOverlay
-        visible={isMovingToBin}
-        text="Moving note to bin..."
-        themedStyles={themedStyles}
-        styles={styles}
-        theme={theme}
-      />
+      
     </SafeAreaView>
   );
 }

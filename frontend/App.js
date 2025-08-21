@@ -5,6 +5,7 @@ import { ThemeProvider, ThemeContext } from './src/ThemeContext';
 import { ReadAloudProvider } from './src/ReadAloudContext';
 import { StatusBar } from 'react-native';
 
+import CollabNotes from './src/screens/CollabNotes';
 import HomeScreen from './src/screens/HomeScreen';
 import NoteDetailScreen from './src/screens/NoteDetailScreen';
 import DeletedNotesScreen from './src/screens/DeletedNotesScreen';
@@ -49,6 +50,7 @@ function Main() {
           <Stack.Screen name="HelpArticle" component={HelpArticleScreen} />
           <Stack.Screen name="LogoutScreen" component={LogoutScreen} />
           <Stack.Screen name="UserProfile" component={UserProfile} />
+          <Stack.Screen name="CollabNotes" component={CollabNotes} options={{ title: 'Collaborated Notes' }}/>
         </Stack.Navigator>
       </NavigationContainer>
     </>

@@ -1,14 +1,16 @@
-// components/CollaboratorModal.js
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, Modal, TouchableOpacity, TextInput,
   Alert, FlatList, ActivityIndicator, ScrollView,
   SafeAreaView, StatusBar
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { collaboratorService } from '../services/collaboratorService';
 
-export default function CollaboratorModal ({
+import { Ionicons } from '@expo/vector-icons';
+import { collaboratorService, collaborationInviteService } from '../services/collaboratorService';
+import { getUserById, getUserByEmail } from '../services/userService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export default function CollaboratorModal({
   visible,
   onClose,
   noteId,
@@ -21,12 +23,16 @@ export default function CollaboratorModal ({
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('Editor');
   const [inviting, setInviting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
 
   const roles = ['Viewer', 'Editor', 'Admin'];
 
   useEffect(() => {
     if (visible && noteId) {
       fetchCollaborators();
+    } else {
+      setCollaborators([]);
+      setCurrentUserRole(null);
     }
   }, [visible, noteId]);
 
@@ -34,10 +40,38 @@ export default function CollaboratorModal ({
     setLoading(true);
     try {
       const data = await collaboratorService.getNoteCollaborators(noteId);
-      setCollaborators(data || []);
+      if (!data || data.length === 0) {
+        setCollaborators([]);
+        setCurrentUserRole(null);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch user info for each collaborator
+      const collaboratorsWithUserInfo = await Promise.all(
+        data.map(async (collab) => {
+          try {
+            const user = await getUserById(collab.userId);
+            return { ...collab, user };
+          } catch (error) {
+            console.error(`Failed to fetch user info for userId ${collab.userId}:`, error);
+            return { ...collab, user: null };
+          }
+        })
+      );
+
+      setCollaborators(collaboratorsWithUserInfo);
+
+      // Get current logged-in user id from AsyncStorage (adjust if using context or redux)
+      const loggedInUserId = await AsyncStorage.getItem('userId');
+      // Find current user's role among collaborators
+      const currentUser = collaboratorsWithUserInfo.find(c => c.userId.toString() === loggedInUserId);
+      setCurrentUserRole(currentUser ? currentUser.role.toLowerCase() : null);
+
     } catch (error) {
       Alert.alert('Error', 'Failed to load collaborators: ' + error.message);
       setCollaborators([]);
+      setCurrentUserRole(null);
     } finally {
       setLoading(false);
     }
@@ -49,7 +83,6 @@ export default function CollaboratorModal ({
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(inviteEmail)) {
       Alert.alert('Error', 'Please enter a valid email address');
@@ -57,11 +90,20 @@ export default function CollaboratorModal ({
     }
 
     setInviting(true);
+
     try {
-      await collaboratorService.inviteCollaborator(noteId, inviteEmail, inviteRole);
+      const invitedUser = await getUserByEmail(inviteEmail);
+      if (!invitedUser) {
+        Alert.alert('Error', 'User with this email does not exist');
+        setInviting(false);
+        return;
+      }
+
+      await collaborationInviteService.sendInvite(noteId, invitedUser.id, inviteRole);
+
       Alert.alert('Success', 'Invitation sent successfully!');
       setInviteEmail('');
-      fetchCollaborators(); // Refresh the list
+      fetchCollaborators();
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
@@ -114,6 +156,8 @@ export default function CollaboratorModal ({
     );
   };
 
+  const canModify = currentUserRole === 'owner' || currentUserRole === 'admin';
+
   const renderCollaborator = ({ item }) => (
     <View style={[styles.collaboratorItem, { borderBottomColor: theme.border }]}>
       <View style={styles.collaboratorInfo}>
@@ -125,31 +169,46 @@ export default function CollaboratorModal ({
             {item.user.email}
           </Text>
         )}
-        <TouchableOpacity
-          style={[styles.roleTag, { backgroundColor: theme.accent + '20' }]}
-          onPress={() => {
-            // Show role change options
-            Alert.alert(
-              'Change Role',
-              'Select new role:',
-              roles.map(role => ({
-                text: role,
-                onPress: () => role !== item.role && handleRoleChange(item, role)
-              })).concat([{ text: 'Cancel', style: 'cancel' }])
-            );
-          }}
-        >
-          <Text style={[styles.roleText, { color: theme.accent }]}>
-            {item.role} ▼
+
+        {item.role !== 'owner' ? (
+          canModify ? (
+            <TouchableOpacity
+              style={[styles.roleTag, { backgroundColor: theme.accent + '20' }]}
+              onPress={() => {
+                Alert.alert(
+                  'Change Role',
+                  'Select new role:',
+                  roles.map(role => ({
+                    text: role,
+                    onPress: () => role !== item.role && handleRoleChange(item, role)
+                  })).concat([{ text: 'Cancel', style: 'cancel' }])
+                );
+              }}
+            >
+              <Text style={[styles.roleText, { color: theme.accent }]}>
+                {item.role} ▼
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={[styles.roleText, { color: theme.accent, marginTop: 4 }]}>
+              {item.role}
+            </Text>
+          )
+        ) : (
+          <Text style={[styles.roleText, { color: theme.accent, marginTop: 4 }]}>
+            {item.role}
           </Text>
-        </TouchableOpacity>
+        )}
       </View>
-      <TouchableOpacity
-        onPress={() => handleRemoveCollaborator(item)}
-        style={styles.removeButton}
-      >
-        <Ionicons name="trash-outline" size={20} color={theme.error || '#ef4444'} />
-      </TouchableOpacity>
+
+      {canModify && item.role !== 'owner' && (
+        <TouchableOpacity
+          onPress={() => handleRemoveCollaborator(item)}
+          style={styles.removeButton}
+        >
+          <Ionicons name="trash-outline" size={20} color={theme.error || '#ef4444'} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -157,7 +216,7 @@ export default function CollaboratorModal ({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView style={[styles.collaboratorModalContainer, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
-        
+
         {/* Header */}
         <View style={[styles.collaboratorModalHeader, { borderBottomColor: theme.border }]}>
           <Text style={[styles.collaboratorModalTitle, { color: theme.text }]}>
@@ -169,79 +228,81 @@ export default function CollaboratorModal ({
         </View>
 
         <ScrollView style={styles.collaboratorModalContent}>
-          {/* Invite Section */}
-          <View style={styles.inviteSection}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Invite New Collaborator
-            </Text>
-            
-            <TextInput
-              style={[
-                styles.emailInput,
-                {
-                  backgroundColor: theme.inputBackground || theme.background,
-                  borderColor: theme.border,
-                  color: theme.text
-                }
-              ]}
-              placeholder="Enter email address"
-              value={inviteEmail}
-              onChangeText={setInviteEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor={theme.placeholder}
-            />
+          {/* Invite Section - show only for owner/admin */}
+          {canModify && (
+            <View style={styles.inviteSection}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                Invite New Collaborator
+              </Text>
 
-            {/* Role Selection */}
-            <View style={styles.roleSelection}>
-              <Text style={[styles.roleLabel, { color: theme.text }]}>Role:</Text>
-              <View style={styles.roleButtons}>
-                {roles.map((role) => (
-                  <TouchableOpacity
-                    key={role}
-                    style={[
-                      styles.roleButton,
-                      { 
-                        backgroundColor: inviteRole === role ? theme.accent : 'transparent',
-                        borderColor: theme.border 
-                      }
-                    ]}
-                    onPress={() => setInviteRole(role)}
-                  >
-                    <Text style={[
-                      styles.roleButtonText,
-                      { 
-                        color: inviteRole === role ? '#fff' : theme.text 
-                      }
-                    ]}>
-                      {role}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <TextInput
+                style={[
+                  styles.emailInput,
+                  {
+                    backgroundColor: theme.inputBackground || theme.background,
+                    borderColor: theme.border,
+                    color: theme.text
+                  }
+                ]}
+                placeholder="Enter email address"
+                value={inviteEmail}
+                onChangeText={setInviteEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={theme.placeholder}
+              />
+
+              {/* Role Selection */}
+              <View style={styles.roleSelection}>
+                <Text style={[styles.roleLabel, { color: theme.text }]}>Role:</Text>
+                <View style={styles.roleButtons}>
+                  {roles.map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[
+                        styles.roleButton,
+                        {
+                          backgroundColor: inviteRole === role ? theme.accent : 'transparent',
+                          borderColor: theme.border
+                        }
+                      ]}
+                      onPress={() => setInviteRole(role)}
+                    >
+                      <Text style={[
+                        styles.roleButtonText,
+                        {
+                          color: inviteRole === role ? '#fff' : theme.text
+                        }
+                      ]}>
+                        {role}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              style={[
-                styles.inviteButton,
-                { 
-                  backgroundColor: theme.accent,
-                  opacity: inviting ? 0.7 : 1
-                }
-              ]}
-              onPress={handleInvite}
-              disabled={inviting}
-            >
-              {inviting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="person-add-outline" size={20} color="#fff" />
-                  <Text style={styles.inviteButtonText}>Send Invitation</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[
+                  styles.inviteButton,
+                  {
+                    backgroundColor: theme.accent,
+                    opacity: inviting ? 0.7 : 1
+                  }
+                ]}
+                onPress={handleInvite}
+                disabled={inviting}
+              >
+                {inviting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="person-add-outline" size={20} color="#fff" />
+                    <Text style={styles.inviteButtonText}>Send Invitation</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Current Collaborators */}
           <View style={styles.collaboratorsSection}>

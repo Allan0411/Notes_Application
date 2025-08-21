@@ -12,6 +12,7 @@ import {
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styleSheets/LoginScreenStyles'; // Import styles from the stylesheet
+import { getUserByEmail } from '../services/userService';
 
 
 export default function LoginScreen({ navigation }) {
@@ -19,6 +20,13 @@ export default function LoginScreen({ navigation }) {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false); // loader state
 
+    const storeUserId = async (id) => {
+  try {
+    await AsyncStorage.setItem('userId', id.toString());
+  } catch (e) {
+    console.error('Failed to save userId', e);
+  }
+};
     const handleLogin = async () => {
         if (!email || !password) {
             alert("Please enter both email and password");
@@ -42,6 +50,9 @@ export default function LoginScreen({ navigation }) {
                 await AsyncStorage.setItem('authToken', data.token);
                 console.log("Token:", data.token);
                 alert("Login successful");
+                const user=await getUserByEmail(email);
+                storeUserId(user.id);
+                console.log("userId:", user.id);
                 navigation.navigate('Home');
             } else {
                 console.error("Login error:", data);

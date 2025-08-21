@@ -29,14 +29,26 @@ export async function fetchNoteById(id) {
     const res = await fetch(`${API_BASE_URL}/notes/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error(`Fetch note failed: ${res.status}`);
+
+    // Log status and response for debugging
+    console.log(`fetchNoteById: status=${res.status}, noteId=${id}`);
+
     const text = await res.text();
+    console.log('fetchNoteById response:', text);
+
+    if (!res.ok) {
+      // Throw detailed error including response body if available
+      throw new Error(text || `Fetch note failed with status ${res.status}`);
+    }
+
     return text ? JSON.parse(text) : null;
   } catch (err) {
-    console.error('Error fetching note by id:', err);
+    console.error(`Error fetching note by id (${id}):`, err);
     throw err;
   }
 }
+
+
 
 // POST (create) new note
 export async function createNote(note) {
@@ -141,3 +153,6 @@ export async function updateNoteIsPrivate(id, isPrivate) {
       throw err;
     }
   }
+
+
+

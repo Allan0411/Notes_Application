@@ -27,3 +27,44 @@ export async function fetchUserInfo() {
     throw err;
   }
 }
+
+
+export async function getUserById(userId) {
+  const token = await getAuthToken();
+  if (!token) throw new Error("No auth token found");
+  try {
+    const res = await fetch(`${API_BASE_URL}/Users/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Fetch user by ID failed: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching user by ID:', err);
+    throw err;
+  }
+}
+
+export async function getUserByEmail(email) {
+  const token = await getAuthToken();
+  if (!token) throw new Error("No auth token found");
+  try {
+    const res = await fetch(`${API_BASE_URL}/Users/byEmail/${encodeURIComponent(email)}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Fetch user by email failed: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching user by email:', err);
+    throw err;
+  }
+}
