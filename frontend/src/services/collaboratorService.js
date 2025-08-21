@@ -58,49 +58,55 @@ export const collaboratorService = {
   },
 
   async removeCollaborator(noteId, collaboratorUserId) {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/NotesUser/${noteId}/collaborators/${collaboratorUserId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/NotesUser/${noteId}/collaborators/${collaboratorUserId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to remove collaborator: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error removing collaborator:', error);
-      throw error;
+    if (!response.ok) {
+      // Attempt to read error text if available
+      const errorText = await response.text();
+      throw new Error(errorText || `Failed to remove collaborator: ${response.status}`);
     }
-  },
+
+    // DELETE may not return JSON, so just return true or nothing
+    return true; 
+  } catch (error) {
+    console.error('Error removing collaborator:', error);
+    throw error;
+  }
+}
+,
 
   async updateCollaboratorRole(noteId, collaboratorUserId, newRole) {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/api/notes/${noteId}/collaborators/${collaboratorUserId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/NotesUser/${noteId}/collaborators/${collaboratorUserId}/role`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: newRole }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to update collaborator role: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating collaborator role:', error);
-      throw error;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Failed to update collaborator role: ${response.status}`);
     }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating collaborator role:', error);
+    throw error;
   }
+}
+
 ,
   async fetchCollaboratedNotes() {
     try {

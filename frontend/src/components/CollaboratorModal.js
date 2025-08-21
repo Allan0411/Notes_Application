@@ -122,7 +122,7 @@ export default function CollaboratorModal({
           style: 'destructive',
           onPress: async () => {
             try {
-              await collaboratorService.removeCollaborator(noteId, collaborator.id);
+              await collaboratorService.removeCollaborator(noteId, collaborator.userId);
               Alert.alert('Success', 'Collaborator removed successfully');
               fetchCollaborators();
             } catch (error) {
@@ -144,7 +144,7 @@ export default function CollaboratorModal({
           text: 'Change',
           onPress: async () => {
             try {
-              await collaboratorService.updateCollaboratorRole(noteId, collaborator.id, newRole);
+              await collaboratorService.updateCollaboratorRole(noteId, collaborator.userId, newRole);
               Alert.alert('Success', 'Role updated successfully');
               fetchCollaborators();
             } catch (error) {
