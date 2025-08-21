@@ -16,7 +16,8 @@ import LogoutScreen from './src/screens/LogoutScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import UserProfile from './src/screens/UserProfile';
-import HelpArticleScreen from './src/screens/HelpArticleScreen'; // Import the new screen
+import HelpArticleScreen from './src/screens/HelpArticleScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen'; // Import the new screen
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +42,7 @@ function Main() {
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
           <Stack.Screen name="DeletedNotes" component={DeletedNotesScreen} />

@@ -1,4 +1,3 @@
-// screens/RemindersScreen.js
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
   View,
@@ -10,8 +9,9 @@ import {
   RefreshControl,
   SafeAreaView,
   StatusBar,
-  Modal,
   TextInput,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -31,13 +31,10 @@ export default function RemindersScreen({ navigation }) {
   const [upcomingReminders, setUpcomingReminders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('upcoming'); // 'upcoming', 'all', 'completed'
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingReminder, setEditingReminder] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
-  // Load reminders when screen focuses
   useFocusEffect(
     useCallback(() => {
       loadReminders();
@@ -54,8 +51,6 @@ export default function RemindersScreen({ navigation }) {
 
       setReminders(allReminders);
       setUpcomingReminders(upcoming);
-
-      // Clean up past reminders
       await reminderService.cleanupPastReminders();
     } catch (error) {
       console.error('Error loading reminders:', error);
@@ -75,7 +70,6 @@ export default function RemindersScreen({ navigation }) {
     try {
       await reminderService.completeReminder(reminderId);
       loadReminders();
-      Alert.alert('Success', 'Reminder marked as completed');
     } catch (error) {
       console.error('Error completing reminder:', error);
       Alert.alert('Error', 'Failed to complete reminder');
@@ -106,32 +100,35 @@ export default function RemindersScreen({ navigation }) {
   };
 
   const openNote = (noteId) => {
-    // Navigate to note detail - you'll need to implement this based on your navigation structure
     navigation.navigate('NoteDetail', { noteId });
   };
 
   const getFilteredReminders = () => {
     let filtered = [];
-    
+
     switch (selectedTab) {
       case 'upcoming':
         filtered = upcomingReminders;
         break;
       case 'all':
-        filtered = reminders.filter(r => r.status === 'active');
+        filtered = reminders.filter((r) => r.status === 'active');
         break;
       case 'completed':
-        filtered = reminders.filter(r => r.status === 'completed');
+        filtered = reminders.filter((r) => r.status === 'completed');
         break;
       default:
         filtered = reminders;
     }
 
-    // Apply search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(reminder =>
-        reminder.noteTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reminder.customMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (reminder) =>
+          reminder.noteTitle
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          reminder.customMessage
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
       );
     }
 
@@ -161,7 +158,7 @@ export default function RemindersScreen({ navigation }) {
     if (diffDays === -1) return 'Yesterday';
     if (diffDays > 1 && diffDays <= 7) return `In ${diffDays} days`;
     if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -171,204 +168,196 @@ export default function RemindersScreen({ navigation }) {
 
     return (
       <TouchableOpacity
-        style={[themedStyles.reminderCard]}
+        style={themedStyles.reminderCard}
         onPress={() => openNote(reminder.noteId)}
       >
-        <View style={styles.reminderCardHeader}>
-          <View style={styles.reminderCardTitle}>
-            <View style={[styles.statusIndicator, { backgroundColor: statusColor }]} />
-            <Text style={themedStyles.reminderCardNoteTitle} numberOfLines={1}>
-              {reminder.noteTitle}
-            </Text>
-          </View>
-          
-          <View style={styles.reminderCardActions}>
-            {reminder.status === 'active' && !isPast && (
-              <TouchableOpacity
-                onPress={() => handleCompleteReminder(reminder.id)}
-                style={styles.reminderAction}
-              >
-                <Ionicons name="checkmark-circle" size={24} color={theme.success} />
-              </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-              onPress={() => handleDeleteReminder(reminder.id)}
-              style={styles.reminderAction}
-            >
-              <Ionicons name="trash" size={20} color={theme.error} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.cardHeader}>
+          <View style={[styles.statusIndicator, { backgroundColor: statusColor }]} />
+          <Text style={themedStyles.cardTitle} numberOfLines={1}>
+            {reminder.noteTitle}
+          </Text>
         </View>
 
-        <Text style={themedStyles.reminderCardMessage} numberOfLines={2}>
+        <Text style={themedStyles.cardMessage} numberOfLines={2}>
           {reminder.customMessage}
         </Text>
 
-        <View style={styles.reminderCardFooter}>
-          <View style={styles.reminderDateTime}>
+        <View style={styles.cardFooter}>
+          <View style={styles.dateTimeContainer}>
             <Ionicons name="time" size={16} color={statusColor} />
-            <Text style={[themedStyles.reminderCardDate, { color: statusColor }]}>
+            <Text style={[themedStyles.cardDate, { color: statusColor }]}>
               {formatReminderDate(reminder.reminderDateTime)} at{' '}
               {new Date(reminder.reminderDateTime).toLocaleTimeString([], {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
             </Text>
           </View>
 
-          <View style={styles.reminderType}>
+          <View style={styles.actionIcons}>
             {(reminder.reminderType === 'notification' || reminder.reminderType === 'both') && (
-              <Ionicons name="notifications" size={16} color={theme.textMuted} />
+              <Ionicons name="notifications" size={16} color={theme.textMuted} style={styles.iconMargin} />
             )}
             {(reminder.reminderType === 'calendar' || reminder.reminderType === 'both') && (
-              <Ionicons name="calendar" size={16} color={theme.textMuted} />
+              <Ionicons name="calendar" size={16} color={theme.textMuted} style={styles.iconMargin} />
             )}
             {reminder.repeatType !== 'none' && (
-              <Ionicons name="repeat" size={16} color={theme.textMuted} />
+              <Ionicons name="repeat" size={16} color={theme.textMuted} style={styles.iconMargin} />
             )}
           </View>
+        </View>
+
+        <View style={styles.actionButtons}>
+          {reminder.status === 'active' && !isPast && (
+            <TouchableOpacity
+              onPress={() => handleCompleteReminder(reminder.id)}
+              style={[styles.actionButton, styles.completeButton]}
+            >
+              <Ionicons name="checkmark-done" size={18} color={theme.success} />
+              <Text style={[themedStyles.actionButtonText, { color: theme.success }]}>Complete</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            onPress={() => handleDeleteReminder(reminder.id)}
+            style={[styles.actionButton, styles.deleteButton]}
+          >
+            <Ionicons name="trash" size={18} color={theme.error} />
+            <Text style={[themedStyles.actionButtonText, { color: theme.error }]}>Delete</Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
   };
 
   const EmptyState = ({ tab }) => (
-    <View style={styles.emptyState}>
-      <Ionicons 
-        name={tab === 'upcoming' ? 'time' : tab === 'completed' ? 'checkmark-done' : 'alarm'} 
-        size={64} 
-        color={theme.textMuted} 
-      />
-      <Text style={themedStyles.emptyStateTitle}>
-        {tab === 'upcoming' && 'No Upcoming Reminders'}
-        {tab === 'all' && 'No Active Reminders'}
-        {tab === 'completed' && 'No Completed Reminders'}
-      </Text>
-      <Text style={themedStyles.emptyStateMessage}>
-        {tab === 'upcoming' && 'Create reminders for your notes to stay organized'}
-        {tab === 'all' && 'Set reminders when editing notes'}
-        {tab === 'completed' && 'Completed reminders will appear here'}
-      </Text>
+    <View style={styles.emptyStateContainer}>
+      <View style={styles.emptyState}>
+        <Ionicons
+          name={tab === 'upcoming' ? 'time' : tab === 'completed' ? 'checkmark-done' : 'alarm'}
+          size={64}
+          color={theme.textMuted}
+        />
+        <Text style={themedStyles.emptyStateTitle}>
+          {tab === 'upcoming' && 'No Upcoming Reminders'}
+          {tab === 'all' && 'No Active Reminders'}
+          {tab === 'completed' && 'No Completed Reminders'}
+        </Text>
+        <Text style={themedStyles.emptyStateMessage}>
+          {tab === 'upcoming' && 'Create reminders for your notes to stay organized.'}
+          {tab === 'all' && 'Set reminders when editing notes.'}
+          {tab === 'completed' && 'Completed reminders will appear here.'}
+        </Text>
+      </View>
     </View>
   );
 
   const filteredReminders = getFilteredReminders();
 
   return (
-    <SafeAreaView style={themedStyles.container}>
-      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
-      
-      {/* Header */}
-      <View style={themedStyles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
-        <Text style={themedStyles.headerTitle}>Reminders</Text>
-        <TouchableOpacity onPress={() => setShowSearch(!showSearch)}>
-          <Ionicons name="search" size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={themedStyles.container}>
+        <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
 
-      {/* Search Bar */}
-      {showSearch && (
-        <View style={themedStyles.searchContainer}>
-          <Ionicons name="search" size={20} color={theme.textMuted} />
-          <TextInput
-            style={themedStyles.searchInput}
-            placeholder="Search reminders..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={theme.placeholder}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={theme.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      {/* Tab Selector */}
-      <View style={themedStyles.tabContainer}>
-        {[
-          { key: 'upcoming', label: 'Upcoming', icon: 'time' },
-          { key: 'all', label: 'All', icon: 'list' },
-          { key: 'completed', label: 'Completed', icon: 'checkmark-done' },
-        ].map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[
-              styles.tab,
-              selectedTab === tab.key && themedStyles.activeTab,
-            ]}
-            onPress={() => setSelectedTab(tab.key)}
-          >
-            <Ionicons
-              name={tab.icon}
-              size={18}
-              color={selectedTab === tab.key ? '#fff' : theme.textSecondary}
-            />
-            <Text
-              style={[
-                themedStyles.tabText,
-                selectedTab === tab.key && styles.activeTabText,
-              ]}
-            >
-              {tab.label}
-            </Text>
-            {/* Badge for count */}
-            {tab.key === 'upcoming' && upcomingReminders.length > 0 && (
-              <View style={[styles.tabBadge, { backgroundColor: theme.error }]}>
-                <Text style={styles.tabBadgeText}>{upcomingReminders.length}</Text>
-              </View>
-            )}
+        <View style={[themedStyles.header, { backgroundColor: '#4a5568' }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerIcon}>
+            <Ionicons name="arrow-back" size={24} color={'#FFFFFF'} />
           </TouchableOpacity>
-        ))}
-      </View>
+          <Text style={[themedStyles.headerTitle, { color: '#FFFFFF' }]}>Reminders</Text>
+          <TouchableOpacity onPress={() => setShowSearch(!showSearch)} style={styles.headerIcon}>
+            <Ionicons name="search" size={24} color={'#FFFFFF'} />
+          </TouchableOpacity>
+        </View>
 
-      {/* Reminders List */}
-      <ScrollView
-        style={styles.contentContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.accent}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredReminders.length === 0 ? (
-          <EmptyState tab={selectedTab} />
-        ) : (
-          <View style={styles.remindersContainer}>
-            {filteredReminders.map((reminder) => (
-              <ReminderCard key={reminder.id} reminder={reminder} />
-            ))}
+        {showSearch && (
+          <View style={themedStyles.searchContainer}>
+            <Ionicons name="search" size={20} color={theme.textMuted} />
+            <TextInput
+              style={themedStyles.searchInput}
+              placeholder="Search reminders..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.placeholder}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <Text style={themedStyles.infoTitle}>About Reminders</Text>
-          <Text style={themedStyles.infoText}>
-            • Reminders can send notifications or add events to your calendar{'\n'}
-            • Set reminders when editing notes using the menu button{'\n'}
-            • Completed reminders are kept for reference{'\n'}
-            • Past due reminders appear in red
-          </Text>
+        <View style={themedStyles.tabContainer}>
+          {[
+            { key: 'upcoming', label: 'Upcoming', icon: 'time' },
+            { key: 'all', label: 'All', icon: 'list' },
+            { key: 'completed', label: 'Completed', icon: 'checkmark-done' },
+          ].map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tab, selectedTab === tab.key && themedStyles.activeTab]}
+              onPress={() => setSelectedTab(tab.key)}
+            >
+              <Ionicons
+                name={tab.icon}
+                size={18}
+                color={selectedTab === tab.key ? '#fff' : theme.textSecondary}
+              />
+              <Text style={[themedStyles.tabText, selectedTab === tab.key && styles.activeTabText]}>
+                {tab.label}
+              </Text>
+              {tab.key === 'upcoming' && upcomingReminders.length > 0 && (
+                <View style={[styles.tabBadge, { backgroundColor: theme.error }]}>
+                  <Text style={styles.tabBadgeText}>{upcomingReminders.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
-      </ScrollView>
 
-      {/* Loading Overlay */}
-      <LoadingOverlay
-        visible={loading}
-        text="Loading reminders..."
-        themedStyles={themedStyles}
-        styles={styles}
-        theme={theme}
-      />
-    </SafeAreaView>
+        <ScrollView
+          style={styles.contentContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.accent}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {filteredReminders.length === 0 && searchQuery.length > 0 ? (
+            <EmptyState tab={selectedTab} />
+          ) : (
+            <>
+              {filteredReminders.length === 0 ? (
+                <EmptyState tab={selectedTab} />
+              ) : (
+                <View style={styles.remindersContainer}>
+                  {filteredReminders.map((reminder) => (
+                    <ReminderCard key={reminder.id} reminder={reminder} />
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.infoSection}>
+                <Text style={themedStyles.infoTitle}>About Reminders</Text>
+                <Text style={themedStyles.infoText}>
+                  • Reminders can send notifications or add events to your calendar.{'\n'}• Set reminders when editing notes using the menu button.{'\n'}• Completed reminders are kept for reference.{'\n'}• Past due reminders appear in red.
+                </Text>
+              </View>
+            </>
+          )}
+        </ScrollView>
+
+        <LoadingOverlay
+          visible={loading}
+          text="Loading reminders..."
+          themedStyles={themedStyles}
+          styles={styles}
+          theme={theme}
+        />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
-};
+}

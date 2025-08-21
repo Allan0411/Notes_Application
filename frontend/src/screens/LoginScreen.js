@@ -78,7 +78,7 @@ export default function LoginScreen({ navigation }) {
                     </View>
 
                     {/* Form Section */}
-                    <View style={styles.formContainer}>
+                    <View style={[styles.formContainer, {marginBottom: 20}]}>
                         <View style={styles.inputContainer}>
                             <TextInput
                                 placeholder="Email"
@@ -109,7 +109,7 @@ export default function LoginScreen({ navigation }) {
                                 editable={!loading} // disable while loading
                             />
                         </View>
-
+                        
                         <TouchableOpacity
                             style={[styles.loginButton, loading && { opacity: 0.8 }]}
                             onPress={handleLogin}
@@ -126,6 +126,34 @@ export default function LoginScreen({ navigation }) {
 
                     {/* Footer Section */}
                     <View style={styles.footerContainer}>
+                        {/* ======================================= */}
+                        {/* NEW: Forgot Password Link now in the footer with new text and a space */}
+                        {/* ======================================= */}
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('ForgotPassword')}
+                            disabled={loading}
+                            activeOpacity={loading ? 1 : 0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.signupText,
+                                    loading && { opacity: 0.5 }
+                                ]}
+                            >
+                                Forgot password?{' '}
+                                <Text
+                                    style={[
+                                        styles.signupLink,
+                                        loading && { opacity: 0.5 }
+                                    ]}
+                                >
+                                    Click here
+                                </Text>
+                            </Text>
+                        </TouchableOpacity>
+                        
+                        <View style={{ height: 10 }} />
+
                         <TouchableOpacity
                             onPress={() => navigation.navigate('Signup')}
                             disabled={loading} // disable while loading
@@ -154,5 +182,3 @@ export default function LoginScreen({ navigation }) {
         </>
     );
 }
-
-
