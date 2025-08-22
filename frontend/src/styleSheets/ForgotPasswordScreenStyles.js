@@ -15,12 +15,12 @@ const ForgotPasswordScreenStyles = StyleSheet.create({
     title: {
         fontSize: 34,
         fontWeight: '700',
-        color: '#374151',
+        color: '#535d81ff',
         fontFamily: 'sans-serif-light',
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
+        color: '#6b7586ff',
         textAlign: 'center',
         marginTop: 5,
     },
@@ -63,7 +63,7 @@ const ForgotPasswordScreenStyles = StyleSheet.create({
     loginButton: {
         width: '100%',
         height: 55,
-        backgroundColor: '#4B5563',
+        backgroundColor: '#686f88ff',
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',

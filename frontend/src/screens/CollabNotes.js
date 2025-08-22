@@ -199,14 +199,13 @@ export default function CollabNotes({ navigation }) {
     return textToRead.trim();
   };
 
-
   const handleSpeakToggle = async (note) => {
     if (speakingNoteId === note.id) {
       stop();
       setSpeakingNoteId(null);
     } else {
       const fullNote = await fetchFullNoteById(note.id);
-      const text = getTextToSpeak(fullNote); // Use the new helper function
+      const text = getTextToSpeak(fullNote);
       speak(text, note.id);
       setSpeakingNoteId(note.id);
     }
@@ -221,143 +220,192 @@ export default function CollabNotes({ navigation }) {
   }, {});
   const groupedNotesArray = Object.entries(groupedNotes);
 
+  const renderNoteCard = (note) => {
+    const checklistItems = parseChecklistItems(note.checklistItems);
+    const hasText = !!(note.textContents ?? note.text ?? '').trim();
+    const hasChecklist = checklistItems.length > 0;
+    const hasDrawings = note.drawings && (
+      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+    );
+
+    return (
+      <TouchableOpacity
+        key={note.id}
+        onPress={() => handleEditNote(note)}
+        style={[collabNotesStyles.noteCard, { 
+          backgroundColor: colors.cardBackground,
+          shadowColor: activeTheme === 'dark' ? '#000' : '#000',
+        }]}
+        activeOpacity={0.7}
+      >
+        {/* Note Header */}
+        <View style={collabNotesStyles.noteHeader}>
+          <View style={collabNotesStyles.noteMetadata}>
+            <View style={[collabNotesStyles.collaborationBadge, { backgroundColor: colors.accentColor + '20' }]}>
+              <Ionicons name="people" size={12} color={colors.accentColor} />
+              <Text style={[collabNotesStyles.badgeText, { color: colors.accentColor }]}>
+                Shared
+              </Text>
+            </View>
+            <Text style={[collabNotesStyles.noteDate, { color: colors.subText }]}>
+              {formatDate(note.updatedAt || note.createdAt)}
+            </Text>
+          </View>
+          <View style={collabNotesStyles.noteActions}>
+            <Pressable
+              onPress={() => handleSpeakToggle(note)}
+              style={[collabNotesStyles.actionButton, { backgroundColor: colors.background }]}
+            >
+              <Ionicons
+                name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
+                size={16}
+                color={speakingNoteId === note.id ? colors.accentColor : colors.iconColor}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Note Content Preview */}
+        <Text style={[collabNotesStyles.noteTitle, { color: colors.text }]} numberOfLines={2}>
+          {getPreviewText(note)}
+        </Text>
+
+        {/* Content Indicators */}
+        <View style={collabNotesStyles.contentIndicators}>
+          {hasText && (
+            <View style={[collabNotesStyles.indicator, { backgroundColor: colors.background }]}>
+              <Ionicons name="document-text" size={14} color={colors.accentColor} />
+              <Text style={[collabNotesStyles.indicatorText, { color: colors.subText }]}>Text</Text>
+            </View>
+          )}
+          {hasChecklist && (
+            <View style={[collabNotesStyles.indicator, { backgroundColor: colors.background }]}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.accentColor} />
+              <Text style={[collabNotesStyles.indicatorText, { color: colors.subText }]}>
+                {checklistItems.length} items
+              </Text>
+            </View>
+          )}
+          {hasDrawings && (
+            <View style={[collabNotesStyles.indicator, { backgroundColor: colors.background }]}>
+              <Ionicons name="brush" size={14} color={colors.accentColor} />
+              <Text style={[collabNotesStyles.indicatorText, { color: colors.subText }]}>Drawing</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={collabNotesStyles.emptyState}>
+      <View style={[collabNotesStyles.emptyIconContainer, { backgroundColor: colors.accentColor + '10' }]}>
+        <Ionicons name="people-outline" size={64} color={colors.accentColor} />
+      </View>
+      <Text style={[collabNotesStyles.emptyTitle, { color: colors.text }]}>
+        No Shared Notes Yet
+      </Text>
+      <Text style={[collabNotesStyles.emptySubtitle, { color: colors.subText }]}>
+        Notes shared with you will appear here.{'\n'}Start collaborating with others!
+      </Text>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[collabNotesStyles.container, { backgroundColor: colors.background }]}>
       <StatusBar
         barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={colors.headerBackground}
       />
 
-      {/* App Bar */}
-      <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
-        <View style={styles.titleRow}>
-          {/* Back Arrow Button */}
-          <Pressable onPress={() => navigation.goBack()} style={{ paddingRight: 10 }}>
-            <Ionicons name="arrow-back" size={26} color={colors.headerText} />
+      {/* Modern Header */}
+      <View style={[collabNotesStyles.header, { 
+        backgroundColor: colors.headerBackground,
+        borderBottomColor: activeTheme === 'dark' ? colors.borderColor : 'transparent',
+      }]}>
+        <View style={collabNotesStyles.headerContent}>
+          <Pressable 
+            onPress={() => navigation.goBack()} 
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.headerText} />
           </Pressable>
-          <Ionicons name="people-outline" size={28} color={colors.headerText} />
-          <Text style={[styles.headerTitle, { color: colors.headerText }]}>Collaborated Notes</Text>
+          
+          <View style={collabNotesStyles.titleContainer}>
+            <View style={collabNotesStyles.titleRow}>
+              <Text style={[collabNotesStyles.headerTitle, { color: colors.headerText }]}>
+                Shared Notes
+              </Text>
+            </View>
+            {collaboratedNotes.length > 0 && (
+              <Text style={[collabNotesStyles.headerSubtitle, { color: colors.subText }]}>
+                {collaboratedNotes.length} note{collaboratedNotes.length !== 1 ? 's' : ''} shared with you
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 
-      {/* List of notes */}
+      {/* Notes List */}
       <FlatList
         data={groupedNotesArray}
         keyExtractor={([month]) => month}
         renderItem={({ item: [month, notes] }) => (
-          <View key={month}>
-            <Text style={[styles.monthHeader, { color: colors.subText }]}>{month}</Text>
-            {notes.map((note) => {
-              const checklistItems = parseChecklistItems(note.checklistItems);
-              const hasText = !!(note.textContents ?? note.text ?? '').trim();
-              const hasChecklist = checklistItems.length > 0;
-              const hasDrawings =
-                note.drawings &&
-                ((Array.isArray(note.drawings) && note.drawings.length > 0) ||
-                  (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]'));
-
-              return (
-                <TouchableOpacity
-                  key={note.id}
-                  onPress={() => handleEditNote(note)}
-                  style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
-                >
-                  <View style={styles.noteHeader}>
-                    <View style={styles.noteInfo}>
-                      <Text style={[styles.noteDate, { color: colors.subText }]}>
-                        {formatDate(note.updatedAt || note.createdAt)}
-                      </Text>
-                    </View>
-                    <View style={styles.noteActions}>
-                      <Pressable
-                        onPress={() => handleEditNote(note)}
-                        style={styles.actionButton}
-                      >
-                        <Ionicons name="create-outline" size={18} color={colors.iconColor} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleSpeakToggle(note)}
-                        style={styles.actionButton}
-                      >
-                        <Ionicons
-                          name={speakingNoteId === note.id ? 'volume-mute-outline' : 'volume-high-outline'}
-                          size={18}
-                          color={colors.iconColor}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-                  <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
-                    {getPreviewText(note)}
-                  </Text>
-
-                  {/* indicators at bottom */}
-                  <View style={[styles.contentIndicators, { borderTopColor: colors.borderColor }]}>
-                    {hasText && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="document-text" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
-                      </View>
-                    )}
-                    {hasChecklist && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>
-                          {checklistItems.length} items
-                        </Text>
-                      </View>
-                    )}
-                    {hasDrawings && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="brush" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={collabNotesStyles.monthSection}>
+            <Text style={[collabNotesStyles.monthHeader, { color: colors.subText }]}>
+              {month}
+            </Text>
+            <View style={collabNotesStyles.notesGrid}>
+              {notes.map(renderNoteCard)}
+            </View>
           </View>
         )}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 100 }}
-        ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: colors.subText }]}>
-            No collaborated notes available.
-          </Text>
-        }
+        contentContainerStyle={collabNotesStyles.listContent}
+        ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Floating Collaboration Requests Button */}
-      {/* Floating Collaboration Requests Button */}
-<TouchableOpacity
-  style={[
-    floatingButtonStyles.floatingButton,
-    { backgroundColor: colors.accentColor, overflow: 'visible' }, // important
-  ]}
-  onPress={() => setModalVisible(true)}
-  activeOpacity={0.8}
->
-  <Ionicons name="people" size={24} color="black" />
-
-  {pendingInvites.length > 0 && (
-    <View style={floatingButtonStyles.badge}>
-      <Text style={floatingButtonStyles.badgeText}>
-        {pendingInvites.length.toString()}
-      </Text>
-    </View>
-  )}
-</TouchableOpacity>
-
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={[collabNotesStyles.floatingButton, { 
+          backgroundColor: activeTheme === 'dark' ? '#4A5568' : '#718096',
+          shadowColor: activeTheme === 'dark' ? '#000' : '#2D3748',
+        }]}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="mail-outline" size={24} color="white" />
+        {pendingInvites.length > 0 && (
+          <View style={collabNotesStyles.badge}>
+            <Text style={collabNotesStyles.badgeText}>
+              {pendingInvites.length > 99 ? '99+' : pendingInvites.length.toString()}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
       {/* Loading Overlays */}
-      <LoadingOverlay
-        visible={isFetchingNotes}
-        text="Fetching collaborated notes..."
-        themedStyles={styles}
-        styles={styles}
-        theme={activeTheme === 'dark' ? darkColors : lightColors}
-      />
+      {isFetchingNotes && (
+        <View style={collabNotesStyles.loadingOverlay}>
+          <View style={[collabNotesStyles.loadingContainer, { 
+            backgroundColor: colors.cardBackground,
+            shadowColor: activeTheme === 'dark' ? '#000' : '#2D3748',
+          }]}>
+            <Ionicons name="people-outline" size={32} color={colors.accentColor} />
+            <Text style={[collabNotesStyles.loadingTitle, { color: colors.text }]}>
+              Loading shared notes...
+            </Text>
+            <Text style={[collabNotesStyles.loadingSubtext, { color: colors.subText }]}>
+              Fetching your collaborative content
+            </Text>
+            <View style={collabNotesStyles.loadingDots}>
+              <View style={[collabNotesStyles.dot, { backgroundColor: colors.accentColor }]} />
+              <View style={[collabNotesStyles.dot, { backgroundColor: colors.accentColor }]} />
+              <View style={[collabNotesStyles.dot, { backgroundColor: colors.accentColor }]} />
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Pending Invites Modal */}
       <PendingInvitesModal
@@ -371,42 +419,228 @@ export default function CollabNotes({ navigation }) {
   );
 }
 
-const floatingButtonStyles = {
+const collabNotesStyles = {
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    paddingTop: 25,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginLeft: 12,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    marginLeft: 36,
+  },
+  listContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  monthSection: {
+    marginBottom: 24,
+  },
+  monthHeader: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  notesGrid: {
+    gap: 12,
+  },
+  noteCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  noteMetadata: {
+    flex: 1,
+    gap: 8,
+  },
+  collaborationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  noteDate: {
+    fontSize: 12,
+  },
+  noteActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  contentIndicators: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  indicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  indicatorText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 32,
+  },
   floatingButton: {
     position: 'absolute',
     bottom: 30,
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { height: 4 },
-    shadowRadius: 8,
-    overflow: 'visible', // ensures badge shows outside
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
   },
   badge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'red',
+    top: -6,
+    right: -6,
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF4757',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    zIndex: 99,
+    paddingHorizontal: 6,
+    borderWidth: 3,
+    borderColor: 'white',
+    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   badgeText: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 12,
     textAlign: 'center',
-    includeFontPadding: false, // fixes Android clipping
-    textAlignVertical: 'center',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    maxWidth: 280,
+    marginHorizontal: 20,
+    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+  },
+  loadingTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.7,
   },
 };

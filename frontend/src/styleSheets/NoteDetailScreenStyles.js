@@ -272,28 +272,29 @@ import { StyleSheet } from 'react-native';
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: 8,
+    marginTop:4,
   },
   fontSection: {
-    maxHeight: 200,
-    marginBottom: 20,
-    borderWidth: 1,
+    maxHeight: 200, 
+    marginHorizontal: 20,
     borderRadius: 8,
+    borderWidth: 1,
   },
   fontOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    paddingHorizontal: 15,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   selectedFontOption: {
-    backgroundColor: '#f7fafc',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
   },
   fontText: {
     fontSize: 16,
+    lineHeight: 20,
   },
   selectedFontText: {
     fontWeight: '600',
@@ -302,20 +303,25 @@ import { StyleSheet } from 'react-native';
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   fontSizeOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    minWidth: 50,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    minWidth: 50,
   },
   selectedFontSize: {
-    borderColor: '#4a5568',
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
   },
   fontSizeText: {
+    fontSize: 14,
     fontWeight: '500',
   },
   selectedFontSizeText: {
@@ -751,6 +757,131 @@ import { StyleSheet } from 'react-native';
     fontSize: 12,
     color: '#fff',
     fontWeight: '600',
+  },
+  fontPreviewSection: { //fontmodal styles
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    marginHorizontal: 20,
+    marginVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  previewLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  previewText: {
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  fontOptionContent: {  // Enhanced Font Option Styles
+    flex: 1,
+    marginRight: 10,
+  },
+  fontSubText: {
+    fontSize: 12,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  // Enhanced Font Size Styles
+  fontSizeScrollContainer: {
+    maxHeight: 80,
+    marginHorizontal: 20,
+  },
+  fontSizeContainer: {
+    paddingHorizontal: 4,
+    paddingVertical: 7,
+  },
+  fontSizeLabel: {
+    fontSize: 10,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+modernApplyButton: {  // Modern Apply Button Styles
+  marginHorizontal: 38,
+  marginVertical: 10,
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  borderRadius: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  backgroundColor: '#3b82f6', // Will be overridden by theme.accent
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+  shadowOpacity: 0.15,
+  shadowRadius: 8,
+  elevation: 8,
+  // // Add subtle gradient effect for iOS
+  // ...(Platform.OS === 'ios' && {
+  //   shadowColor: '#3b82f6',
+  //   shadowOpacity: 0.25,
+  // }),
+},
+modernApplyButtonPressed: {
+  transform: [{ scale: 0.98 }],
+  shadowOpacity: 0.1,
+  elevation: 4,
+},
+
+modernApplyButtonText: {
+  color: '#ffffff',
+  fontSize: 16,
+  fontWeight: '600',
+  letterSpacing: 0.5,
+  marginLeft: 26,
+  textAlign: 'center',
+},
+
+modernApplyButtonIcon: {
+  opacity: 0.95,
+},
+
+// Alternative gradient style (if you want to add gradient backgrounds)
+gradientApplyButton: {
+  marginHorizontal: 20,
+  marginVertical: 10,
+  paddingVertical: 14,
+  paddingHorizontal: 18,
+  borderRadius: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  backgroundColor: 'transparent',
+  overflow: 'hidden',
+},
+
+// Success state for apply button
+applyButtonSuccess: {
+  backgroundColor: '#10b981',
+},
+
+applyButtonSuccessText: {
+  color: '#ffffff',
+},
+// Loading state for apply button
+applyButtonLoading: {
+  opacity: 0.7,
+},
+// Disabled state for apply button
+applyButtonDisabled: {
+  backgroundColor: '#9ca3af',
+  shadowOpacity: 0,
+  elevation: 0,
+},
+
+applyButtonDisabledText: {
+  color: '#d1d5db',
+},
+  // Dark theme overrides for font preview
+  fontPreviewSectionDark: {
+    backgroundColor: '#2d3748',
   }
 });
 

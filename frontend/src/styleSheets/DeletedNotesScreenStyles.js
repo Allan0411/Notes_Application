@@ -18,8 +18,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'left',
+    paddingLeft: 12,
   },
   placeholder: {
     width: 40,

@@ -10,6 +10,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 25,
     borderBottomWidth: 1,
   },
   backButton: {

@@ -13,6 +13,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import styles from '../styleSheets/NoteDetailScreenStyles'; // Import styles from the stylesheet
 import { requestAIAction } from '../services/aiService';
+//import { Platform } from 'react-native';
 
 import { parseChecklistItems } from '../utils/parseChecklistItems';
 import {noteDetailsthemes as themes} from '../utils/themeColors'
@@ -218,18 +219,13 @@ export default function NoteDetailScreen({ route, navigation }) {
 
   // @note font options
   const fonts = [
-    { name: 'System', value: 'System' },
-    { name: 'Arial', value: 'Arial' },
-    { name: 'Times New Roman', value: 'Times New Roman' },
-    { name: 'Courier New', value: 'Courier New' },
-    { name: 'Helvetica', value: 'Helvetica' },
-    { name: 'Georgia', value: 'Georgia' },
-    { name: 'Trebuchet MS', value: 'Trebuchet MS' },
-    { name: 'Impact', value: 'Impact' },
-    { name: 'Comic Sans MS', value: 'Comic Sans MS' },
-    { name: 'Roboto', value: 'Roboto' },
-    { name: 'Open Sans', value: 'Open Sans' },
-  ];
+  { name: 'System Default', value: 'System' },
+  { name: 'Arial (Sans-serif)', value: 'Arial' },
+  { name: 'Times New Roman (Serif)', value: 'Times New Roman' },
+  { name: 'Courier New (Monospace)', value: 'Courier New' },
+  { name: 'Impact (Bold)', value: 'Impact' },
+  { name: 'Comic Sans MS (Casual)', value: 'Comic Sans MS' },
+ ];
 
   // @note font size options
   const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32];
@@ -672,15 +668,50 @@ const clearDrawing = () => {
   };
 
   // @note text formatting
-  const getTextStyle = () => ({
+  const getTextStyle = () => {
+  // Android-compatible font mapping
+  const getAndroidFontFamily = (fontName) => {
+    if (Platform.OS !== 'android') {
+      return fontName === 'System' ? undefined : fontName;
+    }
+    
+    // Android system font mapping
+    const androidFontMap = {
+      'System': undefined,
+      'Arial': 'sans-serif',
+      'Times New Roman': 'serif',
+      'Courier New': 'monospace',
+      'Impact': 'sans-serif-black',
+      'Comic Sans MS': 'casual',
+    };
+    
+    return androidFontMap[fontName] || 'sans-serif';
+  };
+
+  return {
     fontSize,
-    fontFamily: fontFamily === 'System' ? undefined : fontFamily,
+    fontFamily: getAndroidFontFamily(fontFamily),
     fontWeight: isBold ? 'bold' : 'normal',
     fontStyle: isItalic ? 'italic' : 'normal',
     textAlign,
     color: theme.text,
-  });
+    lineHeight: fontSize * 1.4, // Better readability
+  };
+};
 
+// Also add this debugging function to help troubleshoot font issues
+const debugFontChange = (newFontFamily) => {
+  console.log('Font Debug Info:');
+  console.log('- Platform:', Platform.OS);
+  console.log('- Selected Font:', newFontFamily);
+  console.log('- Mapped Font:', getAndroidFontFamily(newFontFamily));
+  console.log('- Current fontSize:', fontSize);
+  console.log('- Current textAlign:', textAlign);
+  console.log('- Current isBold:', isBold);
+  console.log('- Current isItalic:', isItalic);
+};
+
+  // @note alignment icon
   const getAlignmentIcon = () => {
     return '☰';
   };
