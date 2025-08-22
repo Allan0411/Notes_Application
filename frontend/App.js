@@ -3,6 +3,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, ThemeContext } from './src/ThemeContext';
 import { ReadAloudProvider } from './src/ReadAloudContext';
+import { SettingsProvider } from './src/SettingsContext'; // Import the SettingsProvider
 import { StatusBar } from 'react-native';
 
 import CollabNotes from './src/screens/CollabNotes';
@@ -25,7 +26,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <ReadAloudProvider>
-        <Main />
+        {/* Wrap Main with SettingsProvider to make settings globally accessible */}
+        <SettingsProvider>
+          <Main />
+        </SettingsProvider>
       </ReadAloudProvider>
     </ThemeProvider>
   );

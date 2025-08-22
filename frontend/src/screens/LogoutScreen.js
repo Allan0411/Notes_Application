@@ -15,7 +15,7 @@ export default function LogoutScreen() {
   const handleLogout = () => {
     Alert.alert(
       'Confirm Logout',
-      'Are you sure you want to log out?<your auth token will be destroyed>',
+      'Are you sure you want to log out?',
       [
         {
           text: 'Cancel',
@@ -62,11 +62,39 @@ export default function LogoutScreen() {
         <Text style={themedStyles.title}>🚪 Logout</Text>
         <Text style={themedStyles.message}>You are currently signed in.</Text>
         
-        <TouchableOpacity style={themedStyles.logoutButton} onPress={handleLogout}>
-          <Text style={themedStyles.buttonText}>Logout</Text>
+        <TouchableOpacity style={localStyles.logoutButton} onPress={handleLogout}>
+          <View style={localStyles.buttonContent}>
+            <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+            <Text style={localStyles.buttonText}>Logout</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
+const localStyles = StyleSheet.create({
+  logoutButton: {
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: '#f31010f0', // A vibrant  to match the gradient feel
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    textTransform: 'uppercase', // To match the image
+  },
+});

@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
+import { SettingsContext } from '../SettingsContext'; // <-- Import the SettingsContext
 import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -40,6 +41,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function NoteDetailScreen({ route, navigation }) {
   const { activeTheme } = useContext(ThemeContext);
+  const { sharingEnabled } = useContext(SettingsContext); // <-- Use the context here
   const theme = themes[activeTheme] || themes.light;
   const themedStyles=buildThemedStyles(theme,styles);
   // @note navigation/params/state
@@ -312,7 +314,7 @@ export default function NoteDetailScreen({ route, navigation }) {
         Alert.alert('Success', 'Note created successfully!', [
           { text: 'OK', onPress: () => navigation.goBack() }
         ]);
-      } 
+      }
       
       else {
         const notePayload = buildNotePayload({
@@ -450,6 +452,18 @@ console.log("drawings", drawings);
   // Enhanced share function with format selection
   function handleSend() {
     hideMenu();
+
+    if (!sharingEnabled) { // <-- Check the shared state
+        Alert.alert(
+            "Sharing Disabled",
+            "Please enable sharing in settings to use this feature.",
+            [
+                { text: "OK", style: "default" }
+            ]
+        );
+        return;
+    }
+
     if (!noteText.trim() && !noteTitle.trim() && checklistItems.length === 0) {
       Alert.alert('Empty Note', 'Please add some content before sharing.');
       return;

@@ -5,32 +5,33 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import styles from '../styleSheets/HomeScreenStyles';
-import { handleReadAloud } from '../utils/noteSpeaker';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { buildThemedStyles } from '../utils/buildThemedStyles';
 import { noteDetailsthemes as themes } from '../utils/themeColors';
 import { ThemeContext } from '../ThemeContext';
-import { ReadAloudContext } from '../ReadAloudContext'; 
+import { ReadAloudContext } from '../ReadAloudContext';
 import { fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from '../services/noteService';
 import { fetchUserInfo } from '../services/userService';
 import { lightColors, darkColors } from '../utils/themeColors';
 import { normalizeNote } from '../utils/normalizeNote';
 import CollabNotes from './CollabNotes';
+import LoginSuccessOverlay from '../utils/LoginSuccessOverlay';
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export default function HomeScreen({ navigation }) {
   const { activeTheme } = useContext(ThemeContext);
-  const { speak, stop } = useContext(ReadAloudContext); 
+  const { speak, stop } = useContext(ReadAloudContext);
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
 
-  
+  const route = useRoute();
   const [collaboratedNotes, setCollaboratedNotes] = useState([]);
-  
+
   const [notesList, setNotesList] = useState([]);
   const [deletedNotes, setDeletedNotes] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -48,8 +49,17 @@ export default function HomeScreen({ navigation }) {
   const [pendingDeletedNote, setPendingDeletedNote] = useState(null);
   const [undoBarVisible, setUndoBarVisible] = useState(false);
   const undoTimeout = useRef(null);
-  
-  
+
+  // State for the new login success pop-up
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+  useEffect(() => {
+    if (route.params?.showLoginSuccess) {
+      setShowSuccessOverlay(true);
+      navigation.setParams({ showLoginSuccess: undefined });
+    }
+  }, [route.params?.showLoginSuccess]);
+
   useEffect(() => {
     return () => {
       try {
@@ -72,47 +82,41 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-useEffect(() => {
-  
-  const fetchUserInfo1 = async () => {
-    try {
-      const user = await fetchUserInfo();  // Make sure this is your actual async function
-      if (user) {
-        setUserInfo({
-          name: user.username || 'Guest',
-          email: user.email || 'email@example.com',
-        });
+  useEffect(() => {
+    const fetchUserInfo1 = async () => {
+      try {
+        const user = await fetchUserInfo();
+        if (user) {
+          setUserInfo({
+            name: user.username || 'Guest',
+            email: user.email || 'email@example.com',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
       }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    }
-  };
- 
-  fetchUserInfo1();
-}, []);
-
+    };
+    fetchUserInfo1();
+  }, []);
 
   const fetchNotes = async () => {
     setIsFetchingNotes(true);
     try {
       const userIdStr = await AsyncStorage.getItem('userId');
-      console.log('userIdStr:', userIdStr);
-      if(userIdStr){
-          const userId = userIdStr ? parseInt(userIdStr, 10) : null;
-      const notes = await apiFetchNotes();
-      const normalized = Array.isArray(notes) ? notes.map(normalizeNote) : [];
-      const activeNotes = normalized.filter(note => note.isPrivate === false && note.creatorUserId === userId);
-      const binNotes = normalized.filter(note => note.isPrivate === true).map(note => ({
-        ...note,
-        deletedAt: note.deletedAt || new Date().toISOString()
-      }));
+      if (userIdStr) {
+        const userId = parseInt(userIdStr, 10);
+        const notes = await apiFetchNotes();
+        const normalized = Array.isArray(notes) ? notes.map(normalizeNote) : [];
+        const activeNotes = normalized.filter(note => note.isPrivate === false && note.creatorUserId === userId);
+        const binNotes = normalized.filter(note => note.isPrivate === true).map(note => ({
+          ...note,
+          deletedAt: note.deletedAt || new Date().toISOString()
+        }));
 
-
-      setNotesList(activeNotes);
-      setDeletedNotes(binNotes);
-      await saveDeletedNotes(binNotes);
+        setNotesList(activeNotes);
+        setDeletedNotes(binNotes);
+        await saveDeletedNotes(binNotes);
       }
-    
     } catch (error) {
       console.error('Fetch Notes error: ', error);
     } finally {
@@ -125,7 +129,6 @@ useEffect(() => {
       fetchNotes();
     }, [])
   );
-
 
   const handleAddNote = () => {
     const newNote = {
@@ -149,7 +152,6 @@ useEffect(() => {
     });
   };
 
-  // New function to finalize deletion after timeout
   const confirmDeletion = async (noteId) => {
     if (!noteId) return;
 
@@ -157,7 +159,7 @@ useEffect(() => {
     try {
       await updateNoteIsPrivate(noteId, true);
       const noteToDelete = notesList.find(n => (n.id ?? n._id) === noteId) || {};
-      
+
       const deletedNote = {
         ...noteToDelete,
         deletedAt: new Date().toISOString(),
@@ -176,7 +178,6 @@ useEffect(() => {
     }
   };
 
-  // Modified function to trigger the undo bar
   const handleDeleteNote = (noteId) => {
     if (!noteId) {
       console.error("Note does not have a valid id or _id:", noteId);
@@ -186,32 +187,27 @@ useEffect(() => {
     const noteToHide = notesList.find(n => (n.id ?? n._id) === noteId);
     if (!noteToHide) return;
 
-    // Remove the note from the display list immediately
     setNotesList(prevNotes => prevNotes.filter(n => (n.id ?? n._id) !== noteId));
 
-    // Store the note to be potentially restored
     setPendingDeletedNote(noteToHide);
     setUndoBarVisible(true);
 
-    // Start a timer to permanently delete the note after 5 seconds
     if (undoTimeout.current) {
       clearTimeout(undoTimeout.current);
     }
     undoTimeout.current = setTimeout(() => {
       setUndoBarVisible(false);
       confirmDeletion(noteId);
-    }, 5000); // 5 seconds
+    }, 5000);
   };
-  
-  // New function to undo the deletion
+
   const handleUndoDeletion = () => {
     if (undoTimeout.current) {
       clearTimeout(undoTimeout.current);
     }
     setUndoBarVisible(false);
-    
+
     if (pendingDeletedNote) {
-      // Restore the note to the main list
       setNotesList(prevNotes => [pendingDeletedNote, ...prevNotes]);
       setPendingDeletedNote(null);
     }
@@ -228,7 +224,6 @@ useEffect(() => {
   };
 
   const formatDate = (dateStr) => {
-    console.log('formatDate called with:', dateStr);
     if (dateStr && dateStr.length > 0) {
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
@@ -296,7 +291,7 @@ useEffect(() => {
       useNativeDriver: true,
     }).start(() => setSortMenuVisible(false));
   };
-  
+
   const parseChecklistItems = (checklistItems) => {
     if (!checklistItems) return [];
     if (Array.isArray(checklistItems)) return checklistItems;
@@ -321,13 +316,13 @@ useEffect(() => {
     if (note.text && note.text.trim()) {
       return note.text;
     }
-    
+
     const checklistItems = parseChecklistItems(note.checklistItems);
     if (checklistItems.length > 0) {
       const firstItem = checklistItems[0];
       return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
-    
+
     if (note.drawings && (
       (Array.isArray(note.drawings) && note.drawings.length > 0) ||
       (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
@@ -335,6 +330,51 @@ useEffect(() => {
       return '🎨 Drawing';
     }
     return 'Empty note';
+  };
+
+  // NEW HELPER FUNCTION: This is the key to reading the full content
+  const getTextToSpeak = (note) => {
+    let textToRead = '';
+
+    if (note.title && note.title.trim()) {
+      // Add a comma and a space after the title to force a slight pause
+      textToRead += `Title: ${note.title}., `;
+    }
+
+    if (note.textContents && note.textContents.trim()) {
+      textToRead += `Note content: ${note.textContents}. `;
+    }
+
+    const checklistItems = parseChecklistItems(note.checklistItems);
+    if (checklistItems.length > 0) {
+      textToRead += 'Checklist items: ';
+      checklistItems.forEach((item, index) => {
+        textToRead += `${item.isCompleted ? 'Completed' : 'Not completed'}: ${item.text || item.title}. `;
+      });
+    }
+
+    if (note.drawings && (
+      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+    )) {
+      textToRead += 'This note also contains a drawing.';
+    }
+
+    return textToRead.trim();
+  };
+
+  const handleSpeakToggle = async (note) => {
+    if (speakingNoteId === note.id) {
+      stop();
+      setSpeakingNoteId(null);
+    } else {
+      const fullNote = await fetchFullNoteById(note.id);
+      if (fullNote) {
+        const text = getTextToSpeak(fullNote);
+        speak(text, note.id);
+        setSpeakingNoteId(note.id);
+      }
+    }
   };
 
   const handleSortSelection = (option) => {
@@ -375,7 +415,7 @@ useEffect(() => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.headerText === '#fff' ? 'light-content' : 'dark-content'} backgroundColor={colors.headerBackground} />
-      
+
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
           <Ionicons name="book" size={28} color={colors.headerText} />
@@ -413,7 +453,7 @@ useEffect(() => {
           )}
         </View>
       </View>
-      
+
       <FlatList
         data={groupedNotesArray}
         keyExtractor={([month]) => month}
@@ -454,7 +494,6 @@ useEffect(() => {
                     <View style={styles.noteInfo}>
                       <Text style={[styles.noteDate, { color: colors.subText }]}>
                         {formatDate(note[sortOption] || note.createdAt || note.lastAccessed)}
-
                       </Text>
                     </View>
                     <View style={styles.noteActions}>
@@ -471,17 +510,7 @@ useEffect(() => {
                         <Ionicons name="trash" size={18} color={colors.deleteIcon} />
                       </Pressable>
                       <Pressable
-                        onPress={() => {
-                          handleReadAloud({
-                            note: note,
-                            speakingNoteId,
-                            setSpeakingNoteId,
-                            fetchFullNoteById,
-                            setNotesList,
-                            speak,
-                            stop
-                          });
-                        }}
+                        onPress={() => handleSpeakToggle(note)}
                         style={styles.actionButton}
                       >
                         <Ionicons
@@ -523,7 +552,7 @@ useEffect(() => {
           </View>
         )}
       />
-      
+
       <TouchableOpacity style={[styles.fabButton, { backgroundColor: colors.headerBackground }]} onPress={handleAddNote}>
         <Ionicons name="add" size={28} color={colors.headerText} />
       </TouchableOpacity>
@@ -534,7 +563,7 @@ useEffect(() => {
             <Animated.View style={[localStyles.bottomSheet, { backgroundColor: colors.cardBackground, transform: [{ translateY: slideUpAnim }] }]}>
               <View style={[localStyles.bottomSheetHandle, { backgroundColor: colors.subText }]} />
               <Text style={[localStyles.bottomSheetTitle, { color: colors.text }]}>Sort Notes By</Text>
-              
+
               <TouchableOpacity
                 style={localStyles.sortItem}
                 onPress={() => handleSortSelection('updatedAt')}
@@ -544,7 +573,7 @@ useEffect(() => {
                   <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
                 )}
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={localStyles.sortItem}
                 onPress={() => handleSortSelection('createdAt')}
@@ -554,13 +583,12 @@ useEffect(() => {
                   <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
                 )}
               </TouchableOpacity>
-              
+
             </Animated.View>
           </View>
         </TouchableWithoutFeedback>
       )}
 
-      {/* New Undo Bar Component */}
       {undoBarVisible && (
         <View style={[localStyles.undoBar, { backgroundColor: colors.searchBackground }]}>
           <Text style={[localStyles.undoText, { color: colors.text }]}>Note moved to bin</Text>
@@ -569,7 +597,7 @@ useEffect(() => {
           </TouchableOpacity>
         </View>
       )}
-      
+
       {drawerVisible && (
         <>
           <TouchableWithoutFeedback onPress={closeDrawer}>
@@ -611,7 +639,6 @@ useEffect(() => {
                   closeDrawer();
                   navigation.navigate('DeletedNotes', {
                     deletedNotes: deletedNotes,
-                    
                   });
                 }}
                 style={[styles.drawerMenuItem, { borderBottomColor: colors.borderColor }]}
@@ -628,8 +655,7 @@ useEffect(() => {
                 <Ionicons name="chevron-forward" size={16} color={colors.subText} />
               </TouchableOpacity>
 
-              {/* collab list */}
-                <TouchableOpacity
+              <TouchableOpacity
                   onPress={() => {
                     closeDrawer();
                     navigation.navigate('CollabNotes',{collaboratedNotes: collaboratedNotes});
@@ -642,7 +668,6 @@ useEffect(() => {
                   <Text style={[styles.drawerItemText, { color: colors.text }]}>My Collabs</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.subText} />
                 </TouchableOpacity>
-
 
               <TouchableOpacity
                 onPress={() => {
@@ -701,7 +726,7 @@ useEffect(() => {
           </Animated.View>
         </>
       )}
-      
+
       <LoadingOverlay
         visible={isFetchingNotes}
         text="Fetching notes..."
@@ -709,7 +734,12 @@ useEffect(() => {
         styles={styles}
         theme={theme}
       />
-      
+
+      <LoginSuccessOverlay
+        isVisible={showSuccessOverlay}
+        onDismiss={() => setShowSuccessOverlay(false)}
+        colors={colors}
+      />
     </SafeAreaView>
   );
 }
@@ -755,7 +785,7 @@ const localStyles = StyleSheet.create({
   },
   undoBar: {
     position: 'absolute',
-    bottom: 20, // Adjusted for padding
+    bottom: 20,
     left: 10,
     right: 10,
     flexDirection: 'row',
@@ -774,6 +804,39 @@ const localStyles = StyleSheet.create({
   },
   undoButton: {
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  popup: {
+    width: 250,
+    borderRadius: 10,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  popupText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  popupOkButton: {
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  popupOkButtonText: {
     fontWeight: 'bold',
   },
 });

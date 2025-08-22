@@ -12,13 +12,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../ThemeContext';
-import { ReadAloudContext } from '../ReadAloudContext'; // Assuming file name is ReadAloudContext.js
+import { ReadAloudContext } from '../ReadAloudContext'; 
+import { SettingsContext } from '../SettingsContext'; // Import the new context here
 import styles from '../styleSheets/SettingsScreenStyles';
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
-  const [enableSharing, setEnableSharing] = useState(true);
 
+  // Get the state and toggle function from the SettingsContext
+  const { sharingEnabled, toggleSharing } = useContext(SettingsContext);
+  
   // Get voiceSpeed and setVoiceSpeed from the context
   const { voiceSpeed, setVoiceSpeed } = useContext(ReadAloudContext); 
   const { themeMode, setThemeMode, activeTheme } = useContext(ThemeContext);
@@ -71,7 +74,8 @@ const SettingsScreen = () => {
         <Text style={[styles.sectionTitle, { color: textColor }]}>Sharing</Text>
         <View style={styles.optionRow}>
           <Text style={[styles.optionText, { color: textColor }]}>Enable sharing</Text>
-          <Switch value={enableSharing} onValueChange={setEnableSharing} />
+          {/* This switch now controls the global state */}
+          <Switch value={sharingEnabled} onValueChange={toggleSharing} />
         </View>
 
         <View style={{ height: 40 }} />

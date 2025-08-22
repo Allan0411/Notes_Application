@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View,
   Text,
@@ -96,7 +96,7 @@ export default function CollabNotes({ navigation }) {
 
   const handleDecline = async (inviteId) => {
     try {
-      await collaborationInviteService.respondToInvite(inviteId, false);
+      await collaborationInviteService.respondtoInvite(inviteId, false);
       await loadPendingInvites();
     } catch (err) {
       console.error('Failed to decline invite:', err);
@@ -168,6 +168,37 @@ export default function CollabNotes({ navigation }) {
       }
     });
   };
+  
+  // New helper function to combine all readable content
+  const getTextToSpeak = (note) => {
+    let textToRead = '';
+    
+    if (note.title && note.title.trim()) {
+      textToRead += `Title: ${note.title}. `;
+    }
+    
+    if (note.textContents && note.textContents.trim()) {
+      textToRead += `Note content: ${note.textContents}. `;
+    }
+    
+    const checklistItems = parseChecklistItems(note.checklistItems);
+    if (checklistItems.length > 0) {
+      textToRead += 'Checklist items: ';
+      checklistItems.forEach((item, index) => {
+        textToRead += `${item.isCompleted ? 'Completed' : 'Not completed'}: ${item.text || item.title}. `;
+      });
+    }
+    
+    if (note.drawings && (
+      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+    )) {
+      textToRead += 'This note also contains a drawing.';
+    }
+    
+    return textToRead.trim();
+  };
+
 
   const handleSpeakToggle = async (note) => {
     if (speakingNoteId === note.id) {
@@ -175,7 +206,7 @@ export default function CollabNotes({ navigation }) {
       setSpeakingNoteId(null);
     } else {
       const fullNote = await fetchFullNoteById(note.id);
-      const text = fullNote?.textContents || fullNote?.title || '';
+      const text = getTextToSpeak(fullNote); // Use the new helper function
       speak(text, note.id);
       setSpeakingNoteId(note.id);
     }
@@ -200,6 +231,10 @@ export default function CollabNotes({ navigation }) {
       {/* App Bar */}
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
+          {/* Back Arrow Button */}
+          <Pressable onPress={() => navigation.goBack()} style={{ paddingRight: 10 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.headerText} />
+          </Pressable>
           <Ionicons name="people-outline" size={28} color={colors.headerText} />
           <Text style={[styles.headerTitle, { color: colors.headerText }]}>Collaborated Notes</Text>
         </View>
@@ -303,7 +338,7 @@ export default function CollabNotes({ navigation }) {
   onPress={() => setModalVisible(true)}
   activeOpacity={0.8}
 >
-  <Ionicons name="people" size={24} color="white" />
+  <Ionicons name="people" size={24} color="black" />
 
   {pendingInvites.length > 0 && (
     <View style={floatingButtonStyles.badge}>
@@ -375,4 +410,3 @@ const floatingButtonStyles = {
     textAlignVertical: 'center',
   },
 };
-
