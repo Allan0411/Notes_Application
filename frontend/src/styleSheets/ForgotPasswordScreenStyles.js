@@ -3,7 +3,8 @@ import { StyleSheet } from 'react-native';
 const ForgotPasswordScreenStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#a6b7cfff',
+        // Change the background color to transparent to see the gradient
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
@@ -15,19 +16,19 @@ const ForgotPasswordScreenStyles = StyleSheet.create({
     title: {
         fontSize: 34,
         fontWeight: '700',
-        color: '#535d81ff',
+        color: '#000000ff',
         fontFamily: 'sans-serif-light',
     },
     subtitle: {
         fontSize: 16,
-        color: '#6b7586ff',
+        color: '#000000ff',
         textAlign: 'center',
         marginTop: 5,
     },
     formContainer: {
         width: '100%',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#4a5568',
         borderRadius: 12,
         padding: 30,
         elevation: 10,
@@ -63,14 +64,14 @@ const ForgotPasswordScreenStyles = StyleSheet.create({
     loginButton: {
         width: '100%',
         height: 55,
-        backgroundColor: '#686f88ff',
+        backgroundColor: '#939ab3ff',
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 15,
     },
     loginButtonText: {
-        color: '#fff',
+        color: '#090909ff',
         fontSize: 18,
         fontWeight: 'bold',
     },
@@ -80,7 +81,7 @@ const ForgotPasswordScreenStyles = StyleSheet.create({
     },
     signupText: {
         fontSize: 14,
-        color: '#666',
+        color: '#010000ff',
     },
     signupLink: {
         color: '#eceef0ff',

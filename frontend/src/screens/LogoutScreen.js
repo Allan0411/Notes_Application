@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient'; // <-- Import LinearGradient
 import { ThemeContext } from '../ThemeContext'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styleSheets/LogoutScreenStyles'; // Import styles from the stylesheet
@@ -46,34 +47,44 @@ export default function LogoutScreen() {
   const themedStyles = styles(isDark);
 
   return (
-    <SafeAreaView style={themedStyles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={isDark ? '#1a202c' : '#edf2f7'} />
-      
-      <View style={themedStyles.header}>
-        <View style={themedStyles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={isDark ? '#e2e8f0' : '#4a5568'} />
-          </TouchableOpacity>
-          <Text style={themedStyles.headerTitle}>Logout</Text>
-        </View>
-      </View>
-
-      <View style={themedStyles.content}>
-        <Text style={themedStyles.title}>🚪 Logout</Text>
-        <Text style={themedStyles.message}>You are currently signed in.</Text>
+    <LinearGradient
+      colors={['#adbfd8ff', '#384150ff']} // A nice blend of a light color and a darker one
+      style={localStyles.gradientContainer}
+      start={{ x: 0, y: 0 }} // Starts at the top
+      end={{ x: 0, y: 1 }} // Ends at the bottom
+    >
+      <SafeAreaView style={themedStyles.container}>
+        <StatusBar barStyle='light-content' backgroundColor='transparent' translucent />
         
-        <TouchableOpacity style={localStyles.logoutButton} onPress={handleLogout}>
-          <View style={localStyles.buttonContent}>
-            <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-            <Text style={localStyles.buttonText}>Logout</Text>
+        <View style={themedStyles.header}>
+          <View style={themedStyles.headerLeft}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color={isDark ? '#e2e8f0' : '#f1f2f4ff'} />
+            </TouchableOpacity>
+            <Text style={themedStyles.headerTitle}>Logout</Text>
           </View>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        </View>
+
+        <View style={themedStyles.content}>
+          <Text style={themedStyles.title}>🚪 Logout</Text>
+          <Text style={themedStyles.message}>You are currently signed in.</Text>
+          
+          <TouchableOpacity style={localStyles.logoutButton} onPress={handleLogout}>
+            <View style={localStyles.buttonContent}>
+              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+              <Text style={localStyles.buttonText}>Logout</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const localStyles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   logoutButton: {
     paddingHorizontal: 30,
     paddingVertical: 15,

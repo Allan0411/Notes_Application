@@ -8,7 +8,10 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     StatusBar,
+    Alert,
+    Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient'; // <-- Import LinearGradient
 import { API_BASE_URL } from '../config';
 import styles from '../styleSheets/ForgotPasswordScreenStyles'; // Assuming a new stylesheet
 
@@ -50,9 +53,17 @@ export default function ForgotPasswordScreen({ navigation }) {
     };
 
     return (
-        <>
-            <StatusBar barStyle="light-content" backgroundColor='#a6b7cfff' />
-            <KeyboardAvoidingView style={styles.container}>
+        <LinearGradient
+            colors={['#adbfd8ff', '#384150ff']} // A nice blend of a light color and a darker one
+            style={localStyles.gradientContainer}
+            start={{ x: 0, y: 0 }} // Starts at the top
+            end={{ x: 0, y: 1 }} // Ends at the bottom
+        >
+            <StatusBar barStyle="light-content" backgroundColor='transparent' translucent />
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
                 <View style={styles.headerContainer}>
                     <Text style={styles.title}>Forgot Password?</Text>
                     <Text style={styles.subtitle}>Enter your email to receive a password reset link.</Text>
@@ -114,7 +125,13 @@ export default function ForgotPasswordScreen({ navigation }) {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-        </>
+        </LinearGradient>
     );
 }
 
+// NEW local styles for the gradient container
+const localStyles = StyleSheet.create({
+    gradientContainer: {
+        flex: 1,
+    },
+});

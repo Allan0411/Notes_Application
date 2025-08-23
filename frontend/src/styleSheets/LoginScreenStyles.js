@@ -19,17 +19,17 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#ffffff',
+        color: '#161515ff',
         marginBottom: 8,
         letterSpacing: 1,
     },
     subtitle: {
         fontSize: 16,
-        color: '#ffffff',
+        color: '#100f0fff',
         opacity: 0.8,
     },
     formContainer: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#4a5568',
         borderRadius: 24,
         padding: 32,
         shadowColor: '#000',
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     loginButton: {
-        backgroundColor: '#686f88ff',
+        backgroundColor: '#939ab3ff',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     loginButtonText: {
-        color: '#ffffff',
+        color: '#090909ff',
         fontSize: 18,
         fontWeight: '600',
     },
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
     signupLink: {
-        color: '#656f8fff',
+        color: '#181819ff',
         fontWeight: 'bold',
         textDecorationLine: 'underline',
     },

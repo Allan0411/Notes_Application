@@ -8,7 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient'; // <-- Import LinearGradient
 import { API_BASE_URL } from '../config';
 import styles from '../styleSheets/SignupScreenStyles'; // Import styles from the stylesheet
 
@@ -16,17 +19,18 @@ export default function SignupScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading,setIsLoading]=useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async () => {
+    if (isLoading)
+      return
 
-    if(isLoading)
-        return
     if (!name || !email || !password) {
-      alert("Please enter all fields");
+      Alert.alert("Error", "Please enter all fields");
       return;
     }
     setIsLoading(true);
+
     try {
       const response = await fetch(API_BASE_URL + "/Auth/register", {
         method: 'POST',
@@ -43,36 +47,38 @@ export default function SignupScreen({ navigation }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Signup successful");
+        Alert.alert("Success", "Signup successful! Please log in.");
         navigation.navigate('Login');
       } else {
         console.error("Signup error:", data);
-        alert('Signup failed');
+        Alert.alert("Signup Failed", "An account with this email may already exist.");
       }
     } catch (err) {
       console.error("Signup error: ", err);
-      alert('Signup failed');
-    }
-    finally {
-      setIsLoading(false); // <-- 3. STOP loading indicator in all cases
+      Alert.alert("Signup Failed", "An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
+    <LinearGradient
+      colors={['#adbfd8ff', '#384150ff']}
+      style={localStyles.gradientContainer}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
       <StatusBar barStyle="light-content" backgroundColor="#a6b7cfff" />
       <KeyboardAvoidingView
         style={styles.container}
-        // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.innerContainer}>
-          {/* Header Section */}
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Notes</Text>
             <Text style={styles.subtitle}>Create your account 📝</Text>
           </View>
 
-          {/* Form Section */}
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
               <TextInput
@@ -82,6 +88,7 @@ export default function SignupScreen({ navigation }) {
                 autoCapitalize="words"
                 style={styles.input}
                 placeholderTextColor="#999"
+                editable={!isLoading}
               />
             </View>
 
@@ -94,6 +101,7 @@ export default function SignupScreen({ navigation }) {
                 autoCapitalize="none"
                 style={styles.input}
                 placeholderTextColor="#999"
+                editable={!isLoading}
               />
             </View>
 
@@ -105,30 +113,41 @@ export default function SignupScreen({ navigation }) {
                 secureTextEntry
                 style={styles.input}
                 placeholderTextColor="#999"
+                editable={!isLoading}
               />
             </View>
 
             <TouchableOpacity
-              style={styles.signupButton}
+              style={[styles.signupButton, isLoading && { opacity: 0.8 }]}
               onPress={handleSignup}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
-              <Text style={styles.signupButtonText}>Create Account</Text>
+              {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                  <Text style={styles.signupButtonText}>Create Account</Text>
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* Footer Section */}
           <View style={styles.footerContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginText}>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={isLoading} activeOpacity={isLoading ? 1 : 0.7}>
+              <Text style={[styles.loginText, isLoading && { opacity: 0.5 }]}>
                 Already have an account?{' '}
-                <Text style={styles.loginLink}>Login</Text>
+                <Text style={[styles.loginLink, isLoading && { opacity: 0.5 }]}>Login</Text>
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
-    </>
+    </LinearGradient>
   );
 }
 
+// NEW local styles for the gradient container
+const localStyles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
+});

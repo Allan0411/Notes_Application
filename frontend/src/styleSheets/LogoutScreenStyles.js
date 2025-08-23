@@ -10,7 +10,8 @@ const styles = (isDark) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDark ? '#1a202c' : '#edf2f7',
+      // Change this to transparent
+      backgroundColor: 'transparent',
     },
     header: {
       flexDirection: 'row',
@@ -18,7 +19,7 @@ const styles = (isDark) =>
       paddingHorizontal: 16,
       paddingVertical: 20,
       paddingTop: 40,
-      backgroundColor: isDark ? '#2d3748' : '#fff',
+      backgroundColor: isDark ? '#2d3748' : '#4a5568',
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#4a5568' : '#e2e8f0',
     },
@@ -30,7 +31,7 @@ const styles = (isDark) =>
     headerTitle: {
       fontSize: 22,
       fontWeight: 'bold',
-      color: isDark ? '#edf2f7' : '#2d3748',
+      color: isDark ? '#edf2f7' : '#ecececff',
     },
     content: {
       flex: 1,
@@ -41,11 +42,11 @@ const styles = (isDark) =>
     title: {
       fontSize: 24,
       fontWeight: 'bold',
-      color: isDark ? '#edf2f7' : '#2d3748',
+      color: isDark ? '#edf2f7' : '#030303ff',
     },
     message: {
       fontSize: 16,
-      color: isDark ? '#cbd5e0' : '#718096',
+      color: isDark ? '#cbd5e0' : '#000000ff',
       marginTop: 10,
       marginBottom: 30,
     },

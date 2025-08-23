@@ -8,8 +8,10 @@ import {
     KeyboardAvoidingView,
     StatusBar,
     ActivityIndicator,
-    Alert, 
+    Alert,
+    Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient'; // <-- Re-import the LinearGradient component
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styleSheets/LoginScreenStyles';
@@ -30,7 +32,7 @@ export default function LoginScreen({ navigation }) {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            alert("Please enter both email and password");
+            Alert.alert("Error", "Please enter both email and password");
             return;
         }
 
@@ -57,98 +59,107 @@ export default function LoginScreen({ navigation }) {
                     console.log("userId:", user.id);
                 }
                 
-                // === UPDATED CODE HERE ===
-                // Instead of showing an alert, we navigate and pass a parameter.
                 navigation.navigate('Home', { showLoginSuccess: true });
-                // ==========================
 
             } else {
                 console.error("Login error:", data);
-                alert('Login failed');
+                Alert.alert("Login Failed", "Invalid email or password.");
             }
         } catch (err) {
             console.error("Login error: ", err);
-            alert('Login failed');
+            Alert.alert("Login Failed", "An error occurred. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <>
-            <StatusBar barStyle="light-content" backgroundColor='#a6b7cfff' />
-            <KeyboardAvoidingView style={styles.container}>
-                <View style={styles.innerContainer}>
-                    <View style={styles.headerContainer}>
-                        <Text style={styles.title}>Notes</Text>
-                        <Text style={styles.subtitle}>Welcome back!</Text>
+        <LinearGradient
+            colors={['#adbfd8ff', '#384150ff']} // The two colors for the gradient
+            style={localStyles.gradientBackground}
+            start={{ x: 0, y: 0 }} // Starts at the top
+            end={{ x: 0, y: 1 }} // Ends at the bottom
+        >
+            <StatusBar barStyle="light-content" backgroundColor='transparent' translucent />
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+                style={styles.innerContainer}
+            >
+                <View style={styles.headerContainer}>
+                    <Text style={styles.title}>Notes</Text>
+                    <Text style={styles.subtitle}>Welcome back!</Text>
+                </View>
+                <View style={[styles.formContainer, {marginBottom: 20}]}>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            placeholder="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            style={[styles.input, loading && styles.disabledInput]}
+                            placeholderTextColor="#999"
+                            editable={!loading}
+                        />
                     </View>
-                    <View style={[styles.formContainer, {marginBottom: 20}]}>
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                placeholder="Email"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                style={[styles.input, loading && styles.disabledInput]}
-                                placeholderTextColor="#999"
-                                editable={!loading}
-                            />
-                        </View>
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                placeholder="Password"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                                style={[styles.input, loading && styles.disabledInput]}
-                                placeholderTextColor="#999"
-                                editable={!loading}
-                            />
-                        </View>
-                        <TouchableOpacity
-                            style={[styles.loginButton, loading && { opacity: 0.8 }]}
-                            onPress={handleLogin}
-                            activeOpacity={0.8}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                                <Text style={styles.loginButtonText}>Login</Text>
-                            )}
-                        </TouchableOpacity>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            placeholder="Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            style={[styles.input, loading && styles.disabledInput]}
+                            placeholderTextColor="#999"
+                            editable={!loading}
+                        />
                     </View>
-                    <View style={styles.footerContainer}>
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('ForgotPassword')}
-                            disabled={loading}
-                            activeOpacity={loading ? 1 : 0.7}
-                        >
-                            <Text style={[styles.signupText, loading && { opacity: 0.5 }]}>
-                                Forgot password?{' '}
-                                <Text style={[styles.signupLink, loading && { opacity: 0.5 }]}>
-                                    Click here
-                                </Text>
+                    <TouchableOpacity
+                        style={[styles.loginButton, loading && { opacity: 0.8 }]}
+                        onPress={handleLogin}
+                        activeOpacity={0.8}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Login</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.footerContainer}>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('ForgotPassword')}
+                        disabled={loading}
+                        activeOpacity={loading ? 1 : 0.7}
+                    >
+                        <Text style={[styles.signupText, loading && { opacity: 0.5 }]}>
+                            Forgot password?{' '}
+                            <Text style={[styles.signupLink, loading && { opacity: 0.5 }]}>
+                                Click here
                             </Text>
-                        </TouchableOpacity>
-                        <View style={{ height: 10 }} />
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Signup')}
-                            disabled={loading}
-                            activeOpacity={loading ? 1 : 0.7}
-                        >
-                            <Text style={[styles.signupText, loading && { opacity: 0.5 }]}>
-                                Don't have an account?{' '}
-                                <Text style={[styles.signupLink, loading && { opacity: 0.5 }]}>
-                                    Sign Up
-                                </Text>
+                        </Text>
+                    </TouchableOpacity>
+                    <View style={{ height: 10 }} />
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Signup')}
+                        disabled={loading}
+                        activeOpacity={loading ? 1 : 0.7}
+                    >
+                        <Text style={[styles.signupText, loading && { opacity: 0.5 }]}>
+                            Don't have an account?{' '}
+                            <Text style={[styles.signupLink, loading && { opacity: 0.5 }]}>
+                                Sign Up
                             </Text>
-                        </TouchableOpacity>
-                    </View>
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-        </>
+        </LinearGradient>
     );
 }
+
+const localStyles = StyleSheet.create({
+    gradientBackground: {
+        flex: 1,
+    },
+});
