@@ -52,6 +52,20 @@ import { StyleSheet } from 'react-native';
     fontSize: 12,
     fontWeight: '600',
   },
+  // NEW: Rich text container styles
+  richTextContainer: {
+    position: 'relative',
+    minHeight: 570,
+  },
+  richTextOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    bottom: 12,
+    pointerEvents: 'none',
+    zIndex: 1,
+  },
   contentContainer: {
     flex: 1,
     padding: 10,
@@ -818,18 +832,12 @@ modernApplyButton: {  // Modern Apply Button Styles
   shadowOpacity: 0.15,
   shadowRadius: 8,
   elevation: 8,
-  // // Add subtle gradient effect for iOS
-  // ...(Platform.OS === 'ios' && {
-  //   shadowColor: '#3b82f6',
-  //   shadowOpacity: 0.25,
-  // }),
 },
 modernApplyButtonPressed: {
   transform: [{ scale: 0.98 }],
   shadowOpacity: 0.1,
   elevation: 4,
 },
-
 modernApplyButtonText: {
   color: '#ffffff',
   fontSize: 16,
@@ -838,12 +846,10 @@ modernApplyButtonText: {
   marginLeft: 26,
   textAlign: 'center',
 },
-
 modernApplyButtonIcon: {
   opacity: 0.95,
 },
-
-// Alternative gradient style (if you want to add gradient backgrounds)
+// Alternative gradient style for apply button
 gradientApplyButton: {
   marginHorizontal: 20,
   marginVertical: 10,
@@ -856,12 +862,10 @@ gradientApplyButton: {
   backgroundColor: 'transparent',
   overflow: 'hidden',
 },
-
 // Success state for apply button
 applyButtonSuccess: {
   backgroundColor: '#10b981',
 },
-
 applyButtonSuccessText: {
   color: '#ffffff',
 },
