@@ -44,6 +44,9 @@ export default function HomeScreen({ navigation }) {
   const [sortOption, setSortOption] = useState('updatedAt');
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
   const slideUpAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  
+  // NEW state for view mode
+  const [isGridView, setIsGridView] = useState(false);
 
   // New states and refs for undo functionality
   const [pendingDeletedNote, setPendingDeletedNote] = useState(null);
@@ -332,12 +335,10 @@ export default function HomeScreen({ navigation }) {
     return 'Empty note';
   };
 
-  // NEW HELPER FUNCTION: This is the key to reading the full content
   const getTextToSpeak = (note) => {
     let textToRead = '';
 
     if (note.title && note.title.trim()) {
-      // Add a comma and a space after the title to force a slight pause
       textToRead += `Title: ${note.title}., `;
     }
 
@@ -411,6 +412,43 @@ export default function HomeScreen({ navigation }) {
   }, {});
 
   const groupedNotesArray = Object.entries(groupedNotes);
+  
+  // NEW function to toggle view mode
+  const toggleViewMode = () => {
+    setIsGridView(prev => !prev);
+  };
+  
+  // NEW styles for grid items
+  const gridItemStyles = {
+    noteCard: {
+      width: '47%', // Adjusted width for 2 columns with spacing
+      margin: 8,
+    },
+    notePreview: {
+      fontSize: 12,
+    },
+    noteHeader: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+    },
+    noteActions: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    noteDate: {
+      fontSize: 10,
+    },
+    indicatorText: {
+      fontSize: 10,
+    },
+    monthHeader: {
+      marginTop: 20,
+      marginBottom: 10,
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -422,6 +460,16 @@ export default function HomeScreen({ navigation }) {
           <Text style={[styles.headerTitle, { color: colors.headerText }]}>My Notes</Text>
         </View>
         <View style={styles.headerRightButtons}>
+          {/* NEW View Mode Toggle Button */}
+          <TouchableOpacity onPress={toggleViewMode}>
+            <Ionicons
+              name={isGridView ? 'list-outline' : 'grid-outline'}
+              size={26}
+              color={colors.headerText}
+              style={{ marginRight: 10 }}
+            />
+          </TouchableOpacity>
+          {/* End of NEW View Mode Toggle Button */}
           <TouchableOpacity onPress={openSortMenu}>
             <Ionicons
               name={'swap-vertical-outline'}
@@ -458,7 +506,10 @@ export default function HomeScreen({ navigation }) {
         data={groupedNotesArray}
         keyExtractor={([month]) => month}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[
+          styles.listContainer,
+          isGridView && { paddingHorizontal: 4 }
+        ]}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={64} color={colors.subText} />
@@ -474,81 +525,120 @@ export default function HomeScreen({ navigation }) {
           </View>
         }
         renderItem={({ item: [month, notes] }) => (
-          <View key={month}>
-            <Text style={[styles.monthHeader, { color: colors.subText }]}>{month}</Text>
-            {notes.map((note, index) => {
-              const checklistItems = parseChecklistItems(note.checklistItems);
-              const hasText = !!(note.textContents ?? note.text ?? '').trim();
-              const hasChecklist = checklistItems.length > 0;
-              const hasDrawings = !!(note.drawings && (
-                (Array.isArray(note.drawings) && note.drawings.length > 0) ||
-                (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
-              ));
-              return (
-                <TouchableOpacity
-                  key={note.id}
-                  onPress={() => handleEditNote(note)}
-                  style={[styles.noteCard, { backgroundColor: colors.cardBackground }]}
-                >
-                  <View style={styles.noteHeader}>
-                    <View style={styles.noteInfo}>
-                      <Text style={[styles.noteDate, { color: colors.subText }]}>
-                        {formatDate(note[sortOption] || note.createdAt || note.lastAccessed)}
-                      </Text>
-                    </View>
-                    <View style={styles.noteActions}>
-                      <Pressable
-                        onPress={() => handleEditNote(note)}
-                        style={styles.actionButton}
-                      >
-                        <Ionicons name="create" size={18} color={colors.iconColor} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDeleteNote(note.id)}
-                        style={styles.actionButton}
-                      >
-                        <Ionicons name="trash" size={18} color={colors.deleteIcon} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleSpeakToggle(note)}
-                        style={styles.actionButton}
-                      >
-                        <Ionicons
-                          name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
-                          size={18}
-                          color={colors.iconColor}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-                  <Text style={[styles.notePreview, { color: colors.text }]} numberOfLines={3}>
-                    {getPreviewText(note)}
-                  </Text>
-                  <View style={[styles.contentIndicators, { borderTopColor: colors.borderColor }]}>
-                    {hasText && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="document-text" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Text</Text>
+          <View key={month} style={{ width: '100%' }}>
+            <Text style={[styles.monthHeader, { color: colors.subText }, isGridView && gridItemStyles.monthHeader]}>{month}</Text>
+            
+            <FlatList
+                data={notes}
+                keyExtractor={item => item.id}
+                numColumns={isGridView ? 2 : 1}
+                scrollEnabled={false}
+                key={isGridView ? 'grid' : 'list'}
+                columnWrapperStyle={isGridView ? { justifyContent: 'space-between', paddingHorizontal: 8 } : null}
+                renderItem={({ item: note }) => {
+                  const checklistItems = parseChecklistItems(note.checklistItems);
+                  const hasText = !!(note.textContents ?? note.text ?? '').trim();
+                  const hasChecklist = checklistItems.length > 0;
+                  const hasDrawings = !!(note.drawings && (
+                    (Array.isArray(note.drawings) && note.drawings.length > 0) ||
+                    (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
+                  ));
+                  return (
+                    <TouchableOpacity
+                      key={note.id}
+                      onPress={() => handleEditNote(note)}
+                      style={[
+                        styles.noteCard, 
+                        { backgroundColor: colors.cardBackground },
+                        isGridView && { 
+                          flex: 1, 
+                          marginHorizontal: 4, 
+                          marginBottom: 8, 
+                          minHeight: 0, // IMPORTANT: Remove fixed height
+                          height: 'auto',
+                          borderRadius: 12,
+                          padding: 12,
+                        }
+                      ]}
+                    >
+                      <View style={[styles.noteHeader, isGridView && { 
+                        flexDirection: 'row', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: 8,
+                      }]}>
+                        {/* Note info and date on the left */}
+                        <View style={styles.noteInfo}>
+                          <Text style={[styles.noteDate, { color: colors.subText }, isGridView && { fontSize: 10, marginBottom: 0 }]}>
+                            {formatDate(note[sortOption] || note.createdAt || note.lastAccessed)}
+                          </Text>
+                        </View>
+                        {/* Icons on the right */}
+                        <View style={[styles.noteActions, isGridView && { 
+                          position: 'relative', 
+                          top: 0, 
+                          right: 0, 
+                          marginTop: 0, 
+                          gap: 8, // Add space between icons
+                        }]}>
+                          <Pressable
+                            onPress={() => handleDeleteNote(note.id)}
+                            style={styles.actionButton}
+                          >
+                            <Ionicons name="trash" size={18} color={colors.deleteIcon} />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleSpeakToggle(note)}
+                            style={styles.actionButton}
+                          >
+                            <Ionicons
+                              name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
+                              size={18}
+                              color={colors.iconColor}
+                            />
+                          </Pressable>
+                        </View>
                       </View>
-                    )}
-                    {hasChecklist && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>
-                          {checklistItems.length} items
-                        </Text>
+                      
+                      {/* Title and Preview Text */}
+                      {note.title && note.title.trim() && (
+                          <Text style={[styles.notePreview, { color: colors.text, fontWeight: 'bold' }, isGridView && { fontSize: 14 }]} numberOfLines={2}>
+                              {note.title}
+                          </Text>
+                      )}
+                      {(note.textContents && note.textContents.trim()) && (
+                          <Text style={[styles.notePreview, { color: colors.text, marginTop: 4 }, isGridView && { fontSize: 12 }]} numberOfLines={3}>
+                              {note.textContents}
+                          </Text>
+                      )}
+
+                      {/* Checklist and Drawing Indicators */}
+                      <View style={[styles.contentIndicators, { borderTopColor: colors.borderColor, marginTop: 8 }]}>
+                        {hasText && (
+                          <View style={styles.indicator}>
+                            <Ionicons name="document-text" size={12} color={colors.subText} />
+                            <Text style={[styles.indicatorText, { color: colors.subText }, isGridView && { fontSize: 10 }]}>Text</Text>
+                          </View>
+                        )}
+                        {hasChecklist && (
+                          <View style={styles.indicator}>
+                            <Ionicons name="checkmark-circle" size={12} color={colors.subText} />
+                            <Text style={[styles.indicatorText, { color: colors.subText }, isGridView && { fontSize: 10 }]}>
+                              {checklistItems.length} items
+                            </Text>
+                          </View>
+                        )}
+                        {hasDrawings && (
+                          <View style={styles.indicator}>
+                            <Ionicons name="brush" size={12} color={colors.subText} />
+                            <Text style={[styles.indicatorText, { color: colors.subText }, isGridView && { fontSize: 10 }]}>Drawing</Text>
+                          </View>
+                        )}
                       </View>
-                    )}
-                    {hasDrawings && (
-                      <View style={styles.indicator}>
-                        <Ionicons name="brush" size={12} color={colors.subText} />
-                        <Text style={[styles.indicatorText, { color: colors.subText }]}>Drawing</Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                    </TouchableOpacity>
+                  );
+                }}
+            />
           </View>
         )}
       />
