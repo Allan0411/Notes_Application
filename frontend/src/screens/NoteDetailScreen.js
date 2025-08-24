@@ -35,13 +35,14 @@ import ReminderModal from '../components/ReminderModal';
 import reminderService from '../services/reminderService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import {captureRef } from 'react-native-view-shot';
 
 export default function NoteDetailScreen({ route, navigation }) {
   const { activeTheme } = useContext(ThemeContext);
   const { sharingEnabled } = useContext(SettingsContext);
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
-
+  const canvasRef=useRef(null);
   // Navigation/params/state
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
@@ -100,6 +101,9 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
+
+  const [boldMode, setBoldMode] = useState(false);
+  const [italicMode, setItalicMode] = useState(false);
 
 
   // Text formatting state (now for default/global formatting)
@@ -877,28 +881,81 @@ export default function NoteDetailScreen({ route, navigation }) {
     }).start(() => setShowAiModal(false));
   };
 
-  function handleAiResult(aiText, setNoteText, noteText) {
-    Alert.alert(
-      "AI Result",
-      aiText,
-      [
-        { text: "Add", onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText) },
-        { text: "Replace", onPress: () => setNoteText(aiText) },
-        { text: "Cancel", style: "cancel" }
-      ]
-    );
+  // --- REWRITE: AI result handler and AI action handler to use selected text if present ---
+
+  function handleAiResult(aiText, setNoteText, noteText, selectionStart, selectionEnd, hasSelection) {
+    // If there was a selection, offer to replace just the selected text, or add/replace all
+    if (hasSelection && selectionStart !== selectionEnd) {
+      Alert.alert(
+        "AI Result",
+        aiText,
+        [
+          {
+            text: "Replace Selection",
+            onPress: () => {
+              // Replace only the selected text with aiText
+              const start = Math.min(selectionStart, selectionEnd);
+              const end = Math.max(selectionStart, selectionEnd);
+              setNoteText(
+                noteText.substring(0, start) +
+                aiText +
+                noteText.substring(end)
+              );
+            }
+          },
+          {
+            text: "Add to End",
+            onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText)
+          },
+          {
+            text: "Replace All",
+            onPress: () => setNoteText(aiText)
+          },
+          { text: "Cancel", style: "cancel" }
+        ]
+      );
+    } else {
+      // No selection, offer add/replace all
+      Alert.alert(
+        "AI Result",
+        aiText,
+        [
+          { text: "Add", onPress: () => setNoteText(noteText ? noteText + "\n" + aiText : aiText) },
+          { text: "Replace", onPress: () => setNoteText(aiText) },
+          { text: "Cancel", style: "cancel" }
+        ]
+      );
+    }
   }
 
+  // This function will send only the selected text to AI if there is a selection, otherwise the whole noteText
   const handleAiAction = async (actionType) => {
     closeAiMenu();
-    if (!noteText) {
+
+    // Determine what text to send to AI: selected or all
+    let textForAI = noteText;
+    let selectionExists = hasSelection && selectionStart !== selectionEnd;
+    if (selectionExists) {
+      const start = Math.min(selectionStart, selectionEnd);
+      const end = Math.max(selectionStart, selectionEnd);
+      textForAI = noteText.substring(start, end);
+    }
+
+    if (!textForAI || !textForAI.trim()) {
       Alert.alert('No Content', 'Please add some text before using an AI action.');
       return;
     }
     setIsAiProcessing(true);
     try {
-      const aiText = await requestAIAction(actionType, noteText);
-      handleAiResult(aiText, setNoteText, noteText);
+      const aiText = await requestAIAction(actionType, textForAI);
+      handleAiResult(
+        aiText,
+        setNoteText,
+        noteText,
+        selectionStart,
+        selectionEnd,
+        selectionExists
+      );
     } catch (err) {
       console.error('AI API error:', err);
       Alert.alert('Error', err.message || 'There was a problem contacting the AI API.');
@@ -1035,6 +1092,21 @@ export default function NoteDetailScreen({ route, navigation }) {
     return stats;
   };
 
+  const captureCanvas = async () => {
+    try {
+      const uri = await captureRef(canvasRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile'
+      });
+      return uri;
+    } catch (e) {
+      console.warn('Canvas capture failed', e);
+      return null;
+    }
+  }
+
+
   return (
     <>
       <SafeAreaView style={themedStyles.container}>
@@ -1144,7 +1216,7 @@ export default function NoteDetailScreen({ route, navigation }) {
                 </View>
               )}
 
-              <View style={styles.drawingOverlay} pointerEvents={drawingMode ? 'auto' : 'none'}>
+              <View ref={canvasRef} style={styles.drawingOverlay} pointerEvents={drawingMode ? 'auto' : 'none'}>
                 <DrawingCanvas
                   drawings={drawings}
                   setDrawings={(newDrawings) => {
@@ -1316,6 +1388,7 @@ export default function NoteDetailScreen({ route, navigation }) {
           brushContentWidth={brushContentWidth}
           getScrollIndicators={getScrollIndicators}
           clearDrawing={clearDrawing}
+          generateView={captureCanvas}
         />
 
         <MenuModal
@@ -1392,3 +1465,5 @@ export default function NoteDetailScreen({ route, navigation }) {
     </>
   );
 }
+
+
