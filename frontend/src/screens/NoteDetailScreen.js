@@ -139,6 +139,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10);
   const [currentDrawing, setCurrentDrawing] = useState(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Scroll indicator state
   const [brushScrollPosition, setBrushScrollPosition] = useState(0);
@@ -547,10 +548,10 @@ export default function NoteDetailScreen({ route, navigation }) {
   ];
 
   const colors = [
-    '#000000', '#4a5568', '#8099c5ff', '#012b7eff',
-    '#e53e3e', '#f3ba49ff', '#38a169', '#3182ce',
-    '#805ad5', '#d53f8c', '#ed8936', '#48bb78',
-    '#4299e1', '#9f7aea', '#ed64a6', '#f56565',
+    '#000000', '#8099c5ff', '#012b7eff', '#3182ce',
+    '#e53e3e', '#f3ba49ff', '#38a169', '#a85353ff',
+    '#805ad5', '#d53f8c', '#ed8936',
+    '#4299e1', '#52a88eff', '#fdfa2cff', 
   ];
 
   const brushSizes = [1, 2, 4, 8, 10, 12, 15, 20];
@@ -1016,6 +1017,55 @@ export default function NoteDetailScreen({ route, navigation }) {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
+  // Add this function to handle sketch-to-image generation:
+const handleSketchToImage = async () => {
+  if (drawings.length === 0) {
+    Alert.alert(
+      'No Sketch Found',
+      'Please draw something first before generating an image.',
+      [{ text: 'OK' }]
+    );
+    return;
+  }
+
+  setIsGeneratingImage(true);
+  
+  try {
+    // Here you would integrate with your AI service for image generation
+    // This is a placeholder for the actual implementation
+    
+    Alert.alert(
+      'Sketch-to-Image',
+      'This feature will convert your sketch to an AI-generated image. Implementation depends on your AI service integration.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Continue',
+          onPress: () => {
+            // Placeholder for actual image generation logic
+            // You might want to:
+            // 1. Convert drawing paths to an image
+            // 2. Send to AI service (like DALL-E, Midjourney API, etc.)
+            // 3. Display the generated image
+            // 4. Optionally replace the sketch or add as a new element
+            
+            Alert.alert('Feature Coming Soon', 'Sketch-to-image generation will be implemented with AI service integration.');
+          }
+        }
+      ]
+    );
+    
+  } catch (error) {
+    console.error('Error generating image from sketch:', error);
+    Alert.alert('Generation Error', 'Failed to generate image from sketch. Please try again.');
+  } finally {
+    setIsGeneratingImage(false);
+  }
+};
+
   const clearDrawing = () => {
     Alert.alert(
       'Clear Drawing',
@@ -1388,7 +1438,8 @@ export default function NoteDetailScreen({ route, navigation }) {
           brushContentWidth={brushContentWidth}
           getScrollIndicators={getScrollIndicators}
           clearDrawing={clearDrawing}
-          generateView={captureCanvas}
+          onSketchToImage={handleSketchToImage} // NEW
+          isGenerating={isGeneratingImage}  
         />
 
         <MenuModal

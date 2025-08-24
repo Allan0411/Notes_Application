@@ -106,6 +106,25 @@ import { StyleSheet } from 'react-native';
     right: 0,
     bottom: 0,
   },
+  sketchToImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  sketchToImageButtonDisabled: {
+    opacity: 0.6,
+  },
+  sketchToImageText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   checklistContainer: {
     borderRadius: 8,
     padding: 12,
@@ -453,7 +472,7 @@ import { StyleSheet } from 'react-native';
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 18,
     gap: 8,
     marginTop: 10,
   },
@@ -551,7 +570,7 @@ import { StyleSheet } from 'react-native';
     alignItems: 'center',
     justifyContent: 'center',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 18,
     gap: 8,
   },
   inviteButtonText: {
@@ -815,11 +834,11 @@ import { StyleSheet } from 'react-native';
     textAlign: 'center',
   },
 modernApplyButton: {  // Modern Apply Button Styles
-  marginHorizontal: 38,
-  marginVertical: 10,
+  marginHorizontal: 48,
+  marginVertical: 16,
   paddingVertical: 12,
-  paddingHorizontal: 16,
-  borderRadius: 12,
+  paddingHorizontal: 12,
+  borderRadius: 18,
   alignItems: 'center',
   justifyContent: 'center',
   flexDirection: 'row',
@@ -843,7 +862,6 @@ modernApplyButtonText: {
   fontSize: 16,
   fontWeight: '600',
   letterSpacing: 0.5,
-  marginLeft: 26,
   textAlign: 'center',
 },
 modernApplyButtonIcon: {
@@ -864,7 +882,7 @@ gradientApplyButton: {
 },
 // Success state for apply button
 applyButtonSuccess: {
-  backgroundColor: '#10b981',
+  backgroundColor: '#10b96aff',
 },
 applyButtonSuccessText: {
   color: '#ffffff',
@@ -879,7 +897,6 @@ applyButtonDisabled: {
   shadowOpacity: 0,
   elevation: 0,
 },
-
 applyButtonDisabledText: {
   color: '#d1d5db',
 },
