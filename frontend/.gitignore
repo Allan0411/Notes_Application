@@ -80,3 +80,5 @@ yarn-error.*
 
 .expo/
 .vscode/
+
+src/config.js

@@ -1,8 +1,11 @@
+ import { getAttachments as fetchAttachments } from '../services/attachmentService';
 import React, { useState, useRef, useContext, useEffect } from 'react';
+import {generateImageFromSketch, uploadImageToCloudinary} from '../services/cloudinaryUpload';
+import { addAttachment } from '../services/attachmentService';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   Alert, Modal, Dimensions, SafeAreaView, StatusBar, PanResponder,
-  Animated, ActivityIndicator, Share, Platform,
+  Animated, ActivityIndicator, Share, Platform,Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,6 +53,90 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [isExporting, setIsExporting] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [noteReminders, setNoteReminders] = useState([]);
+  // Attachments state
+  const [attachmentsList, setAttachmentsList] = useState(note?.attachments || []);
+
+  // Function to fetch attachments (images) for the note
+  // Fetch attachments from the backend using the attachmentService
+ 
+  const getAttachments = async () => {
+    if (!note?.id) {
+      setAttachmentsList([]);
+      return;
+    }
+    try {
+      const attachments = await fetchAttachments(note.id);
+      console.log(attachments);
+      setAttachmentsList(Array.isArray(attachments) ? attachments : []);
+      
+    } catch (error) {
+      console.error('Failed to fetch attachments:', error);
+      setAttachmentsList([]);
+    }
+  };
+
+  // Function to open image preview (can be replaced with a modal or navigation)
+  // Inline image preview: show a modal with the image
+  const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
+  const [imagePreviewAttachment, setImagePreviewAttachment] = useState(null);
+
+  const openImagePreview = (attachment) => {
+    if (!attachment || !attachment.storagePath) {
+      Alert.alert('Error', 'No image available for preview.');
+      return;
+    }
+    setImagePreviewAttachment(attachment);
+    setImagePreviewVisible(true);
+  };
+
+  // Inline image preview modal component
+  // Call <ImagePreviewModal visible={imagePreviewVisible} attachment={imagePreviewAttachment} onClose={() => setImagePreviewVisible(false)} />
+  // somewhere in your render tree, e.g. just above </View> in your main return.
+  const ImagePreviewModal = ({ visible, attachment, onClose }) => {
+    if (!attachment) return null;
+    return (
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 40, right: 20, zIndex: 2 }}
+            onPress={onClose}
+          >
+            <Ionicons name="close" size={36} color="#fff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: attachment.storagePath }}
+            style={{
+              width: SCREEN_WIDTH * 0.9,
+              height: SCREEN_HEIGHT * 0.7,
+              resizeMode: 'contain',
+              borderRadius: 12,
+              backgroundColor: '#222'
+            }}
+          />
+          {attachment.name && (
+            <Text style={{
+              color: '#fff',
+              marginTop: 16,
+              fontSize: 16,
+              textAlign: 'center'
+            }}>
+              {attachment.name}
+            </Text>
+          )}
+        </View>
+      </Modal>
+    );
+  };
 
   // Note content state
   const [noteText, setNoteText] = useState(note?.textContents || '');
@@ -620,7 +707,7 @@ export default function NoteDetailScreen({ route, navigation }) {
         await AsyncStorage.removeItem(backupKey);
 
         Alert.alert('Success', 'Note created successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
+          { text: 'OK' }
         ]);
       } else {
         const updatePayload = buildNotePayload({
@@ -656,8 +743,8 @@ export default function NoteDetailScreen({ route, navigation }) {
             onSave(updated);
           }
         }
-        Alert.alert('Success', 'Note updated successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
+        Alert.alert('Success', 'Note created successfully!', [
+          { text: 'OK' }
         ]);
       }
       setUpdatedAt(notePayload.updatedAt);
@@ -982,6 +1069,8 @@ export default function NoteDetailScreen({ route, navigation }) {
     { id: 'expand', label: 'Expand', icon: 'add-circle-outline', action: () => handleAiAction('expand') },
     { id: 'formal', label: 'Make Formal', icon: 'school-outline', action: () => handleAiAction('make_formal') },
     { id: 'grammar', label: 'Fix Grammar', icon: 'checkmark-circle-outline', action: () => handleAiAction('fix_grammar') },
+    { id: 'sketch-to-image', label: 'Sketch to image', icon: 'brush-outline', action: () => captureCanvas() },
+   
   ];
 
   useEffect(() => {
@@ -1017,54 +1106,7 @@ export default function NoteDetailScreen({ route, navigation }) {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
-  // Add this function to handle sketch-to-image generation:
-const handleSketchToImage = async () => {
-  if (drawings.length === 0) {
-    Alert.alert(
-      'No Sketch Found',
-      'Please draw something first before generating an image.',
-      [{ text: 'OK' }]
-    );
-    return;
-  }
 
-  setIsGeneratingImage(true);
-  
-  try {
-    // Here you would integrate with your AI service for image generation
-    // This is a placeholder for the actual implementation
-    
-    Alert.alert(
-      'Sketch-to-Image',
-      'This feature will convert your sketch to an AI-generated image. Implementation depends on your AI service integration.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Continue',
-          onPress: () => {
-            // Placeholder for actual image generation logic
-            // You might want to:
-            // 1. Convert drawing paths to an image
-            // 2. Send to AI service (like DALL-E, Midjourney API, etc.)
-            // 3. Display the generated image
-            // 4. Optionally replace the sketch or add as a new element
-            
-            Alert.alert('Feature Coming Soon', 'Sketch-to-image generation will be implemented with AI service integration.');
-          }
-        }
-      ]
-    );
-    
-  } catch (error) {
-    console.error('Error generating image from sketch:', error);
-    Alert.alert('Generation Error', 'Failed to generate image from sketch. Please try again.');
-  } finally {
-    setIsGeneratingImage(false);
-  }
-};
 
   const clearDrawing = () => {
     Alert.alert(
@@ -1142,20 +1184,85 @@ const handleSketchToImage = async () => {
     return stats;
   };
 
+ 
   const captureCanvas = async () => {
+    closeAiMenu();
+    setIsAiProcessing(true); // Show overlay while processing
     try {
+      // Capture the canvas with a white background
+      // Ensure the background is white by using backgroundColor: '#ffffff'
       const uri = await captureRef(canvasRef, {
-        format: 'png',
+        format: 'jpeg',
         quality: 1,
-        result: 'tmpfile'
+        result: 'tmpfile',
+        backgroundColor: '#ffffff' // Use full white hex code for clarity
       });
-      return uri;
-    } catch (e) {
-      console.warn('Canvas capture failed', e);
-      return null;
-    }
-  }
+      console.log('Local canvas URI:', uri);
 
+      // Build FormData directly with the local file
+      const formData = new FormData();
+      formData.append("file", {
+        uri,
+        type: "image/jpeg",
+        name: "canvas.jpeg"
+      });
+
+      // Upload to your FastAPI endpoint
+      const response = await fetch("https://74e54ed4b8e1.ngrok-free.app/generate-image-file", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const result = await response.json();
+      console.log("Cloudinary upload result:", result);
+      // Use the async/await version of generateImageFromSketch (see file_context_0)
+      const mypicurl = result.cloudinary_url;
+      console.log("mypicurl: ", mypicurl);
+      const sketch_response = await generateImageFromSketch(mypicurl);
+      console.log(sketch_response);
+
+      // Add as attachment to the note
+      if (note?.id && sketch_response) {
+        const attachmentData = {
+          attachmentType: "image",
+          storagePath: sketch_response
+        };
+        try {
+          await addAttachment(note.id, attachmentData);
+          
+          console.log("Attachment added:", attachmentData); 
+          // Move active tab to 'attachments' after adding
+          setActiveTab && setActiveTab('attachments');
+      Alert.alert('Success', 'Successfully generated image.', [
+        {
+          text: 'OK',
+          onPress: async () => {
+            if (getAttachments) {
+              await getAttachments();
+            }
+          }
+        }
+      ]);
+   
+        } catch (err) {
+          console.warn("Failed to add attachment:", err);
+        }
+      }
+      
+      return sketch_response || "";
+
+    } catch (e) {
+      console.warn("Canvas capture or upload failed", e);
+      return null;
+    } finally {
+      setIsAiProcessing(false); // Hide AI overlay when done
+    }
+  };
+  
 
   return (
     <>
@@ -1286,6 +1393,42 @@ const handleSketchToImage = async () => {
             </View>
           )}
 
+          {/* Image list for attachments tab */}
+          {activeTab === 'attachments' && (
+            <>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, marginBottom: 16 }}>
+                {(attachmentsList || []).map((attachment, idx) => (
+                  <TouchableOpacity
+                    key={attachment.id || idx}
+                    style={{ margin: 4 }}
+                    onPress={() => {
+                      if (typeof openImagePreview === 'function') {
+                        openImagePreview(attachment);
+                      } else {
+                        Alert.alert('Preview', 'Image preview not implemented');
+                      }
+                    }}
+                  >
+                    <Image
+                      source={{ uri: attachment.storagePath }}
+                      style={{ width: 60, height: 60, borderRadius: 6, backgroundColor: '#eee' }}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ))}
+                {(!attachmentsList || attachmentsList.length === 0) && (
+                  <Text style={{ color: theme.textMuted, margin: 8 }}>No images found.</Text>
+                )}
+              </View>
+              {/* Inline image preview modal */}
+              <ImagePreviewModal
+                visible={imagePreviewVisible}
+                attachment={imagePreviewAttachment}
+                onClose={() => setImagePreviewVisible(false)}
+              />
+            </>
+          )}
+
           {activeTab === 'checklist' && (
             <Checklist
               items={checklistItems}
@@ -1298,6 +1441,9 @@ const handleSketchToImage = async () => {
               styles={styles}
             />
           )}
+
+
+
         </ScrollView>
 
         <View style={themedStyles.toolbar}>
@@ -1315,9 +1461,14 @@ const handleSketchToImage = async () => {
             <Ionicons name="list" size={20} color={activeTab === 'checklist' ? '#fff' : theme.textSecondary} />
           </TouchableOpacity>
 
+          
           <TouchableOpacity
             style={[styles.toolButton, drawingMode && themedStyles.activeToolButton]}
-            onPress={toggleDrawingMode}
+            onPress={() => {
+              setActiveTab('text');
+                toggleDrawingMode();
+            
+            }}
           >
             <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : theme.textSecondary} />
           </TouchableOpacity>
@@ -1370,6 +1521,27 @@ const handleSketchToImage = async () => {
           <TouchableOpacity style={styles.toolButton} onPress={openAiMenu}>
             <Ionicons name="sparkles" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
+
+          {/* Attachments Tab Button */}
+
+          {/* Attachments Tab Button */}
+          <TouchableOpacity
+            style={[styles.toolButton, activeTab === 'attachments' && themedStyles.activeToolButton]}
+            onPress={async () => {
+              setActiveTab('attachments');
+              // Call the function to fetch attachments (images)
+              if (typeof getAttachments === 'function') {
+                await getAttachments(); 
+                console.log("fetched attachemtns");// This should fetch and set the images in state
+              } else {
+                console.warn('getAttachments function not implemented');
+              }
+            }}
+          >
+            <Ionicons name="attach" size={20} color={activeTab === 'attachments' ? '#fff' : theme.textSecondary} />
+          </TouchableOpacity>
+          
+
         </View>
 
         <MenuModal
@@ -1438,7 +1610,7 @@ const handleSketchToImage = async () => {
           brushContentWidth={brushContentWidth}
           getScrollIndicators={getScrollIndicators}
           clearDrawing={clearDrawing}
-          onSketchToImage={handleSketchToImage} // NEW
+          onSketchToImage={captureCanvas} // NEW
           isGenerating={isGeneratingImage}  
         />
 
@@ -1463,7 +1635,6 @@ const handleSketchToImage = async () => {
         styles={styles}
         theme={theme}
       />
-
       <LoadingOverlay
         visible={isAiProcessing}
         text="AI is doing it's work"

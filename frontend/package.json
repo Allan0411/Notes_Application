@@ -27,6 +27,7 @@
     "expo-image-manipulator": "~13.1.7",
     "expo-image-picker": "~16.1.4",
     "expo-linear-gradient": "~14.1.5",
+    "expo-media-library": "~17.1.7",
     "expo-notifications": "^0.31.4",
     "expo-print": "~14.1.4",
     "expo-screen-capture": "~7.2.0",
@@ -45,7 +46,8 @@
     "react-native-view-shot": "^4.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "react-native-dotenv": "^3.4.11"
   },
   "private": true
 }
