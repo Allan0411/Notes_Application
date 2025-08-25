@@ -1396,39 +1396,61 @@ export default function NoteDetailScreen({ route, navigation }) {
 
           {/* Image list for attachments tab */}
           {activeTab === 'attachments' && (
-            <>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, marginBottom: 16 }}>
-                {(attachmentsList || []).map((attachment, idx) => (
-                  <TouchableOpacity
-                    key={attachment.id || idx}
-                    style={{ margin: 4 }}
-                    onPress={() => {
-                      if (typeof openImagePreview === 'function') {
-                        openImagePreview(attachment);
-                      } else {
-                        Alert.alert('Preview', 'Image preview not implemented');
-                      }
-                    }}
-                  >
-                    <Image
-                      source={{ uri: attachment.storagePath }}
-                      style={{ width: 60, height: 60, borderRadius: 6, backgroundColor: '#eee' }}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ))}
-                {(!attachmentsList || attachmentsList.length === 0) && (
-                  <Text style={{ color: theme.textMuted, margin: 8 }}>No images found.</Text>
-                )}
-              </View>
-              {/* Inline image preview modal */}
-              <ImagePreviewModal
-                visible={imagePreviewVisible}
-                attachment={imagePreviewAttachment}
-                onClose={() => setImagePreviewVisible(false)}
-              />
-            </>
-          )}
+           <>
+             <ScrollView style={{ flex: 1, marginTop: 10 }}>
+               <View style={styles.attachmentsContainer}>
+                 {(attachmentsList || []).map((attachment, idx) => (
+                   <TouchableOpacity
+                     key={attachment.id || idx}
+                     style={styles.attachmentItem}
+                     onPress={() => {
+                       if (typeof openImagePreview === 'function') {
+                         openImagePreview(attachment);
+                        } else {
+                          Alert.alert('Preview', 'Image preview not implemented');
+                        }
+                      }}
+                      activeOpacity={0.8}
+                   >
+                    <View style={styles.imageContainer}>
+                      <Image
+                       source={{ uri: attachment.storagePath }}
+                       style={styles.attachmentImage}
+                       resizeMode="cover"
+                     />
+                      <View style={styles.imageOverlay}>
+                        <Ionicons name="expand-outline" size={20} color="#fff" />
+                      </View>
+                   </View>
+                   {attachment.name && (
+                     <Text style={[styles.attachmentName, { color: theme.text }]} numberOfLines={2}>
+                       {attachment.name}
+                      </Text>
+                    )}
+                 </TouchableOpacity>
+              ))}
+             {(!attachmentsList || attachmentsList.length === 0) && (
+                <View style={styles.emptyAttachmentsContainer}>
+                  <Ionicons name="images-outline" size={48} color={theme.textMuted} />
+                  <Text style={[styles.emptyAttachmentsText, { color: theme.textMuted }]}>
+                   No images found
+                 </Text>
+                  <Text style={[styles.emptyAttachmentsSubtext, { color: theme.textMuted }]}>
+                   Generated images will appear here
+                  </Text>
+               </View>
+              )}
+           </View>
+         </ScrollView>
+    
+           {/* Inline image preview modal */}
+           <ImagePreviewModal
+             visible={imagePreviewVisible}
+             attachment={imagePreviewAttachment}
+             onClose={() => setImagePreviewVisible(false)}
+            />
+         </>
+        )}
 
           {activeTab === 'checklist' && (
             <Checklist

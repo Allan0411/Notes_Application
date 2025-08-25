@@ -2,7 +2,7 @@
 
 import { StyleSheet } from 'react-native';
 
-  const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingBottom: 35
@@ -52,7 +52,7 @@ import { StyleSheet } from 'react-native';
     fontSize: 12,
     fontWeight: '600',
   },
-  // NEW: Rich text container styles
+  // Rich text container styles
   richTextContainer: {
     position: 'relative',
     minHeight: 570,
@@ -89,7 +89,7 @@ import { StyleSheet } from 'react-native';
     textAlignVertical: 'top',
     borderWidth: 1,
   },
-  // BOOKMARK: drawingOverlay
+  // Drawing overlay
   drawingOverlay: {
     position: 'absolute',
     top: 0,
@@ -636,7 +636,8 @@ import { StyleSheet } from 'react-native';
     fontSize: 14,
     textAlign: 'center',
   },
-  reminderModalContainer: { // Reminder Modal Styles
+  // Reminder Modal Styles
+  reminderModalContainer: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -744,35 +745,79 @@ import { StyleSheet } from 'react-native';
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 20,
     borderTopWidth: 1,
+    gap: 6,
   },
   reminderCancelButton: {
-    flex: 1,
-    marginRight: 10,
-    padding: 14,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 28,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 2,
+    minWidth: 50,
+  },
+  reminderCancelButtonPressed: {
+    backgroundColor: '#e2e8f0',
+    transform: [{ scale: 0.98 }],
   },
   reminderCancelText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#64748b',
+    letterSpacing: 0.2,
   },
   reminderCreateButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    paddingLeft: 22,
+    borderRadius: 20,
     alignItems: 'center',
-    backgroundColor: '#3182ce',
+    justifyContent: 'center',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#3b82f6',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+    minWidth: 140,
+  },
+  reminderCreateButtonPressed: {
+    backgroundColor: '#2563eb',
+    transform: [{ scale: 0.98 }],
+    shadowOpacity: 0.15,
+    elevation: 2,
+  },
+  reminderCreateButtonDisabled: {
+    backgroundColor: '#94a3b8',
+    shadowOpacity: 0.1,
+    elevation: 2,
   },
   reminderCreateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 0.3,
+  },
+  reminderCreateTextDisabled: {
+    color: '#f1f5f9',
   },
   reminderIndicator: {
     position: 'absolute',
@@ -791,7 +836,8 @@ import { StyleSheet } from 'react-native';
     color: '#fff',
     fontWeight: '600',
   },
-  fontPreviewSection: { //fontmodal styles
+  // Font modal styles
+  fontPreviewSection: {
     backgroundColor: '#f8f9fa',
     padding: 10,
     marginHorizontal: 20,
@@ -810,7 +856,7 @@ import { StyleSheet } from 'react-native';
     lineHeight: 24,
     textAlign: 'center',
   },
-  fontOptionContent: {  // Enhanced Font Option Styles
+  fontOptionContent: {
     flex: 1,
     marginRight: 10,
   },
@@ -819,7 +865,6 @@ import { StyleSheet } from 'react-native';
     marginTop: 2,
     fontStyle: 'italic',
   },
-  // Enhanced Font Size Styles
   fontSizeScrollContainer: {
     maxHeight: 80,
     marginHorizontal: 20,
@@ -833,77 +878,152 @@ import { StyleSheet } from 'react-native';
     marginTop: 2,
     textAlign: 'center',
   },
-modernApplyButton: {  // Modern Apply Button Styles
-  marginHorizontal: 48,
-  marginVertical: 16,
-  paddingVertical: 12,
-  paddingHorizontal: 12,
-  borderRadius: 18,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-  backgroundColor: '#3b82f6', // Will be overridden by theme.accent
-  shadowColor: '#000',
-  shadowOffset: {
-    width: 0,
-    height: 4,
+  modernApplyButton: {
+    marginHorizontal: 48,
+    marginVertical: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  shadowOpacity: 0.15,
-  shadowRadius: 8,
-  elevation: 8,
-},
-modernApplyButtonPressed: {
-  transform: [{ scale: 0.98 }],
-  shadowOpacity: 0.1,
-  elevation: 4,
-},
-modernApplyButtonText: {
-  color: '#ffffff',
-  fontSize: 16,
-  fontWeight: '600',
-  letterSpacing: 0.5,
-  textAlign: 'center',
-},
-modernApplyButtonIcon: {
-  opacity: 0.95,
-},
-// Alternative gradient style for apply button
-gradientApplyButton: {
-  marginHorizontal: 20,
-  marginVertical: 10,
-  paddingVertical: 14,
-  paddingHorizontal: 18,
-  borderRadius: 12,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-  backgroundColor: 'transparent',
-  overflow: 'hidden',
-},
-// Success state for apply button
-applyButtonSuccess: {
-  backgroundColor: '#10b96aff',
-},
-applyButtonSuccessText: {
-  color: '#ffffff',
-},
-// Loading state for apply button
-applyButtonLoading: {
-  opacity: 0.7,
-},
-// Disabled state for apply button
-applyButtonDisabled: {
-  backgroundColor: '#9ca3af',
-  shadowOpacity: 0,
-  elevation: 0,
-},
-applyButtonDisabledText: {
-  color: '#d1d5db',
-},
-  // Dark theme overrides for font preview
+  modernApplyButtonPressed: {
+    transform: [{ scale: 0.98 }],
+    shadowOpacity: 0.1,
+    elevation: 4,
+  },
+  modernApplyButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  modernApplyButtonIcon: {
+    opacity: 0.95,
+  },
+  gradientApplyButton: {
+    marginHorizontal: 20,
+    marginVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
+  },
+  applyButtonSuccess: {
+    backgroundColor: '#10b96aff',
+  },
+  applyButtonSuccessText: {
+    color: '#ffffff',
+  },
+  applyButtonLoading: {
+    opacity: 0.7,
+  },
+  applyButtonDisabled: {
+    backgroundColor: '#9ca3af',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  applyButtonDisabledText: {
+    color: '#d1d5db',
+  },
   fontPreviewSectionDark: {
     backgroundColor: '#2d3748',
-  }
+  },
+
+  // *** NEW ENHANCED ATTACHMENTS STYLES ***
+  attachmentsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  
+  attachmentItem: {
+    width: '48%', // Two columns on most screens
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  imageContainer: {
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+  },
+  
+  attachmentImage: {
+    width: '100%',
+    height: 140, // Much larger than the previous 60x60
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+  },
+  
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 16,
+    padding: 6,
+    opacity: 0.8,
+  },
+  
+  attachmentName: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 8,
+    paddingHorizontal: 4,
+    lineHeight: 16,
+  },
+  
+  // Empty state styles for attachments
+  emptyAttachmentsContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  
+  emptyAttachmentsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  
+  emptyAttachmentsSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
 
 export default styles;

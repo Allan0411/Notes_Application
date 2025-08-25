@@ -482,27 +482,44 @@ const ReminderModal = ({
             flexDirection: 'row',
             justifyContent: 'space-between',
             paddingHorizontal: 20,
-            paddingVertical: 15,
+            paddingVertical: 20,
             borderTopWidth: 1,
             borderTopColor: theme.border || '#e2e8f0',
             backgroundColor: theme.background || '#fff',
+            gap: 12,
           }]}>
             <TouchableOpacity
-              style={[styles.reminderCancelButton, {
-                flex: 1,
-                marginRight: 10,
-                padding: 14,
-                borderRadius: 8,
-                alignItems: 'center',
-                backgroundColor: theme.surface || '#f1f5f9',
-              }]}
+              style={[
+                styles.reminderCancelButton,
+                {
+                  flex: 1,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.surface || '#f8fafc',
+                  borderWidth: 1.5,
+                  borderColor: theme.border || '#e2e8f0',
+                  shadowColor: '#000',
+                  shadowOffset: {
+                    width: 0,
+                    height: 1,
+                  },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 2,
+                }
+              ]}
               onPress={onClose}
               disabled={isCreating}
+              activeOpacity={0.8}
             >
               <Text style={[styles.reminderCancelText, {
                 fontSize: 16,
                 fontWeight: '600',
-                color: theme.textSecondary || '#64748b',
+                color: theme.textSecondary || '#475569',
+                letterSpacing: 0.3,
               }]}>Cancel</Text>
             </TouchableOpacity>
             
@@ -511,27 +528,58 @@ const ReminderModal = ({
                 styles.reminderCreateButton,
                 {
                   flex: 1,
-                  padding: 14,
-                  borderRadius: 8,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  borderRadius: 14,
                   alignItems: 'center',
-                  backgroundColor: theme.accent || '#3182ce',
-                  opacity: isCreating ? 0.6 : 1
+                  justifyContent: 'center',
+                  backgroundColor: isCreating 
+                    ? (theme.textMuted || '#94a3b8') 
+                    : (theme.accent || '#3b82f6'),
+                  shadowColor: theme.accent || '#3b82f6',
+                  shadowOffset: {
+                    width: 0,
+                    height: isCreating ? 2 : 4,
+                  },
+                  shadowOpacity: isCreating ? 0.1 : 0.3,
+                  shadowRadius: isCreating ? 4 : 8,
+                  elevation: isCreating ? 2 : 6,
                 }
               ]}
               onPress={createReminder}
               disabled={isCreating}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.reminderCreateText, {
-                fontSize: 16,
-                fontWeight: '600',
-                color: '#fff',
-              }]}>
-                {isCreating ? 'Creating...' : 'Create Reminder'}
-              </Text>
+              <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center',
+                justifyContent: 'center' 
+              }}>
+                {isCreating && (
+                  <View style={{
+                    marginRight: 8,
+                    width: 16,
+                    height: 16,
+                  }}>
+                    <Ionicons 
+                      name="hourglass" 
+                      size={16} 
+                      color={isCreating ? '#f1f5f9' : '#fff'} 
+                    />
+                  </View>
+                )}
+                <Text style={[styles.reminderCreateText, {
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: isCreating ? '#f1f5f9' : '#ffffff',
+                  letterSpacing: 0.5,
+                }]}>
+                  {isCreating ? 'Creating...' : 'Create Reminder'}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
-
         {/* Date Picker */}
         {showDatePicker && (
           <DateTimePicker
