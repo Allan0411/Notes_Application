@@ -1610,8 +1610,7 @@ export default function NoteDetailScreen({ route, navigation }) {
           brushContentWidth={brushContentWidth}
           getScrollIndicators={getScrollIndicators}
           clearDrawing={clearDrawing}
-          onSketchToImage={captureCanvas} // NEW
-          isGenerating={isGeneratingImage}  
+
         />
 
         <MenuModal

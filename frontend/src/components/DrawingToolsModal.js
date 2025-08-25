@@ -25,9 +25,7 @@ export default function DrawingToolsModal({
   brushScrollWidth,
   brushContentWidth,
   getScrollIndicators,
-  clearDrawing,
-  onSketchToImage, // NEW: Callback for sketch-to-image generation
-  isGenerating = false, // NEW: Loading state for generation
+  clearDrawing, // NEW: Loading state for generation
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -154,25 +152,7 @@ export default function DrawingToolsModal({
             </View>
           )}
 
-          {/* Sketch-to-Image Generation Button */}
-            <TouchableOpacity
-              style={[
-                styles.sketchToImageButton,
-                { backgroundColor: theme.accent },
-                isGenerating && styles.sketchToImageButtonDisabled
-              ]}
-              onPress={onSketchToImage}
-              disabled={isGenerating}
-            >
-              <Ionicons 
-                name={isGenerating ? "hourglass-outline" : "sparkles"} 
-                size={20} 
-                color="#fff" 
-              />
-              <Text style={styles.sketchToImageText}>
-                {isGenerating ? 'Generating...' : 'Generate Image from Sketch'}
-              </Text>
-            </TouchableOpacity>
+        
 
           {/* Clear Drawing Button */}
           <TouchableOpacity style={[styles.clearDrawingButton, { backgroundColor: theme.danger }]} onPress={clearDrawing}>
