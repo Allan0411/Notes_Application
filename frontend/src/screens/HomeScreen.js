@@ -18,6 +18,7 @@ import { lightColors, darkColors } from '../utils/themeColors';
 import { normalizeNote } from '../utils/normalizeNote';
 import CollabNotes from './CollabNotes';
 import LoginSuccessOverlay from '../utils/LoginSuccessOverlay';
+import reminderService from '../services/reminderService'; // <-- Add this import
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -115,8 +116,25 @@ export default function HomeScreen({ navigation }) {
           ...note,
           deletedAt: note.deletedAt || new Date().toISOString()
         }));
+        
+        // --- START OF NEW LOGIC ---
+        // Fetch reminders for each active note to determine if a reminder icon should be shown
+        const notesWithReminders = await Promise.all(
+          activeNotes.map(async (note) => {
+            try {
+              const reminders = await reminderService.getRemindersForNote(note.id);
+              // Check for at least one active reminder
+              const hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending'); 
+              return { ...note, hasReminder };
+            } catch (error) {
+              console.error(`Error fetching reminders for note ${note.id}:`, error);
+              return { ...note, hasReminder: false };
+            }
+          })
+        );
+        // --- END OF NEW LOGIC ---
 
-        setNotesList(activeNotes);
+        setNotesList(notesWithReminders);
         setDeletedNotes(binNotes);
         await saveDeletedNotes(binNotes);
       }
@@ -281,7 +299,7 @@ export default function HomeScreen({ navigation }) {
   const openSortMenu = () => {
     setSortMenuVisible(true);
     Animated.timing(slideUpAnim, {
-      toValue: 0,
+      toValue: SCREEN_HEIGHT,
       duration: 300,
       useNativeDriver: true,
     }).start();
@@ -581,6 +599,11 @@ export default function HomeScreen({ navigation }) {
                           marginTop: 0, 
                           gap: 8, // Add space between icons
                         }]}>
+                          {note.hasReminder && (
+                            <Pressable style={styles.actionButton}>
+                              <Ionicons name="alarm-outline" size={18} color={'#008000'} />
+                            </Pressable>
+                          )}
                           <Pressable
                             onPress={() => handleDeleteNote(note.id)}
                             style={styles.actionButton}
@@ -898,7 +921,7 @@ const localStyles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(4, 4, 4, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -928,5 +951,5 @@ const localStyles = StyleSheet.create({
   },
   popupOkButtonText: {
     fontWeight: 'bold',
-  },
+  },   
 });

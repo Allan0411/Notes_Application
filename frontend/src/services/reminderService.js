@@ -162,7 +162,8 @@ class reminderService {
       const trigger = new Date(reminder.reminderDateTime);
       
       if (trigger <= new Date()) {
-        throw new Error('Cannot schedule reminder in the past');
+        console.warn('Cannot schedule reminder in the past');
+        return null; // Return null to prevent scheduling
       }
 
       const notificationId = await Notifications.scheduleNotificationAsync({
@@ -236,9 +237,22 @@ class reminderService {
   async getRemindersForNote(noteId) {
     try {
       const allReminders = await this.getAllReminders();
-      return allReminders.filter(reminder => 
-        reminder.noteId === noteId && reminder.status === 'active'
-      );
+      
+      // Filter for active reminders and check if the reminder time has passed
+      const now = new Date();
+      const activeReminders = allReminders.filter(reminder => {
+        const reminderDate = new Date(reminder.reminderDateTime);
+        return (
+          reminder.noteId === noteId && 
+          reminder.status === 'active' && 
+          reminderDate > now
+        );
+      });
+
+      // Automatically update reminders that have passed their time
+      await this.cleanupPastReminders();
+      
+      return activeReminders;
     } catch (error) {
       console.error('Error getting reminders for note:', error);
       return [];
@@ -257,7 +271,7 @@ class reminderService {
 
       const existingReminder = reminders[reminderIndex];
       
-      // Cancel existing notification and calendar event
+      // Cancel existing notification and calendar event before any updates
       if (existingReminder.notificationId) {
         await Notifications.cancelScheduledNotificationAsync(existingReminder.notificationId);
       }
@@ -273,8 +287,8 @@ class reminderService {
         updatedAt: new Date().toISOString(),
       };
 
-      // Reschedule if the reminder is still active
-      if (updatedReminder.status === 'active') {
+      // Reschedule only if the new status is active and the time is in the future
+      if (updatedReminder.status === 'active' && new Date(updatedReminder.reminderDateTime) > new Date()) {
         if (updatedReminder.reminderType === 'notification' || updatedReminder.reminderType === 'both') {
           updatedReminder.notificationId = await this.scheduleNotification(updatedReminder);
         }
@@ -365,19 +379,21 @@ class reminderService {
     try {
       const reminders = await this.getAllReminders();
       const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-      const activeReminders = reminders.filter(reminder => {
+      
+      const updatedReminders = reminders.map(reminder => {
         const reminderDate = new Date(reminder.reminderDateTime);
-        return (
-          reminder.status === 'active' || 
-          reminderDate > oneDayAgo ||
-          reminder.status === 'completed'
-        );
+        if (reminder.status === 'active' && reminderDate <= now) {
+          return {
+            ...reminder,
+            status: 'completed',
+            completedAt: new Date().toISOString(),
+          };
+        }
+        return reminder;
       });
 
-      await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(activeReminders));
-      return activeReminders.length;
+      await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(updatedReminders));
+      return updatedReminders.length;
     } catch (error) {
       console.error('Error cleaning up reminders:', error);
       return 0;
