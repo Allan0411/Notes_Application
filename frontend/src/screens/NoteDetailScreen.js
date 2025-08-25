@@ -707,8 +707,9 @@ export default function NoteDetailScreen({ route, navigation }) {
         await AsyncStorage.removeItem(backupKey);
 
         Alert.alert('Success', 'Note created successfully!', [
-          { text: 'OK' }
+          { text: 'OK', onPress: () => navigation.navigate('Home') }
         ]);
+        
       } else {
         const updatePayload = buildNotePayload({
           title: noteTitle || 'Untitled Note',
