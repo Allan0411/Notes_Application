@@ -299,7 +299,7 @@ export default function HomeScreen({ navigation }) {
   const openSortMenu = () => {
     setSortMenuVisible(true);
     Animated.timing(slideUpAnim, {
-      toValue: SCREEN_HEIGHT,
+      toValue: 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
