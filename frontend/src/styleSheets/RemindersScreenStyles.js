@@ -3,208 +3,302 @@ import { StyleSheet, Platform } from 'react-native';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: 40,
+    backgroundColor: '#FFFFFF',
   },
+  
+  // Header Styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    marginTop:24,
     paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#4a5568',
     borderBottomWidth: 1,
-    // Change to add the gray background color to the header.
-    backgroundColor: '#a56161b9',
+    borderBottomColor: '#4a5568',
+    paddingTop: 20,
+  },
+  headerCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'left',
+    justifyContent: 'left',
+    paddingLeft: 10,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#eff0f3ff',
   },
-  headerIcon: {
-    padding: 4,
-  },
+  // Search Styles
   searchContainer: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    overflow: 'hidden',
+  },
+  searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 8,
-    marginHorizontal: 16,
-    marginBottom: 10,
-    borderRadius: 10,
+    flex: 1,
   },
   searchInput: {
     flex: 1,
-    paddingHorizontal: 10,
+    marginHorizontal: 12,
     fontSize: 16,
+    color: '#a5a7acff',
+    backgroundColor: 'transparent',
   },
+  
+  // Tab Styles
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    padding: 4,
-    borderRadius: 12,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#edf3f8ff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf3f8ff',
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     marginHorizontal: 4,
+    position: 'relative',
+    backgroundColor: '#e8eef7ff',
   },
   activeTab: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#5b6880ff',
   },
   tabText: {
     marginLeft: 6,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+    color: '#6B7280',
   },
   activeTabText: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   tabBadge: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -2,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    backgroundColor: '#EF4444',
   },
   tabBadgeText: {
-    color: '#fff',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
+  
+  // Content Styles
   contentContainer: {
     flex: 1,
+    backgroundColor: '#edf3f8ff',
   },
   remindersContainer: {
     paddingHorizontal: 16,
+    paddingTop: 16,
   },
+  
+  // Reminder Card Styles
   reminderCard: {
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  urgentCard: {
+    borderColor: '#FEE2E2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+  },
+  completedCard: {
+    opacity: 1.0,
+    backgroundColor: '#eaeceeff',
+  },
+  cardTouchable: {
+    padding: 16,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 10,
+  cardHeaderLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    flexShrink: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    lineHeight: 22,
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
+    color: '#9CA3AF',
+  },
+  statusBadgeContainer: {
+    marginTop: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  reminderTypeIcons: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  typeIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  cardContent: {
+    gap: 8,
   },
   cardMessage: {
     fontSize: 14,
-    marginBottom: 12,
+    lineHeight: 20,
+    color: '#6B7280',
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  cardDateTime: {
+    paddingTop: 8,
     borderTopWidth: 1,
-    paddingTop: 12,
+    borderTopColor: '#eaeceeff',
+    marginTop: 4,
   },
-  dateTimeContainer: {
+  dateTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  cardDate: {
-    fontSize: 14,
-    fontWeight: '600',
+  dateTimeText: {
+    fontSize: 13,
+    fontWeight: '500',
     marginLeft: 6,
+    color: '#4B5563',
   },
-  actionIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconMargin: {
-    marginLeft: 8,
-  },
-  actionButtons: {
+  cardActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 8,
+    gap: 8,
     borderTopWidth: 1,
-    paddingTop: 10,
+    borderTopColor: '#eaeceeff',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 16,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   completeButton: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
   },
   deleteButton: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
+  actionButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  completeButtonText: {
+    color: '#16A34A',
+  },
+  deleteButtonText: {
+    color: '#DC2626',
+  },
+  
+  // Empty State Styles
   emptyStateContainer: {
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
-  emptyState: {
-    alignItems: 'center',
     paddingHorizontal: 40,
+    paddingVertical: 60,
+  },
+  emptyStateContent: {
+    alignItems: 'center',
+    maxWidth: 280,
+  },
+  emptyStateIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    marginBottom: 16,
   },
   emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 20,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 8,
+    color: '#111827',
   },
   emptyStateMessage: {
     fontSize: 14,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  infoSection: {
-    marginTop: 20,
-    marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 12,
     lineHeight: 20,
+    textAlign: 'center',
+    color: '#6B7280',
+  },
+  // Status Colors
+  statusActive: {
+    backgroundColor: '#EFF6FF',
+    color: '#2563EB',
+  },
+  statusCompleted: {
+    backgroundColor: '#F0FDF4',
+    color: '#16A34A',
+  },
+  statusOverdue: {
+    backgroundColor: '#FEF2F2',
+    color: '#DC2626',
+  },
+  statusUrgent: {
+    backgroundColor: '#FEF3C7',
+    color: '#D97706',
   },
 });
 
