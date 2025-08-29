@@ -33,6 +33,9 @@ export default function HomeScreen({ navigation }) {
   const route = useRoute();
   const [collaboratedNotes, setCollaboratedNotes] = useState([]);
 
+  // Add this with your other state variables (around line 40-50)
+const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+
   const [notesList, setNotesList] = useState([]);
   const [deletedNotes, setDeletedNotes] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -142,6 +145,7 @@ export default function HomeScreen({ navigation }) {
       console.error('Fetch Notes error: ', error);
     } finally {
       setIsFetchingNotes(false);
+      setHasFetchedOnce(true);
     }
   };
 
@@ -840,13 +844,16 @@ export default function HomeScreen({ navigation }) {
         </>
       )}
 
-      <LoadingOverlay
-        visible={isFetchingNotes}
-        text="Fetching notes..."
-        themedStyles={themedStyles}
-        styles={styles}
-        theme={theme}
-      />
+      
+      {isFetchingNotes && !hasFetchedOnce && (
+        <LoadingOverlay
+          visible={true}
+          text="Fetching notes..."
+          themedStyles={themedStyles}
+          styles={styles}
+          theme={theme}
+        />
+      )}
 
       <LoginSuccessOverlay
         isVisible={showSuccessOverlay}

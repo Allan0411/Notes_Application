@@ -36,7 +36,7 @@ import FontPickerModal from '../components/FontPickerModal';
 import CollaboratorModal from '../components/CollaboratorModal';
 import ReminderModal from '../components/ReminderModal';
 import reminderService from '../services/reminderService';
-
+import { collaboratorService } from '../services/collaboratorService';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import {captureRef } from 'react-native-view-shot';
 
@@ -46,6 +46,11 @@ export default function NoteDetailScreen({ route, navigation }) {
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
   const canvasRef=useRef(null);
+
+  //persomisionf for collab
+  const [currentUserRole, setCurrentUserRole] = useState('owner'); // Default to owner
+  const [noteCollaborators, setNoteCollaborators] = useState([]);
+
   // Navigation/params/state
   const { note, onSave, isNewNote } = route.params;
   const [isSaving, setIsSaving] = useState(false);
@@ -247,6 +252,25 @@ export default function NoteDetailScreen({ route, navigation }) {
   const undoStack = useRef([]);
   const redoStack = useRef([]);
 
+
+  //navtigation helper function
+
+  // Add these helper functions after your state declarations
+const canEdit = () => {
+  return ['owner', 'admin', 'editor'].includes(currentUserRole);
+};
+
+const canDelete = () => {
+  return ['owner', 'admin'].includes(currentUserRole);
+};
+
+const canManageCollaborators = () => {
+  return ['owner', 'admin'].includes(currentUserRole);
+};
+
+const isReadOnly = () => {
+  return currentUserRole === 'viewer';
+};
   // NEW: General purpose undo function
   const handleUndo = () => {
     if (undoStack.current.length > 0) {
@@ -1107,6 +1131,41 @@ export default function NoteDetailScreen({ route, navigation }) {
     setChecklistItems(items => items.filter(item => item.id !== id));
   };
 
+  //for permissoin
+  // Much simpler version since user must be a collaborator to access the note
+useEffect(() => {
+  const fetchUserPermissions = async () => {
+    if (note?.id) {
+      try {
+        // Use your existing collaborator service
+        const data = await collaboratorService.getNoteCollaborators(note.id);
+        
+        // Get current logged-in user id
+        const loggedInUserId = await AsyncStorage.getItem('userId');
+        
+        // Find current user's role among collaborators (they MUST exist)
+        const currentUser = data.find(c => c.userId.toString() === loggedInUserId);
+        
+        if (currentUser) {
+          setCurrentUserRole(currentUser.role.toLowerCase());
+          setNoteCollaborators(data);
+          console.log('User role:', currentUser.role.toLowerCase());
+        } else {
+          // This shouldn't happen if user can access the note, but fallback to owner
+          console.warn('User not found in collaborators but can access note - defaulting to owner');
+          setCurrentUserRole('owner');
+        }
+        
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+        // Fallback to owner if fetch fails
+        setCurrentUserRole('owner');
+      }
+    }
+  };
+  
+  fetchUserPermissions();
+}, [note?.id]);
 
 
   const clearDrawing = () => {
@@ -1193,7 +1252,7 @@ export default function NoteDetailScreen({ route, navigation }) {
       // Capture the canvas with a white background
       // Ensure the background is white by using backgroundColor: '#ffffff'
       const uri = await captureRef(canvasRef, {
-        format: 'jpeg',
+        format: 'png',
         quality: 1,
         result: 'tmpfile',
         backgroundColor: '#ffffff' // Use full white hex code for clarity
@@ -1204,12 +1263,12 @@ export default function NoteDetailScreen({ route, navigation }) {
       const formData = new FormData();
       formData.append("file", {
         uri,
-        type: "image/jpeg",
-        name: "canvas.jpeg"
+        type: "image/png",
+        name: "canvas.png"
       });
 
       // Upload to your FastAPI endpoint
-      const response = await fetch("https://74e54ed4b8e1.ngrok-free.app/generate-image-file", {
+      const response = await fetch("https://927a1815929b.ngrok-free.app/generate-image-file", {
         method: "POST",
         body: formData
       });
@@ -1278,6 +1337,8 @@ export default function NoteDetailScreen({ route, navigation }) {
              <Text style={themedStyles.headerTitle}>Note Detail</Text>
           </View>
           <View style={styles.headerActions}>
+          {canEdit() && (
+            <>
             <TouchableOpacity
               onPress={handleUndo}
               disabled={undoStack.current.length === 0}
@@ -1300,13 +1361,20 @@ export default function NoteDetailScreen({ route, navigation }) {
                 color={redoStack.current.length === 0 ? theme.textMuted : theme.textSecondary}
               />
             </TouchableOpacity>
-            
+            </>
+          )}
+            {canDelete() &&(
             <TouchableOpacity onPress={handleDeleteNote} style={{ marginRight: 10 }}>
               <Ionicons name="trash-outline" size={24} color="#cd0f0fff" />
             </TouchableOpacity>
+
+            )}
+            {canEdit() && (
             <TouchableOpacity onPress={saveNote} style={{ marginRight: 10 }}>
               <Ionicons name="checkmark-done-outline" size={28} color={theme.accent} />
             </TouchableOpacity>
+          )}
+
             <TouchableOpacity onPress={showMenu}>
               <Ionicons name="ellipsis-vertical" size={24} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -1334,12 +1402,12 @@ export default function NoteDetailScreen({ route, navigation }) {
             style={[themedStyles.titleInput, getTextStyle()]}
             placeholder="Note Title"
             value={noteTitle}
-            onChangeText={(text) => {
+            onChangeText={canEdit()?(text) => {
               saveForUndo('title', noteTitle);
               setNoteTitle(text);
-            }}
+            }:undefined}
             placeholderTextColor={theme.placeholder}
-            editable={!drawingMode}
+            editable={canEdit()&&!drawingMode}
           />
 
           <Text style={[styles.updatedDate, { color: theme.textMuted }]}>
