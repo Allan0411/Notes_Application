@@ -161,15 +161,38 @@ export default function RemindersScreen({ navigation }) {
    const minutesDiff = timeDiff / (1000 * 60);
 
     if (reminder.status === 'completed') {
-     return { text: 'Completed', style: styles.statusCompleted };
+     return { text: 'Completed', style: getThemedStatusStyle('completed') };
     }
     if (timeDiff < 0) {
-     return { text: 'Overdue', style: styles.statusOverdue };
+     return { text: 'Overdue', style: getThemedStatusStyle('overdue') };
     }
     if (minutesDiff <= 60) { // Within 1 hour
-     return { text: 'Urgent', style: styles.statusUrgent };
+     return { text: 'Urgent', style: getThemedStatusStyle('urgent') };
     }
-   return { text: 'Active', style: styles.statusActive };
+   return { text: 'Active', style: getThemedStatusStyle('active') };
+  };
+
+  // Get themed status styles
+  const getThemedStatusStyle = (status) => {
+    const baseStyles = {
+      active: {
+        backgroundColor: activeTheme === 'dark' ? '#1e3a8a' : '#EFF6FF',
+        color: activeTheme === 'dark' ? '#93c5fd' : '#2563EB',
+      },
+      completed: {
+        backgroundColor: activeTheme === 'dark' ? '#14532d' : '#F0FDF4',
+        color: activeTheme === 'dark' ? '#86efac' : '#16A34A',
+      },
+      overdue: {
+        backgroundColor: activeTheme === 'dark' ? '#7f1d1d' : '#FEF2F2',
+        color: activeTheme === 'dark' ? '#fca5a5' : '#DC2626',
+      },
+      urgent: {
+        backgroundColor: activeTheme === 'dark' ? '#92400e' : '#FEF3C7',
+        color: activeTheme === 'dark' ? '#fcd34d' : '#D97706',
+      },
+    };
+    return baseStyles[status] || baseStyles.active;
   };
 
   // Enhanced urgent check
@@ -237,8 +260,13 @@ const formatReminderDate = (dateString) => {
     return (
       <View style={[
         styles.reminderCard,
-        isCompleted && styles.completedCard,
-        urgent && styles.urgentCard,
+        { backgroundColor: theme.background, borderColor: theme.border },
+        isCompleted && { backgroundColor: activeTheme === 'dark' ? '#374151' : '#eaeceeff' },
+        urgent && {
+          borderColor: activeTheme === 'dark' ? '#42506bff' : '#6f7897ff',
+          borderLeftWidth: 2,
+          borderLeftColor: activeTheme === 'dark' ? '#65789bff' : '#4a4b63ff',
+        },
       ]}>
         <TouchableOpacity
           onPress={() => openNote(reminder.noteId)}
@@ -250,7 +278,8 @@ const formatReminderDate = (dateString) => {
               <Text 
                 style={[
                   styles.cardTitle,
-                  isCompleted && styles.completedText
+                  { color: theme.text },
+                  isCompleted && { textDecorationLine: 'line-through', color: theme.textMuted }
                 ]} 
                 numberOfLines={1}
               >
@@ -258,7 +287,7 @@ const formatReminderDate = (dateString) => {
               </Text>
               <View style={styles.statusBadgeContainer}>
                 <View style={[styles.statusBadge, statusInfo.style]}>
-                  <Text style={[styles.statusText, statusInfo.style]}>
+                  <Text style={[styles.statusText, { color: statusInfo.style.color }]}>
                     {statusInfo.text}
                   </Text>
                 </View>
@@ -268,18 +297,18 @@ const formatReminderDate = (dateString) => {
             <View style={styles.cardHeaderRight}>
               <View style={styles.reminderTypeIcons}>
                 {(reminder.reminderType === 'notification' || reminder.reminderType === 'both') && (
-                  <View style={styles.typeIcon}>
-                    <Ionicons name="notifications" size={12} color="#6B7280" />
+                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                    <Ionicons name="notifications" size={12} color={theme.textMuted} />
                   </View>
                 )}
                 {(reminder.reminderType === 'calendar' || reminder.reminderType === 'both') && (
-                  <View style={styles.typeIcon}>
-                    <Ionicons name="calendar" size={12} color="#6B7280" />
+                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                    <Ionicons name="calendar" size={12} color={theme.textMuted} />
                   </View>
                 )}
                 {reminder.repeatType !== 'none' && (
-                  <View style={styles.typeIcon}>
-                    <Ionicons name="repeat" size={12} color="#6B7280" />
+                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                    <Ionicons name="repeat" size={12} color={theme.textMuted} />
                   </View>
                 )}
               </View>
@@ -290,17 +319,18 @@ const formatReminderDate = (dateString) => {
             <Text 
               style={[
                 styles.cardMessage,
-                isCompleted && styles.completedText
+                { color: theme.textSecondary },
+                isCompleted && { color: theme.textMuted }
               ]} 
               numberOfLines={2}
             >
               {reminder.customMessage}
             </Text>
 
-            <View style={styles.cardDateTime}>
+            <View style={[styles.cardDateTime, { borderTopColor: theme.border }]}>
               <View style={styles.dateTimeRow}>
-                <Ionicons name="time-outline" size={14} color="#6B7280" />
-                <Text style={styles.dateTimeText}>
+                <Ionicons name="time-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.dateTimeText, { color: theme.textSecondary }]}>
                   {formatReminderDate(reminder.reminderDateTime)} at{' '}
                   {new Date(reminder.reminderDateTime).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -313,15 +343,24 @@ const formatReminderDate = (dateString) => {
         </TouchableOpacity>
 
         {/* Action Buttons */}
-        <View style={styles.cardActions}>
+        <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
           {reminder.status === 'active' && (
             <TouchableOpacity
               onPress={() => handleCompleteReminder(reminder.id)}
-              style={[styles.actionButton, styles.completeButton]}
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: activeTheme === 'dark' ? '#14532d' : '#F0FDF4',
+                  borderColor: activeTheme === 'dark' ? '#22c55e' : '#BBF7D0',
+                }
+              ]}
               activeOpacity={0.7}
             >
-              <Ionicons name="checkmark" size={16} color="#16A34A" />
-              <Text style={[styles.actionButtonText, styles.completeButtonText]}>
+              <Ionicons name="checkmark" size={16} color={activeTheme === 'dark' ? '#86efac' : '#16A34A'} />
+              <Text style={[
+                styles.actionButtonText,
+                { color: activeTheme === 'dark' ? '#86efac' : '#16A34A' }
+              ]}>
                 Done
               </Text>
             </TouchableOpacity>
@@ -329,11 +368,20 @@ const formatReminderDate = (dateString) => {
 
           <TouchableOpacity
             onPress={() => handleDeleteReminder(reminder.id)}
-            style={[styles.actionButton, styles.deleteButton]}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: activeTheme === 'dark' ? '#3c3d3fff' : '#FEF2F2',
+                borderColor: activeTheme === 'dark' ? '#ef4444' : '#FECACA',
+              }
+            ]}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={16} color="#DC2626" />
-            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
+            <Ionicons name="trash-outline" size={16} color={activeTheme === 'dark' ? '#fca5a5' : '#DC2626'} />
+            <Text style={[
+              styles.actionButtonText,
+              { color: activeTheme === 'dark' ? '#fca5a5' : '#DC2626' }
+            ]}>
               Delete
             </Text>
           </TouchableOpacity>
@@ -345,19 +393,19 @@ const formatReminderDate = (dateString) => {
   const EmptyState = ({ tab }) => (
     <View style={styles.emptyStateContainer}>
       <View style={styles.emptyStateContent}>
-        <View style={styles.emptyStateIcon}>
+        <View style={[styles.emptyStateIcon, { backgroundColor: theme.surface }]}>
           <Ionicons
             name={tab === 'upcoming' ? 'time-outline' : tab === 'completed' ? 'checkmark-circle' : 'list-outline'}
             size={32}
-            color="#9CA3AF"
+            color={theme.textMuted}
           />
         </View>
-        <Text style={styles.emptyStateTitle}>
+        <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
           {tab === 'upcoming' && 'No Upcoming Reminders'}
           {tab === 'all' && 'No Active Reminders'}
           {tab === 'completed' && 'No Completed Reminders'}
         </Text>
-        <Text style={styles.emptyStateMessage}>
+        <Text style={[styles.emptyStateMessage, { color: theme.textSecondary }]}>
           {tab === 'upcoming' && 'Create reminders for your notes to stay organized.'}
           {tab === 'all' && 'Set reminders when editing notes to track deadlines.'}
           {tab === 'completed' && 'Completed reminders will appear here.'}
@@ -375,17 +423,23 @@ const formatReminderDate = (dateString) => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={themedStyles.container}>
-        <StatusBar barStyle={theme.statusbar} backgroundColor={theme.background} />
+      <SafeAreaView style={[themedStyles.container, { backgroundColor: theme.background }]}>
+        <StatusBar barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'} />
 
         {/* Header */}
-        <View style={[themedStyles.header, { backgroundColor: '#4a5568' }]}>
+        <View style={[
+          themedStyles.header, 
+          { 
+            backgroundColor: activeTheme === 'dark' ? '#2d384bff': '#4a5568',
+            borderBottomColor: activeTheme === 'dark' ? '#2d384bff' : '#4a5568',
+          }
+        ]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
             <Ionicons name="arrow-back" size={24} color="#e7e8ebff" />
           </TouchableOpacity>
           
           <View style={styles.headerCenter}>
-            <Text style={themedStyles.headerTitle}>Reminders</Text>
+            <Text style={styles.headerTitle}>Reminders</Text>
           </View>
           
           <TouchableOpacity onPress={toggleSearch} style={styles.headerButton}>
@@ -398,21 +452,24 @@ const formatReminderDate = (dateString) => {
         </View>
 
         {/* Animated Search Bar */}
-        <Animated.View style={[styles.searchContainer, { height: searchHeight }]}>
+        <Animated.View style={[
+          styles.searchContainer, 
+          { height: searchHeight, backgroundColor: theme.background, borderBottomColor: theme.border }
+        ]}>
           {showSearch && (
             <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={18} color="#9CA3AF" />
+              <Ionicons name="search" size={18} color={theme.textMuted} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: theme.text }]}
                 placeholder="Search reminders..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 autoFocus
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                  <Ionicons name="close-circle" size={18} color={theme.textMuted} />
                 </TouchableOpacity>
               )}
             </View>
@@ -420,7 +477,13 @@ const formatReminderDate = (dateString) => {
         </Animated.View>
 
         {/* Tabs */}
-        <View style={styles.tabContainer}>
+        <View style={[
+          styles.tabContainer, 
+          { 
+            backgroundColor: theme.background, 
+            borderBottomColor: theme.background 
+          }
+        ]}>
           {[
             { key: 'upcoming', label: 'Upcoming', icon: 'time-outline', count: upcomingReminders.length },
             { key: 'all', label: 'All', icon: 'list-outline', count: reminders.filter(r => r.status === 'active').length },
@@ -430,7 +493,8 @@ const formatReminderDate = (dateString) => {
               key={tab.key}
               style={[
                 styles.tab,
-                selectedTab === tab.key && styles.activeTab
+                { backgroundColor: activeTheme === 'dark' ? '#4a5568' : '#e8eef7ff' },
+                selectedTab === tab.key && { backgroundColor: activeTheme === 'dark' ? '#64748b' : '#5b6880ff' }
               ]}
               onPress={() => setSelectedTab(tab.key)}
               activeOpacity={0.7}
@@ -438,11 +502,11 @@ const formatReminderDate = (dateString) => {
               <Ionicons
                 name={tab.icon}
                 size={16}
-                color={selectedTab === tab.key ? '#FFFFFF' : '#6B7280'}
+                color={selectedTab === tab.key ? '#FFFFFF' : theme.textMuted}
               />
               <Text style={[
                 styles.tabText,
-                selectedTab === tab.key && styles.activeTabText
+                { color: selectedTab === tab.key ? '#FFFFFF' : theme.textMuted }
               ]}>
                 {tab.label}
               </Text>
@@ -459,14 +523,14 @@ const formatReminderDate = (dateString) => {
 
         {/* Content */}
         <ScrollView
-          style={styles.contentContainer}
+          style={[styles.contentContainer, { backgroundColor: theme.background }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#6B7280"
-              colors={['#6B7280']}
+              tintColor={theme.textMuted}
+              colors={[theme.textMuted]}
             />
           }
         >
@@ -486,11 +550,11 @@ const formatReminderDate = (dateString) => {
           <View style={{
             position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: activeTheme === 'dark' ? 'rgba(26,32,44,0.8)' : 'rgba(255,255,255,0.8)',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <Text style={{ color: '#6B7280', marginTop: 8 }}>Loading...</Text>
+            <Text style={{ color: theme.textMuted, marginTop: 8 }}>Loading...</Text>
           </View>
         )}
       </SafeAreaView>

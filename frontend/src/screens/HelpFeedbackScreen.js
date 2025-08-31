@@ -122,12 +122,12 @@ Easily share notes with friends, family, or colleagues.
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a202c' : '#f8f9fa' }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={isDark ? '#1e1e1e' : '#4a5568'}
+        backgroundColor={activeTheme === 'dark' ? '#2d384bff' : '#4a5568'}
       />
 
       <View style={[styles.header, {
         borderBottomColor: isDark ? '#333' : '#e8eaed',
-        backgroundColor: '#4a5568',
+        backgroundColor: activeTheme === 'dark' ? '#2d384bff' : '#4a5568',
       }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Ionicons name="arrow-back" size={24} color={'#FFFFFF'} />

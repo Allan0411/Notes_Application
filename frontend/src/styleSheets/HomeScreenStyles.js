@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   fabButton: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 45,
     right: 20,
     width: 56,
     height: 56,
