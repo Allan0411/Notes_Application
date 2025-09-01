@@ -861,6 +861,19 @@ const isReadOnly = () => {
   const exportAsPDF = async () => {
     try {
       setIsExporting(true);
+      await getAttachments();
+      // Capture the canvas as an image and pass its URI to formatNoteAsHTML
+      let canvasImageUri = null;
+      try {
+        canvasImageUri = await captureRef(canvasRef, {
+          format: 'png',
+          quality: 1,
+          result: 'data-uri',
+          backgroundColor: '#ffffff'
+        });
+      } catch (e) {
+        console.warn('Failed to capture canvas image for PDF export:', e);
+      }
       const htmlContent = formatNoteAsHTML({
         noteTitle,
         noteText,
@@ -871,7 +884,10 @@ const isReadOnly = () => {
         fontFamily,
         isBold,
         isItalic,
-        textAlign
+        textAlign,
+        noteId: note?.id,
+        attachmentsList,
+        canvasImageUri // pass the image URI instead of the ref
       });
       const fileName = `${(noteTitle || 'Note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
       const { uri } = await Print.printToFileAsync({
@@ -1268,7 +1284,7 @@ useEffect(() => {
       });
 
       // Upload to your FastAPI endpoint
-      const response = await fetch("https://927a1815929b.ngrok-free.app/generate-image-file", {
+      const response = await fetch("https://7560c2bc2fcb.ngrok-free.app/generate-image-file", {
         method: "POST",
         body: formData
       });
