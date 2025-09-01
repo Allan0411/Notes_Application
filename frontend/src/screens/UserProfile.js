@@ -204,7 +204,7 @@ export default function UserProfile({ navigation }) {
 
           {editMode && (
             <View style={styles.editActions}>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit}>
+              <TouchableOpacity style={[styles.cancelButton,{backgroundColor: themeColors.accent}]} onPress={handleCancelEdit}>
                 <Text style={[styles.cancelButtonText, { color: themeColors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.saveButton, { backgroundColor: themeColors.accent }]} onPress={handleSaveProfile}>

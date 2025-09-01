@@ -99,10 +99,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cancelButton: { 
-    marginRight: 16 
+    marginRight: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   cancelButtonText: { 
-    fontSize: 14 
+    color: '#fff', 
+    fontWeight: 'bold' ,
   },
   saveButton: {
     paddingHorizontal: 16,

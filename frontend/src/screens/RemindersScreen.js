@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import reminderService from '../services/reminderService';
+import { fetchNoteById } from '../services/noteService';
 import {ThemeContext} from '../ThemeContext';
 import { remindersthemes as themes } from '../utils/themeColors';
 import { buildThemedStyles } from '../utils/buildThemedStyles';
@@ -116,9 +117,38 @@ export default function RemindersScreen({ navigation }) {
     );
   };
 
-  const openNote = (noteId) => {
-    navigation.navigate('NoteDetail', { noteId });
-  };
+  const openNote = async (noteId) => {
+  try {
+    if (!noteId) {
+      Alert.alert('Error', 'Note ID is missing');
+      return;
+    }
+    
+    // Fetch the complete note data before navigating
+    const noteData = await fetchNoteById(noteId);
+    
+    if (!noteData) {
+      Alert.alert('Error', 'Note not found or you may not have access to it');
+      return;
+    }
+    
+    // Navigate to NoteDetail with the complete note data
+    navigation.navigate('NoteDetail', { 
+      note: noteData,
+      isNewNote: false,
+      onSave: (updatedNote) => {
+        // Refresh reminders when note is updated
+        loadReminders();
+      }
+    });
+  } catch (error) {
+    console.error('Error opening note from reminder:', error);
+    Alert.alert(
+      'Error', 
+      'Could not open note. It may have been deleted or you may not have permission to view it.'
+    );
+  }
+};
 
   const getFilteredReminders = () => {
     let filtered = [];
@@ -252,143 +282,155 @@ const formatReminderDate = (dateString) => {
 };
 
   const ReminderCard = ({ reminder }) => {
-    const statusInfo = getStatusInfo(reminder);
-    const isPast = new Date(reminder.reminderDateTime) < new Date();
-    const isCompleted = reminder.status === 'completed';
-    const urgent = isUrgent(reminder);
+  const statusInfo = getStatusInfo(reminder);
+  const isPast = new Date(reminder.reminderDateTime) < new Date();
+  const isCompleted = reminder.status === 'completed';
+  const urgent = isUrgent(reminder);
 
-    return (
-      <View style={[
-        styles.reminderCard,
-        { backgroundColor: theme.background, borderColor: theme.border },
-        isCompleted && { backgroundColor: activeTheme === 'dark' ? '#374151' : '#eaeceeff' },
-        urgent && {
-          borderColor: activeTheme === 'dark' ? '#42506bff' : '#6f7897ff',
-          borderLeftWidth: 2,
-          borderLeftColor: activeTheme === 'dark' ? '#65789bff' : '#4a4b63ff',
-        },
-      ]}>
-        <TouchableOpacity
-          onPress={() => openNote(reminder.noteId)}
-          style={styles.cardTouchable}
-          activeOpacity={0.6}
-        >
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <Text 
-                style={[
-                  styles.cardTitle,
-                  { color: theme.text },
-                  isCompleted && { textDecorationLine: 'line-through', color: theme.textMuted }
-                ]} 
-                numberOfLines={1}
-              >
-                {reminder.noteTitle}
-              </Text>
-              <View style={styles.statusBadgeContainer}>
-                <View style={[styles.statusBadge, statusInfo.style]}>
-                  <Text style={[styles.statusText, { color: statusInfo.style.color }]}>
-                    {statusInfo.text}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            
-            <View style={styles.cardHeaderRight}>
-              <View style={styles.reminderTypeIcons}>
-                {(reminder.reminderType === 'notification' || reminder.reminderType === 'both') && (
-                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
-                    <Ionicons name="notifications" size={12} color={theme.textMuted} />
-                  </View>
-                )}
-                {(reminder.reminderType === 'calendar' || reminder.reminderType === 'both') && (
-                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
-                    <Ionicons name="calendar" size={12} color={theme.textMuted} />
-                  </View>
-                )}
-                {reminder.repeatType !== 'none' && (
-                  <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
-                    <Ionicons name="repeat" size={12} color={theme.textMuted} />
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.cardContent}>
+  return (
+    <View style={[
+      styles.reminderCard,
+      { backgroundColor: theme.background, borderColor: theme.border },
+      isCompleted && { backgroundColor: activeTheme === 'dark' ? '#374151' : '#eaeceeff' },
+      urgent && {
+        borderColor: activeTheme === 'dark' ? '#42506bff' : '#6f7897ff',
+        borderLeftWidth: 2,
+        borderLeftColor: activeTheme === 'dark' ? '#65789bff' : '#4a4b63ff',
+      },
+    ]}>
+      <TouchableOpacity
+        onPress={() => {
+          try {
+            if (reminder.noteId) {
+              openNote(reminder.noteId);
+            } else {
+              Alert.alert('Error', 'Note ID is missing from reminder data');
+            }
+          } catch (error) {
+            console.error('Failed to open note:', error);
+            Alert.alert('Error', 'Failed to open note. Please try again.');
+          }
+        }}
+        style={styles.cardTouchable}
+        activeOpacity={0.6}
+      >
+      
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderLeft}>
             <Text 
               style={[
-                styles.cardMessage,
-                { color: theme.textSecondary },
-                isCompleted && { color: theme.textMuted }
+                styles.cardTitle,
+                { color: theme.text },
+                isCompleted && { textDecorationLine: 'line-through', color: theme.textMuted }
               ]} 
-              numberOfLines={2}
+              numberOfLines={1}
             >
-              {reminder.customMessage}
+              {reminder.noteTitle}
             </Text>
-
-            <View style={[styles.cardDateTime, { borderTopColor: theme.border }]}>
-              <View style={styles.dateTimeRow}>
-                <Ionicons name="time-outline" size={14} color={theme.textMuted} />
-                <Text style={[styles.dateTimeText, { color: theme.textSecondary }]}>
-                  {formatReminderDate(reminder.reminderDateTime)} at{' '}
-                  {new Date(reminder.reminderDateTime).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+            <View style={styles.statusBadgeContainer}>
+              <View style={[styles.statusBadge, statusInfo.style]}>
+                <Text style={[styles.statusText, { color: statusInfo.style.color }]}>
+                  {statusInfo.text}
                 </Text>
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+          
+          <View style={styles.cardHeaderRight}>
+            <View style={styles.reminderTypeIcons}>
+              {(reminder.reminderType === 'notification' || reminder.reminderType === 'both') && (
+                <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="notifications" size={12} color={theme.textMuted} />
+                </View>
+              )}
+              {(reminder.reminderType === 'calendar' || reminder.reminderType === 'both') && (
+                <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="calendar" size={12} color={theme.textMuted} />
+                </View>
+              )}
+              {reminder.repeatType !== 'none' && (
+                <View style={[styles.typeIcon, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="repeat" size={12} color={theme.textMuted} />
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
 
-        {/* Action Buttons */}
-        <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
-          {reminder.status === 'active' && (
-            <TouchableOpacity
-              onPress={() => handleCompleteReminder(reminder.id)}
-              style={[
-                styles.actionButton,
-                {
-                  backgroundColor: activeTheme === 'dark' ? '#14532d' : '#F0FDF4',
-                  borderColor: activeTheme === 'dark' ? '#22c55e' : '#BBF7D0',
-                }
-              ]}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="checkmark" size={16} color={activeTheme === 'dark' ? '#86efac' : '#16A34A'} />
-              <Text style={[
-                styles.actionButtonText,
-                { color: activeTheme === 'dark' ? '#86efac' : '#16A34A' }
-              ]}>
-                Done
+        <View style={styles.cardContent}>
+          <Text 
+            style={[
+              styles.cardMessage,
+              { color: theme.textSecondary },
+              isCompleted && { color: theme.textMuted }
+            ]} 
+            numberOfLines={2}
+          >
+            {reminder.customMessage}
+          </Text>
+
+          <View style={[styles.cardDateTime, { borderTopColor: theme.border }]}>
+            <View style={styles.dateTimeRow}>
+              <Ionicons name="time-outline" size={14} color={theme.textMuted} />
+              <Text style={[styles.dateTimeText, { color: theme.textSecondary }]}>
+                {formatReminderDate(reminder.reminderDateTime)} at{' '}
+                {new Date(reminder.reminderDateTime).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </Text>
-            </TouchableOpacity>
-          )}
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
 
+      {/* Action Button */}
+      <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+        {reminder.status === 'active' && (
           <TouchableOpacity
-            onPress={() => handleDeleteReminder(reminder.id)}
+            onPress={() => handleCompleteReminder(reminder.id)}
             style={[
               styles.actionButton,
               {
-                backgroundColor: activeTheme === 'dark' ? '#3c3d3fff' : '#FEF2F2',
-                borderColor: activeTheme === 'dark' ? '#ef4444' : '#FECACA',
+                backgroundColor: activeTheme === 'dark' ? '#14532d' : '#F0FDF4',
+                borderColor: activeTheme === 'dark' ? '#22c55e' : '#BBF7D0',
               }
             ]}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={16} color={activeTheme === 'dark' ? '#fca5a5' : '#DC2626'} />
+            <Ionicons name="checkmark" size={16} color={activeTheme === 'dark' ? '#86efac' : '#16A34A'} />
             <Text style={[
               styles.actionButtonText,
-              { color: activeTheme === 'dark' ? '#fca5a5' : '#DC2626' }
+              { color: activeTheme === 'dark' ? '#86efac' : '#16A34A' }
             ]}>
-              Delete
+              Done
             </Text>
           </TouchableOpacity>
-        </View>
+        )}
+
+        <TouchableOpacity
+          onPress={() => handleDeleteReminder(reminder.id)}
+          style={[
+            styles.actionButton,
+            {
+              backgroundColor: activeTheme === 'dark' ? '#3c3d3fff' : '#FEF2F2',
+              borderColor: activeTheme === 'dark' ? '#ef4444' : '#FECACA',
+            }
+          ]}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="trash-outline" size={16} color={activeTheme === 'dark' ? '#fca5a5' : '#DC2626'} />
+          <Text style={[
+            styles.actionButtonText,
+            { color: activeTheme === 'dark' ? '#fca5a5' : '#DC2626' }
+          ]}>
+            Delete
+          </Text>
+        </TouchableOpacity>
       </View>
-    );
-  };
+    </View>
+  );
+};
 
   const EmptyState = ({ tab }) => (
     <View style={styles.emptyStateContainer}>
