@@ -10,8 +10,7 @@ const styles = (isDark) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      // Change this to transparent
-      backgroundColor: 'transparent',
+      backgroundColor: isDark ? '#1a202c' : '#f7fafc',
     },
     header: {
       flexDirection: 'row',
@@ -19,9 +18,9 @@ const styles = (isDark) =>
       paddingHorizontal: 16,
       paddingVertical: 20,
       paddingTop: 40,
-      backgroundColor: isDark ? '#2d3748' : '#4a5568',
+      backgroundColor: isDark ? '#2d3748' : '#475568ff',
       borderBottomWidth: 1,
-      borderBottomColor: isDark ? '#4a5568' : '#e2e8f0',
+      borderBottomColor: isDark ? '#4a5568' : '#cbd5e0',
     },
     headerLeft: {
       flexDirection: 'row',
@@ -31,7 +30,7 @@ const styles = (isDark) =>
     headerTitle: {
       fontSize: 22,
       fontWeight: 'bold',
-      color: isDark ? '#edf2f7' : '#ecececff',
+      color: isDark ? '#edf2f7' : '#f2f4f8ff',
     },
     content: {
       flex: 1,
@@ -46,12 +45,13 @@ const styles = (isDark) =>
     },
     message: {
       fontSize: 16,
-      color: isDark ? '#cbd5e0' : '#000000ff',
+      color: isDark ? '#cbd5e0' : '#4a5568',
       marginTop: 10,
       marginBottom: 30,
     },
     logoutButton: {
-      backgroundColor: '#e53e3e',
+      // Use dynamic color for the button background
+      backgroundColor: isDark ? '#c53030' : '#e53e3e',
       paddingHorizontal: 32,
       paddingVertical: 12,
       borderRadius: 8,
@@ -62,7 +62,8 @@ const styles = (isDark) =>
       shadowRadius: 4,
     },
     buttonText: {
-      color: '#fff',
+      // Use dynamic color for the button text
+      color: isDark ? '#f7fafc' : '#fff',
       fontSize: 16,
       fontWeight: '600',
     },

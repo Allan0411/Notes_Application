@@ -58,9 +58,9 @@ export default function HelpArticleScreen({ route }) {
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a202c' : '#f8f9fa' }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={isDark ? '#1e1e1e' : '#4a5568'}
+        backgroundColor={isDark ? '#2d384bff' : '#4a5568'}
       />
-      <View style={[styles.header, { backgroundColor: '#4a5568', borderBottomColor: isDark ? '#333' : '#e8eaed' }]}>
+      <View style={[styles.header, { backgroundColor:isDark ? '#2d384bff' :  '#4a5568', borderBottomColor: isDark ? '#333' : '#e8eaed' }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={isDark ? '#fafafaff' : '#f0f0f0ff'} />
         </TouchableOpacity>
@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    paddingTop: 40,
   },
   backButton: {
     padding: 8,

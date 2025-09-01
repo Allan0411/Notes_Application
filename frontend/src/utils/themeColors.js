@@ -57,9 +57,6 @@ export const lightColors = {
       placeholder: '#718096',
       drawingBanner: '#4a5568',
       statusBar: 'dark-content',
-      success: '#38a169',
-      warning: '#d69e2e',
-      error: '#e53e3e',
       overlay: 'rgba(0,0,0,0.5)',
     },
     dark: {
@@ -79,9 +76,6 @@ export const lightColors = {
       placeholder: '#a0aec0',
       drawingBanner: '#2d3748',
       statusBar: 'light-content',
-      success: '#48bb78',
-      warning: '#f6e05e',
-      error: '#fc8181',
       overlay: 'rgba(0,0,0,0.7)',
     }
   };
@@ -96,9 +90,6 @@ export const lightColors = {
     accent: '#3182ce',
     border: '#e2e8f0',
     placeholder: '#a0aec0',
-    success: '#38a169',
-    warning: '#d69e2e',
-    error: '#e53e3e',
     statusBar: 'dark-content',
   },
   dark: {
@@ -110,9 +101,6 @@ export const lightColors = {
     accent: '#63b3ed',
     border: '#4a5568',
     placeholder: '#718096',
-    success: '#48bb78',
-    warning: '#f6e05e',
-    error: '#fc8181',
     statusBar: 'light-content',
   }
 };

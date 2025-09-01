@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     justifyContent: 'space-around',
+    marginBottom: 18,
   },
   toolButton: {
     padding: 8,

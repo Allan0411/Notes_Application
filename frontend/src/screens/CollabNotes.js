@@ -427,7 +427,7 @@ const collabNotesStyles = {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
-    paddingTop: 25,
+    paddingTop: 40,
   },
   headerContent: {
     flexDirection: 'row',

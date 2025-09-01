@@ -27,7 +27,7 @@ Welcome to your Note App! This guide will help you quickly get up to speed. Our 
 * **Search and sort:** Easily find any note with powerful search and sorting options.
 
 ## Your First Note
-1.  On the main screen, tap the large **\`+\`** button in the bottom right corner.
+1.  On the main screen, tap the large **+** button in the bottom right corner.
 2.  Add a title and start typing your note.
 3.  Tap the back arrow or done button to save automatically.`,
     },
@@ -42,7 +42,7 @@ Our editor is designed to be simple and intuitive. You can add more than just te
 
 ## Creating a New Note
 1.  Go to your home screen.
-2.  Tap the **\`+\`** button.
+2.  Tap the **+** button.
 3.  The editor will open, ready for your input. Notes are saved automatically as you type.
 
 ## Editing an Existing Note
@@ -51,8 +51,8 @@ Our editor is designed to be simple and intuitive. You can add more than just te
 
 ## Using the Editor
 * **Text:** Start typing directly in the note body.
-* **Checklist:** To add a checklist, look for the **\`checkbox icon\`** in the editor toolbar.
-* **Drawing:** To sketch, select the **\`drawing icon\`** from the toolbar to access a digital canvas.`,
+* **Checklist:** To add a checklist, look for the **checkbox icon** in the editor toolbar.
+* **Drawing:** To sketch, select the **drawing icon** from the toolbar to access a digital canvas.`,
     },
     {
       id: 3,
@@ -88,7 +88,7 @@ Easily share notes with friends, family, or colleagues.
 
 ## How to Share
 1.  **Open the note** you wish to share.
-2.  Look for the **\`share icon\`** (typically an arrow or three dots) in the top right corner.
+2.  Look for the **share icon** (typically an arrow or three dots) in the top right corner.
 3.  A menu will appear with options to share the content via email, messaging apps, or other services on your device.
 
 ## Sharing Options
@@ -122,12 +122,12 @@ Easily share notes with friends, family, or colleagues.
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a202c' : '#f8f9fa' }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={isDark ? '#1e1e1e' : '#4a5568'}
+        backgroundColor={activeTheme === 'dark' ? '#2d384bff' : '#4a5568'}
       />
 
       <View style={[styles.header, {
         borderBottomColor: isDark ? '#333' : '#e8eaed',
-        backgroundColor: '#4a5568',
+        backgroundColor: activeTheme === 'dark' ? '#2d384bff' : '#4a5568',
       }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Ionicons name="arrow-back" size={24} color={'#FFFFFF'} />

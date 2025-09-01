@@ -1630,8 +1630,6 @@ useEffect(() => {
           </TouchableOpacity>
 
           {/* Attachments Tab Button */}
-
-          {/* Attachments Tab Button */}
           <TouchableOpacity
             style={[styles.toolButton, activeTab === 'attachments' && themedStyles.activeToolButton]}
             onPress={async () => {
