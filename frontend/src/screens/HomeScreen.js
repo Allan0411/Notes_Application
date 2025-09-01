@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   View, Text, FlatList, Pressable,
-  SafeAreaView, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput, StyleSheet
+  SafeAreaView, StatusBar, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, TextInput, StyleSheet, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,9 +16,8 @@ import { fetchNotes as apiFetchNotes, fetchNoteById, updateNoteIsPrivate } from 
 import { fetchUserInfo } from '../services/userService';
 import { lightColors, darkColors } from '../utils/themeColors';
 import { normalizeNote } from '../utils/normalizeNote';
-import CollabNotes from './CollabNotes';
 import LoginSuccessOverlay from '../utils/LoginSuccessOverlay';
-import reminderService from '../services/reminderService'; // <-- Add this import
+import reminderService from '../services/reminderService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -32,10 +31,7 @@ export default function HomeScreen({ navigation }) {
 
   const route = useRoute();
   const [collaboratedNotes, setCollaboratedNotes] = useState([]);
-
-  // Add this with your other state variables (around line 40-50)
-const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
-
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [notesList, setNotesList] = useState([]);
   const [deletedNotes, setDeletedNotes] = useState([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -48,16 +44,15 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [sortOption, setSortOption] = useState('updatedAt');
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
   const slideUpAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  
-  // NEW state for view mode
   const [isGridView, setIsGridView] = useState(false);
 
-  // New states and refs for undo functionality
+  // NEW: Multi-select state
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState([]);
+  
   const [pendingDeletedNote, setPendingDeletedNote] = useState(null);
   const [undoBarVisible, setUndoBarVisible] = useState(false);
   const undoTimeout = useRef(null);
-
-  // State for the new login success pop-up
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
   useEffect(() => {
@@ -119,15 +114,12 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
           ...note,
           deletedAt: note.deletedAt || new Date().toISOString()
         }));
-        
-        // --- START OF NEW LOGIC ---
-        // Fetch reminders for each active note to determine if a reminder icon should be shown
+
         const notesWithReminders = await Promise.all(
           activeNotes.map(async (note) => {
             try {
               const reminders = await reminderService.getRemindersForNote(note.id);
-              // Check for at least one active reminder
-              const hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending'); 
+              const hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending');
               return { ...note, hasReminder };
             } catch (error) {
               console.error(`Error fetching reminders for note ${note.id}:`, error);
@@ -135,7 +127,6 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
             }
           })
         );
-        // --- END OF NEW LOGIC ---
 
         setNotesList(notesWithReminders);
         setDeletedNotes(binNotes);
@@ -179,12 +170,10 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
   const confirmDeletion = async (noteId) => {
     if (!noteId) return;
-
     setIsMovingToBin(true);
     try {
       await updateNoteIsPrivate(noteId, true);
       const noteToDelete = notesList.find(n => (n.id ?? n._id) === noteId) || {};
-
       const deletedNote = {
         ...noteToDelete,
         deletedAt: new Date().toISOString(),
@@ -208,12 +197,9 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
       console.error("Note does not have a valid id or _id:", noteId);
       return;
     }
-
     const noteToHide = notesList.find(n => (n.id ?? n._id) === noteId);
     if (!noteToHide) return;
-
     setNotesList(prevNotes => prevNotes.filter(n => (n.id ?? n._id) !== noteId));
-
     setPendingDeletedNote(noteToHide);
     setUndoBarVisible(true);
 
@@ -231,7 +217,6 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
       clearTimeout(undoTimeout.current);
     }
     setUndoBarVisible(false);
-
     if (pendingDeletedNote) {
       setNotesList(prevNotes => [pendingDeletedNote, ...prevNotes]);
       setPendingDeletedNote(null);
@@ -331,43 +316,14 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
     return [];
   };
 
-  const getPreviewText = (note) => {
-    if (note.title && note.title.trim()) {
-      return note.title;
-    }
-    if (note.textContents && note.textContents.trim()) {
-      return note.textContents;
-    }
-    if (note.text && note.text.trim()) {
-      return note.text;
-    }
-
-    const checklistItems = parseChecklistItems(note.checklistItems);
-    if (checklistItems.length > 0) {
-      const firstItem = checklistItems[0];
-      return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
-    }
-
-    if (note.drawings && (
-      (Array.isArray(note.drawings) && note.drawings.length > 0) ||
-      (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
-    )) {
-      return '🎨 Drawing';
-    }
-    return 'Empty note';
-  };
-
   const getTextToSpeak = (note) => {
     let textToRead = '';
-
     if (note.title && note.title.trim()) {
       textToRead += `Title: ${note.title}., `;
     }
-
     if (note.textContents && note.textContents.trim()) {
       textToRead += `Note content: ${note.textContents}. `;
     }
-
     const checklistItems = parseChecklistItems(note.checklistItems);
     if (checklistItems.length > 0) {
       textToRead += 'Checklist items: ';
@@ -375,14 +331,12 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
         textToRead += `${item.isCompleted ? 'Completed' : 'Not completed'}: ${item.text || item.title}. `;
       });
     }
-
     if (note.drawings && (
       (Array.isArray(note.drawings) && note.drawings.length > 0) ||
       (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
     )) {
       textToRead += 'This note also contains a drawing.';
     }
-
     return textToRead.trim();
   };
 
@@ -434,16 +388,77 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   }, {});
 
   const groupedNotesArray = Object.entries(groupedNotes);
-  
-  // NEW function to toggle view mode
+
   const toggleViewMode = () => {
     setIsGridView(prev => !prev);
   };
   
-  // NEW styles for grid items
+  // NEW function to toggle multi-select mode
+  const toggleMultiSelectMode = (noteId) => {
+    setIsMultiSelectMode(true);
+    setSelectedNotes([noteId]);
+  };
+
+  // NEW function to handle selecting/deselecting a note
+  const toggleSelectNote = (noteId) => {
+    setSelectedNotes(prevSelected => {
+      if (prevSelected.includes(noteId)) {
+        const newSelection = prevSelected.filter(id => id !== noteId);
+        if (newSelection.length === 0) {
+          setIsMultiSelectMode(false);
+        }
+        return newSelection;
+      } else {
+        return [...prevSelected, noteId];
+      }
+    });
+  };
+  
+  // NEW function to handle bulk deletion
+  const handleDeleteSelected = async () => {
+    Alert.alert(
+      'Confirm Deletion',
+      `Are you sure you want to delete ${selectedNotes.length} note(s)?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsMovingToBin(true);
+            try {
+              await Promise.all(selectedNotes.map(noteId => updateNoteIsPrivate(noteId, true)));
+              setNotesList(prevNotes => prevNotes.filter(n => !selectedNotes.includes(n.id)));
+              const deleted = notesList.filter(n => selectedNotes.includes(n.id)).map(n => ({
+                ...n,
+                deletedAt: new Date().toISOString(),
+                isPrivate: true
+              }));
+              setDeletedNotes(prevDeleted => {
+                const newDeleted = [...prevDeleted, ...deleted];
+                saveDeletedNotes(newDeleted);
+                return newDeleted;
+              });
+
+            } catch (error) {
+              console.error("Error moving notes to bin:", error);
+            } finally {
+              setIsMovingToBin(false);
+              setIsMultiSelectMode(false);
+              setSelectedNotes([]);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const gridItemStyles = {
     noteCard: {
-      width: '47%', // Adjusted width for 2 columns with spacing
+      width: '47%',
       margin: 8,
     },
     notePreview: {
@@ -478,51 +493,67 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
         <View style={styles.titleRow}>
-          <Ionicons name="book" size={28} color={colors.headerText} />
-          <Text style={[styles.headerTitle, { color: colors.headerText }]}>My Notes</Text>
+          {isMultiSelectMode ? (
+            <TouchableOpacity onPress={() => { setIsMultiSelectMode(false); setSelectedNotes([]); }}>
+              <Ionicons name="close-outline" size={28} color={colors.headerText} />
+            </TouchableOpacity>
+          ) : (
+            <Ionicons name="book" size={28} color={colors.headerText} />
+          )}
+          <Text style={[styles.headerTitle, { color: colors.headerText }]}>
+            {isMultiSelectMode ? `${selectedNotes.length} selected` : 'My Notes'}
+          </Text>
         </View>
         <View style={styles.headerRightButtons}>
-          {/* NEW View Mode Toggle Button */}
-          <TouchableOpacity onPress={toggleViewMode}>
-            <Ionicons
-              name={isGridView ? 'list-outline' : 'grid-outline'}
-              size={26}
-              color={colors.headerText}
-              style={{ marginRight: 10 }}
-            />
-          </TouchableOpacity>
-          {/* End of NEW View Mode Toggle Button */}
-          <TouchableOpacity onPress={openSortMenu}>
-            <Ionicons
-              name={'swap-vertical-outline'}
-              size={26}
-              color={colors.headerText}
-              style={{ marginRight: 10 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openDrawer}>
-            <Ionicons name="menu" size={26} color={colors.headerText} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.searchBackground }]}>
-          <Ionicons name="search" size={20} color={colors.subText} style={styles.searchIcon} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.searchText }]}
-            placeholder="Search notes..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={colors.searchPlaceholder}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={colors.subText} />
+          {isMultiSelectMode ? (
+            <TouchableOpacity onPress={handleDeleteSelected}>
+              <Ionicons name="trash-bin-outline" size={26} color={colors.deleteIcon} />
             </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity onPress={toggleViewMode}>
+                <Ionicons
+                  name={isGridView ? 'list-outline' : 'grid-outline'}
+                  size={26}
+                  color={colors.headerText}
+                  style={{ marginRight: 10 }}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={openSortMenu}>
+                <Ionicons
+                  name={'swap-vertical-outline'}
+                  size={26}
+                  color={colors.headerText}
+                  style={{ marginRight: 10 }}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={openDrawer}>
+                <Ionicons name="menu" size={26} color={colors.headerText} />
+              </TouchableOpacity>
+            </>
           )}
         </View>
       </View>
+
+      {!isMultiSelectMode && (
+        <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.searchBar, { backgroundColor: colors.searchBackground }]}>
+            <Ionicons name="search" size={20} color={colors.subText} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.searchText }]}
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={colors.searchPlaceholder}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={colors.subText} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       <FlatList
         data={groupedNotesArray}
@@ -565,10 +596,20 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
                     (Array.isArray(note.drawings) && note.drawings.length > 0) ||
                     (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
                   ));
+                  
+                  const isSelected = selectedNotes.includes(note.id);
+                  
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={note.id}
-                      onPress={() => handleEditNote(note)}
+                      onPress={() => {
+                        if (isMultiSelectMode) {
+                          toggleSelectNote(note.id);
+                        } else {
+                          handleEditNote(note);
+                        }
+                      }}
+                      onLongPress={() => toggleMultiSelectMode(note.id)}
                       style={[
                         styles.noteCard, 
                         { backgroundColor: colors.cardBackground },
@@ -576,58 +617,67 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
                           flex: 1, 
                           marginHorizontal: 4, 
                           marginBottom: 8, 
-                          minHeight: 0, // IMPORTANT: Remove fixed height
+                          minHeight: 0,
                           height: 'auto',
                           borderRadius: 12,
                           padding: 12,
-                        }
+                        },
+                        isSelected && { borderWidth: 2, borderColor: colors.accentColor }
                       ]}
                     >
+                      {isMultiSelectMode && (
+                        <View style={localStyles.selectIndicator}>
+                          <Ionicons
+                            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                            size={24}
+                            color={isSelected ? colors.accentColor : colors.subText}
+                          />
+                        </View>
+                      )}
                       <View style={[styles.noteHeader, isGridView && { 
                         flexDirection: 'row', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
                         marginBottom: 8,
                       }]}>
-                        {/* Note info and date on the left */}
                         <View style={styles.noteInfo}>
                           <Text style={[styles.noteDate, { color: colors.subText }, isGridView && { fontSize: 10, marginBottom: 0 }]}>
                             {formatDate(note[sortOption] || note.createdAt || note.lastAccessed)}
                           </Text>
                         </View>
-                        {/* Icons on the right */}
-                        <View style={[styles.noteActions, isGridView && { 
-                          position: 'relative', 
-                          top: 0, 
-                          right: 0, 
-                          marginTop: 0, 
-                          gap: 8, // Add space between icons
-                        }]}>
-                          {note.hasReminder && (
-                            <Pressable style={styles.actionButton}>
-                              <Ionicons name="alarm-outline" size={18} color={'#008000'} />
+                        {!isMultiSelectMode && (
+                          <View style={[styles.noteActions, isGridView && { 
+                            position: 'relative', 
+                            top: 0, 
+                            right: 0, 
+                            marginTop: 0, 
+                            gap: 8,
+                          }]}>
+                            {note.hasReminder && (
+                              <Pressable style={styles.actionButton}>
+                                <Ionicons name="alarm-outline" size={18} color={'#008000'} />
+                              </Pressable>
+                            )}
+                            <Pressable
+                              onPress={() => handleDeleteNote(note.id)}
+                              style={styles.actionButton}
+                            >
+                              <Ionicons name="trash" size={18} color={colors.deleteIcon} />
                             </Pressable>
-                          )}
-                          <Pressable
-                            onPress={() => handleDeleteNote(note.id)}
-                            style={styles.actionButton}
-                          >
-                            <Ionicons name="trash" size={18} color={colors.deleteIcon} />
-                          </Pressable>
-                          <Pressable
-                            onPress={() => handleSpeakToggle(note)}
-                            style={styles.actionButton}
-                          >
-                            <Ionicons
-                              name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
-                              size={18}
-                              color={colors.iconColor}
-                            />
-                          </Pressable>
-                        </View>
+                            <Pressable
+                              onPress={() => handleSpeakToggle(note)}
+                              style={styles.actionButton}
+                            >
+                              <Ionicons
+                                name={speakingNoteId === note.id ? 'volume-mute' : 'volume-high'}
+                                size={18}
+                                color={colors.iconColor}
+                              />
+                            </Pressable>
+                          </View>
+                        )}
                       </View>
                       
-                      {/* Title and Preview Text */}
                       {note.title && note.title.trim() && (
                           <Text style={[styles.notePreview, { color: colors.text, fontWeight: 'bold' }, isGridView && { fontSize: 14 }]} numberOfLines={2}>
                               {note.title}
@@ -639,7 +689,6 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
                           </Text>
                       )}
 
-                      {/* Checklist and Drawing Indicators */}
                       <View style={[styles.contentIndicators, { borderTopColor: colors.borderColor, marginTop: 8 }]}>
                         {hasText && (
                           <View style={styles.indicator}>
@@ -662,7 +711,7 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
                           </View>
                         )}
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 }}
             />
@@ -700,7 +749,6 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
                   <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
                 )}
               </TouchableOpacity>
-
             </Animated.View>
           </View>
         </TouchableWithoutFeedback>
@@ -844,7 +892,6 @@ const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
         </>
       )}
 
-      
       {isFetchingNotes && !hasFetchedOnce && (
         <LoadingOverlay
           visible={true}
@@ -958,5 +1005,11 @@ const localStyles = StyleSheet.create({
   },
   popupOkButtonText: {
     fontWeight: 'bold',
-  },   
+  },
+  selectIndicator: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 1,
+  },
 });

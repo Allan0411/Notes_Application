@@ -102,7 +102,6 @@ export default function DeletedNotesScreen() {
     }
   };
 
-  // Helper function to parse checklist items consistently
   const parseChecklistItems = (checklistItems) => {
     if (!checklistItems) return [];
     if (Array.isArray(checklistItems)) return checklistItems;
@@ -134,7 +133,6 @@ export default function DeletedNotesScreen() {
       return `☑️ ${firstItem.text || firstItem.title || 'Checklist item'}`;
     }
     
-    // Check if drawing tool was used and saved in note
     if (note.drawings && (
       (Array.isArray(note.drawings) && note.drawings.length > 0) ||
       (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
@@ -144,7 +142,6 @@ export default function DeletedNotesScreen() {
     return 'Empty note';
   };
 
-  // Restore note by setting isPrivate to false
   const handleRestore = (noteId) => {
     Alert.alert(
       'Restore Note',
@@ -174,7 +171,6 @@ export default function DeletedNotesScreen() {
     );
   };
 
-  // Permanent delete using API
   const handlePermanentDelete = (noteId) => {
     Alert.alert(
       'Permanently Delete',
@@ -206,13 +202,47 @@ export default function DeletedNotesScreen() {
       ]
     );
   };
+  
+  // NEW: Function to handle emptying the bin
+  const handleEmptyBin = () => {
+    if (localDeletedNotes.length === 0) {
+      Alert.alert('Bin is empty', 'There are no notes to delete.');
+      return;
+    }
+
+    Alert.alert(
+      'Empty Bin',
+      'Are you sure you want to permanently delete all notes in the bin? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            if (isProcessing) return;
+            setIsProcessing(true);
+            try {
+              const deletionPromises = localDeletedNotes.map(note => deleteNote(note.id));
+              await Promise.allSettled(deletionPromises);
+              setLocalDeletedNotes([]); // Clear all notes from the local state
+              Alert.alert('Success', 'Bin emptied successfully.');
+            } catch (error) {
+              console.error('Error emptying bin:', error);
+              Alert.alert('Error', 'Failed to empty bin. Please try again.');
+            } finally {
+              setIsProcessing(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const renderNoteItem = ({ item }) => {
     const checklistItems = parseChecklistItems(item.checklistItems);
     const hasText = !!(item.textContents ?? item.text ?? '').trim();
     const hasChecklist = checklistItems.length > 0;
     
-    // Check if drawing tool was used and saved in note
     const hasDrawings = !!(item.drawings && (
       (Array.isArray(item.drawings) && item.drawings.length > 0) ||
       (typeof item.drawings === 'string' && item.drawings.trim() !== '' && item.drawings !== '[]')
@@ -235,7 +265,6 @@ export default function DeletedNotesScreen() {
             </View>
           </View>
           
-          {/* Action buttons */}
           <View style={styles.miniActions}>
             <TouchableOpacity
               style={[
@@ -273,7 +302,6 @@ export default function DeletedNotesScreen() {
           {getPreviewText(item)}
         </Text>
 
-        {/* Content indicators */}
         <View style={styles.contentIndicators}>
           {hasText && (
             <View style={[styles.indicator, { backgroundColor: colors.iconColor + '10' }]}>
@@ -316,7 +344,11 @@ export default function DeletedNotesScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.headerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.headerText }]}>Deleted Notes</Text>
-        <View style={styles.placeholder} />
+        {localDeletedNotes.length > 0 && (
+          <TouchableOpacity onPress={handleEmptyBin} style={styles.emptyBinButton}>
+            <Ionicons name="trash-bin-outline" size={24} color={colors.headerText} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Empty state */}
