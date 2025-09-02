@@ -13,13 +13,15 @@ export function formatNoteAsHTML({
   attachmentsList = [],
   canvasImageUri // <-- pass the saved canvas image URI here
 }) {
+  // Reduce font size for export to help fit more on a page
+  const exportFontSize = Math.max(12, Math.min(fontSize, 16));
   const fontStyle = `
     font-family: ${fontFamily === 'System' ? 'Arial, sans-serif' : fontFamily};
-    font-size: ${fontSize}px;
+    font-size: ${exportFontSize}px;
     font-weight: ${isBold ? 'bold' : 'normal'};
     font-style: ${isItalic ? 'italic' : 'normal'};
     text-align: ${textAlign};
-    line-height: 1.6;
+    line-height: 1.5;
   `;
   const formattedDate = new Date(updatedAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -29,6 +31,14 @@ export function formatNoteAsHTML({
     minute: '2-digit'
   });
 
+  // Calculate image sizing to fit all on one or two pages
+  // We'll use a grid and smaller max-widths for images
+  // For A4 at 96dpi: ~794x1123px, so keep images small
+  const maxImageWidth = 160; // px
+  const maxImageHeight = 160; // px
+  const maxCanvasWidth = 220; // px
+  const maxCanvasHeight = 220; // px
+
   let html = `
     <!DOCTYPE html>
     <html>
@@ -36,27 +46,48 @@ export function formatNoteAsHTML({
       <meta charset="utf-8">
       <title>${noteTitle || 'Note'}</title>
       <style>
-        /* styles unchanged */
-        body { font-family: Arial, sans-serif; margin: 40px; color: #333; background: white; }
-        .header { border-bottom: 2px solid #4a5568; padding-bottom: 20px; margin-bottom: 30px; }
-        .title { font-size: 24px; font-weight: bold; color: #2d3748; margin-bottom: 10px; }
-        .meta { font-size: 12px; color: #718096; font-style: italic; }
-        .content { ${fontStyle} margin-bottom: 30px; white-space: pre-wrap; }
-        .section-title { font-size: 18px; font-weight: bold; color: #4a5568; margin: 30px 0 15px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        body { font-family: Arial, sans-serif; margin: 32px; color: #333; background: white; }
+        .header { border-bottom: 2px solid #4a5568; padding-bottom: 12px; margin-bottom: 18px; }
+        .title { font-size: 20px; font-weight: bold; color: #2d3748; margin-bottom: 8px; }
+        .meta { font-size: 11px; color: #718096; font-style: italic; }
+        .content { ${fontStyle} margin-bottom: 18px; white-space: pre-wrap; }
+        .section-title { font-size: 15px; font-weight: bold; color: #4a5568; margin: 18px 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
         .checklist { list-style: none; padding: 0; }
-        .checklist-item { margin-bottom: 8px; padding: 5px 0; display: flex; align-items: center; }
-        .checkbox { margin-right: 10px; font-weight: bold; }
+        .checklist-item { margin-bottom: 5px; padding: 2px 0; display: flex; align-items: center; }
+        .checkbox { margin-right: 8px; font-weight: bold; }
         .checked { text-decoration: line-through; color: #718096; }
-        .drawings-info { background: #f7fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #4a5568; margin: 20px 0; }
-        .generated-images-section { margin: 30px 0; }
-        .generated-images-title { font-size: 18px; font-weight: bold; color: #4a5568; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        .generated-images-list { display: flex; flex-wrap: wrap; gap: 20px; }
-        .generated-image-container { margin-bottom: 20px; }
-        .generated-image { max-width: 300px; max-height: 300px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #a0aec0; text-align: center; }
-        .canvas-section { margin: 30px 0; }
-        .canvas-title { font-size: 18px; font-weight: bold; color: #4a5568; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        .canvas-image { max-width: 400px; max-height: 400px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: block; margin-bottom: 10px; }
+        .drawings-info { background: #f7fafc; padding: 10px; border-radius: 6px; border-left: 3px solid #4a5568; margin: 12px 0; font-size: 12px; }
+        .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #a0aec0; text-align: center; }
+        .canvas-section { margin: 18px 0; }
+        .canvas-title { font-size: 15px; font-weight: bold; color: #4a5568; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
+        .canvas-image { max-width: ${maxCanvasWidth}px; max-height: ${maxCanvasHeight}px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: block; margin-bottom: 6px; }
+        .generated-images-section { margin: 18px 0; }
+        .generated-images-title { font-size: 15px; font-weight: bold; color: #4a5568; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
+        .generated-images-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: flex-start;
+        }
+        .generated-image-container {
+          margin-bottom: 10px;
+          width: ${maxImageWidth + 10}px;
+          text-align: center;
+        }
+        .generated-image {
+          max-width: ${maxImageWidth}px;
+          max-height: ${maxImageHeight}px;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          display: block;
+          margin: 0 auto 4px auto;
+        }
+        @media print {
+          body { margin: 0.5in; }
+          .header, .footer { page-break-inside: avoid; }
+          .generated-images-list, .canvas-section { page-break-inside: avoid; }
+        }
       </style>
     </head>
     <body>
@@ -88,44 +119,51 @@ export function formatNoteAsHTML({
   if (drawings.length > 0) {
     html += `
       <div class="drawings-info">
-        <strong>📝 Drawings:</strong> This note contains ${drawings.length} drawing(s). 
+        <strong>📝 Drawings:</strong> This note contains ${drawings.length} strokes(s). 
         Drawings are not included in the PDF export but are preserved in the original note.
       </div>
     `;
   }
 
-  // Add canvas image section if canvasImageUri is a string (uri)
-  if (canvasImageUri && typeof canvasImageUri === 'string') {
-    html += `
-      <div class="canvas-section">
-        <div class="canvas-title">Canvas Snapshot</div>
-        <img class="canvas-image" src="${canvasImageUri}" alt="Canvas Snapshot" />
-      </div>
-    `;
-  }
+  // Show canvas and attachments together in a single grid section
+  const imagesWithPath = attachmentsList && Array.isArray(attachmentsList)
+    ? attachmentsList.filter(att => att && att.storagePath)
+    : [];
 
-  // Add generated images section if attachmentsList has any items with storagePath
-  if (attachmentsList && Array.isArray(attachmentsList) && attachmentsList.length > 0) {
-    const imagesWithPath = attachmentsList.filter(att => att && att.storagePath);
-    if (imagesWithPath.length > 0) {
+  if (
+    (canvasImageUri && typeof canvasImageUri === 'string') ||
+    (imagesWithPath.length > 0)
+  ) {
+    html += `
+      <div class="generated-images-section">
+        <div class="generated-images-title">Canvas & Attachments</div>
+        <div class="generated-images-list">
+    `;
+
+    // Canvas first, if present
+    if (canvasImageUri && typeof canvasImageUri === 'string') {
       html += `
-        <div class="generated-images-section">
-          <div class="generated-images-title">Generated Images</div>
-          <div class="generated-images-list">
-      `;
-      imagesWithPath.forEach((att, idx) => {
-        html += `
-          <div class="generated-image-container">
-            <img class="generated-image" src="${att.storagePath}" alt="Generated Image ${idx + 1}" />
-            ${att.name ? `<div style="font-size:12px; color:#718096; margin-top:4px; text-align:center;">${att.name}</div>` : ''}
-          </div>
-        `;
-      });
-      html += `
-          </div>
+        <div class="generated-image-container">
+          <img class="canvas-image" src="${canvasImageUri}" alt="Canvas Snapshot" />
+          <div style="font-size:12px; color:#718096; margin-top:2px;">Canvas Snapshot</div>
         </div>
       `;
     }
+
+    // Then all attachments, reduced size
+    imagesWithPath.forEach((att, idx) => {
+      html += `
+        <div class="generated-image-container">
+          <img class="generated-image" src="${att.storagePath}" alt="Generated Image ${idx + 1}" />
+          ${att.name ? `<div style="font-size:11px; color:#718096; margin-top:2px;">${att.name}</div>` : ''}
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
   }
 
   html += `

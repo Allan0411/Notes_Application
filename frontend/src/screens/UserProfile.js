@@ -5,9 +5,39 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../config';
 import { ThemeContext } from '../ThemeContext';
 import styles from '../styleSheets/UserProfileStyles'; // Import styles from the stylesheet
+import { changeName } from '../services/userService';
+
+// Import a simple loading overlay (inline, since not in context)
+function LoadingOverlay({ visible, message }) {
+  if (!visible) return null;
+  return (
+    <View style={{
+      position: 'absolute',
+      top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <View style={{
+        backgroundColor: '#fff',
+        padding: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        minWidth: 180,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 8,
+      }}>
+        <Text style={{ fontSize: 16, color: '#333' }}>{message || 'Loading...'}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function UserProfile({ navigation }) {
   const { activeTheme } = useContext(ThemeContext);
 
@@ -21,6 +51,7 @@ export default function UserProfile({ navigation }) {
       accent: '#4a5568',
       input: '#fff',
       overlay: 'rgba(0, 0, 0, 0.5)',
+      disabled: '#cbd5e0',
     },
     dark: {
       background: '#1a202c',
@@ -31,6 +62,7 @@ export default function UserProfile({ navigation }) {
       accent: '#899aaaff',
       input: '#4a5568',
       overlay: 'rgba(255, 255, 255, 0.1)',
+      disabled: '#4a5568',
     },
   };
 
@@ -45,41 +77,54 @@ export default function UserProfile({ navigation }) {
     newPassword: '',
     confirmPassword: '',
   });
+  const [loading, setLoading] = useState(false);
 
+  // Use AsyncStorage to get username and email
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const getUserInfoFromStorage = async () => {
       try {
-        const token = await AsyncStorage.getItem('authToken');
-        if (!token) return;
-
-        const res = await fetch(API_BASE_URL + "/Auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data = await res.json();
+        setLoading(true);
+        const username = await AsyncStorage.getItem('username');
+        const email = await AsyncStorage.getItem('useremail');
         setUserInfo({
-          name: data.username || 'User',
-          email: data.email || 'email@example.com'
+          name: username || 'User',
+          email: email || 'email@example.com',
         });
-
         setEditedInfo({
-          name: data.username || 'User',
-          email: data.email || 'email@example.com'
+          name: username || 'User',
+          email: email || 'email@example.com',
         });
       } catch (err) {
-        console.error("Error fetching user info:", err);
-        alert("Couldn't fetch user info");
+        console.error("Error getting user info from storage:", err);
+        alert("Couldn't get user info");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUserInfo();
+    getUserInfoFromStorage();
   }, []);
 
-  const handleSaveProfile = () => {
-    setUserInfo({ ...editedInfo });
-    setEditMode(false);
-    Alert.alert('Success', 'Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    // Only allow changing the name, not the email
+    try {
+      const newName = editedInfo.name;
+      if (!newName || newName.trim().length === 0) {
+        Alert.alert('Error', 'Name cannot be empty');
+        return;
+      }
+      setLoading(true);
+      await changeName(newName);
+      setUserInfo((prev) => ({ ...prev, name: newName }));
+      setEditedInfo((prev) => ({ ...prev, name: newName }));
+      await AsyncStorage.setItem('username', newName);
+      setEditMode(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (err) {
+      console.error('Failed to update name:', err);
+      Alert.alert('Error', 'Failed to update name. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -105,7 +150,6 @@ export default function UserProfile({ navigation }) {
       return;
     }
 
-
     Alert.alert('Success', 'Password changed successfully!', [
       {
         text: 'OK',
@@ -121,11 +165,12 @@ export default function UserProfile({ navigation }) {
     ]);
   };
 
-
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeColors.accent} />
+
+      {/* Loading overlay for changing name */}
+      <LoadingOverlay visible={loading} message="changing name..." />
 
       <View style={[styles.header, { backgroundColor: themeColors.accent }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -153,7 +198,6 @@ export default function UserProfile({ navigation }) {
         <View style={[styles.infoSection, { backgroundColor: themeColors.card }]}>
           <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Personal Information</Text>
 
-
           <View style={styles.infoItem}>
             <Text style={[styles.infoLabel, { color: themeColors.subtext }]}>Full Name</Text>
             {editMode ? (
@@ -167,6 +211,7 @@ export default function UserProfile({ navigation }) {
                 onChangeText={(text) => setEditedInfo({ ...editedInfo, name: text })}
                 placeholder="Enter your full name"
                 placeholderTextColor={themeColors.subtext}
+                editable={true}
               />
             ) : (
               <Text style={[styles.infoValue, {
@@ -176,37 +221,42 @@ export default function UserProfile({ navigation }) {
             )}
           </View>
 
-
           <View style={styles.infoItem}>
             <Text style={[styles.infoLabel, { color: themeColors.subtext }]}>Email Address</Text>
             {editMode ? (
               <TextInput
-                style={[styles.infoInput, {
-                  backgroundColor: themeColors.input,
-                  color: themeColors.text,
-                  borderColor: themeColors.border,
-                }]}
+                style={[
+                  styles.infoInput,
+                  {
+                    backgroundColor: themeColors.input,
+                    color: themeColors.disabled,
+                    borderColor: themeColors.border,
+                  }
+                ]}
                 value={editedInfo.email}
-                onChangeText={(text) => setEditedInfo({ ...editedInfo, email: text })}
                 placeholder="Enter your email"
                 placeholderTextColor={themeColors.subtext}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={false}
               />
             ) : (
-              <Text style={[styles.infoValue, {
-                backgroundColor: themeColors.input,
-                color: themeColors.text,
-              }]}>{userInfo.email}</Text>
+              <Text style={[
+                styles.infoValue,
+                {
+                  backgroundColor: themeColors.input,
+                  color: themeColors.disabled,
+                }
+              ]}>{userInfo.email}</Text>
             )}
           </View>
 
-
           {editMode && (
             <View style={styles.editActions}>
-              <TouchableOpacity style={[styles.cancelButton,{backgroundColor: themeColors.accent}]} onPress={handleCancelEdit}>
-                <Text style={[styles.cancelButtonText, { color: themeColors.subtext }]}>Cancel</Text>
+              <TouchableOpacity style={[styles.cancelButton, { backgroundColor: themeColors.accent }]} onPress={handleCancelEdit}>
+                <Text style={[styles.cancelButtonText]}>Cancel</Text>
               </TouchableOpacity>
+              
               <TouchableOpacity style={[styles.saveButton, { backgroundColor: themeColors.accent }]} onPress={handleSaveProfile}>
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
@@ -279,7 +329,7 @@ export default function UserProfile({ navigation }) {
           </View>
         </View>
       </Modal>
+    
     </SafeAreaView>
   );
 }
-

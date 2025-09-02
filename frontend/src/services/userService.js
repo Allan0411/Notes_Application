@@ -68,3 +68,29 @@ export async function getUserByEmail(email) {
     throw err;
   }
 }
+
+export async function changeName(newUsername) {
+  const token = await getAuthToken();
+  if (!token) throw new Error("No auth token found");
+  if (!newUsername || typeof newUsername !== "string" || !newUsername.trim()) {
+    throw new Error("New username is required");
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/Users/changeName`, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ newUsername })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Change name failed: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error changing username:', err);
+    throw err;
+  }
+}

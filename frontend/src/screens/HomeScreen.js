@@ -84,22 +84,32 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    const fetchUserInfo1 = async () => {
-      try {
-        const user = await fetchUserInfo();
-        if (user) {
-          setUserInfo({
-            name: user.username || 'Guest',
-            email: user.email || 'email@example.com',
-          });
+  // Fetch user info every time the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUserInfo1 = async () => {
+        try {
+          const user = await fetchUserInfo();
+          if (user) {
+            setUserInfo({
+              name: user.username || 'Guest',
+              email: user.email || 'email@example.com',
+            });
+            // Save user info to AsyncStorage as 'username' and 'useremail'
+            if (user.username) {
+              await AsyncStorage.setItem('username', user.username);
+            }
+            if (user.email) {
+              await AsyncStorage.setItem('useremail', user.email);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user info:', error);
         }
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      }
-    };
-    fetchUserInfo1();
-  }, []);
+      };
+      fetchUserInfo1();
+    }, [])
+  );
 
   const fetchNotes = async () => {
     setIsFetchingNotes(true);
@@ -122,7 +132,7 @@ export default function HomeScreen({ navigation }) {
               const hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending');
               return { ...note, hasReminder };
             } catch (error) {
-              console.error(`Error fetching reminders for note ${note.id}:`, error);
+              console.error(`Error fetching reminders forf  note ${note.id}:`, error);
               return { ...note, hasReminder: false };
             }
           })
