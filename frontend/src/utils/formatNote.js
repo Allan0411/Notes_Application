@@ -116,14 +116,7 @@ export function formatNoteAsHTML({
     });
     html += '</ul>';
   }
-  if (drawings.length > 0) {
-    html += `
-      <div class="drawings-info">
-        <strong>📝 Drawings:</strong> This note contains ${drawings.length} strokes(s). 
-        Drawings are not included in the PDF export but are preserved in the original note.
-      </div>
-    `;
-  }
+ 
 
   // Show canvas and attachments together in a single grid section
   const imagesWithPath = attachmentsList && Array.isArray(attachmentsList)

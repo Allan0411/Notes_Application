@@ -23,8 +23,8 @@ import { noteDetailsthemes as themes } from '../utils/themeColors';
 import DrawingCanvas from '../components/DrawingCanvas';
 import Checklist from '../components/Checklist';
 
-import { createNote, updateNote, updateNoteIsPrivate } from '../services/noteService';
-import { buildNotePayload } from '../utils/buildNotePayload';
+import { createNote, updateNote, updateNoteIsPrivate,fetchNoteById } from '../services/noteService';
+import { buildNotePayload, updatedMergePayload } from '../utils/buildNotePayload';
 
 import { formatNoteAsHTML, formatNoteAsPlainText } from '../utils/formatNote';
 
@@ -39,7 +39,7 @@ import reminderService from '../services/reminderService';
 import { collaboratorService } from '../services/collaboratorService';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import {captureRef } from 'react-native-view-shot';
-
+import { fetchUserInfo } from '../services/userService';
 export default function NoteDetailScreen({ route, navigation }) {
   const { activeTheme } = useContext(ThemeContext);
   const { sharingEnabled } = useContext(SettingsContext);
@@ -687,6 +687,121 @@ const isReadOnly = () => {
     }));
   };
 
+
+  const parseConflictError = (err) => {
+    let errorMessage = err?.message || err?.toString() || '';
+    
+    // Remove "[Error: " prefix and "]" suffix if present
+    if (errorMessage.startsWith('[Error: ')) {
+        errorMessage = errorMessage.substring(8); // Remove "[Error: "
+    }
+    if (errorMessage.endsWith(']')) {
+        errorMessage = errorMessage.slice(0, -1); // Remove "]"
+    }
+    
+    try {
+        return JSON.parse(errorMessage);
+    } catch (e) {
+        console.log('Could not parse:', errorMessage);
+        return null;
+    }
+};
+
+const updateLocalStateWithMergedNote = (mergedNote, latestNote) => {
+  // Update basic text content
+  setNoteTitle(mergedNote.title || '');
+  setNoteText(mergedNote.textContents || '');
+  setUpdatedAt(mergedNote.updatedAt || new Date().toISOString());
+
+  // Update checklist items
+  const parsedChecklistItems = parseChecklistItems(mergedNote.checklistItems);
+  setChecklistItems(parsedChecklistItems);
+
+  // Update drawings if you have that state
+  if (typeof mergedNote.drawings === 'string') {
+    try {
+      const parsedDrawings = JSON.parse(mergedNote.drawings);
+      setDrawings(parsedDrawings || []);
+    } catch (e) {
+      console.log('Could not parse drawings:', e);
+    }
+  } else if (Array.isArray(mergedNote.drawings)) {
+    setDrawings(mergedNote.drawings);
+  }
+
+  // Update formatting if you have those states
+  if (typeof mergedNote.formatting === 'string') {
+    try {
+      const parsedFormatting = JSON.parse(mergedNote.formatting);
+      setFontSize(parsedFormatting.fontSize || fontSize);
+      setFontFamily(parsedFormatting.fontFamily || fontFamily);
+      setIsBold(parsedFormatting.isBold || false);
+      setIsItalic(parsedFormatting.isItalic || false);
+      setTextAlign(parsedFormatting.textAlign || 'left');
+    } catch (e) {
+      console.log('Could not parse formatting:', e);
+    }
+  }
+
+  // Update formatted ranges
+  if (Array.isArray(mergedNote.formattedRanges)) {
+    setFormattedRanges(mergedNote.formattedRanges);
+  }
+
+  // Update the note reference itself (if you have that state)
+  // This ensures version number and other metadata is current
+  // Instead of setting the whole note, set each field individually
+  setNoteTitle(mergedNote.title || '');
+  setNoteText(mergedNote.textContents || '');
+  setUpdatedAt(mergedNote.updatedAt || new Date().toISOString());
+
+  // Checklist items
+  const parsedChecklistItems1 = parseChecklistItems(mergedNote.checklistItems);
+  setChecklistItems(parsedChecklistItems1);
+
+  // Drawings
+  if (typeof mergedNote.drawings === 'string') {
+    try {
+      const parsedDrawings = JSON.parse(mergedNote.drawings);
+      setDrawings(parsedDrawings || []);
+    } catch (e) {
+      console.log('Could not parse drawings:', e);
+    }
+  } else if (Array.isArray(mergedNote.drawings)) {
+    setDrawings(mergedNote.drawings);
+  }
+
+  // Formatting
+  if (typeof mergedNote.formatting === 'string') {
+    try {
+      const parsedFormatting = JSON.parse(mergedNote.formatting);
+      setFontSize(parsedFormatting.fontSize || fontSize);
+      setFontFamily(parsedFormatting.fontFamily || fontFamily);
+      setIsBold(parsedFormatting.isBold || false);
+      setIsItalic(parsedFormatting.isItalic || false);
+      setTextAlign(parsedFormatting.textAlign || 'left');
+    } catch (e) {
+      console.log('Could not parse formatting:', e);
+    }
+  }
+
+  // Formatted ranges
+  if (Array.isArray(mergedNote.formattedRanges)) {
+    setFormattedRanges(mergedNote.formattedRanges);
+  }
+
+  // If you still want to update the note object itself for metadata/version
+  if (typeof setNote === 'function') {
+    setNote(prev => ({
+      ...prev,
+      ...latestNote,
+      ...mergedNote
+    }));
+  }
+  console.log('Note title:', noteTitle);
+  console.log("note text: ",noteText)
+  console.log('✅ All local state updated with merged note data');
+};
   // Save note function (keeping existing implementation)
   const saveNote = async () => {
     if (isSaving) return;
@@ -719,11 +834,13 @@ const isReadOnly = () => {
         isItalic,
         textAlign,
         ranges: formattedRanges
-      }
+      },
+      lastChangedBy:note?.creatorUserId
     });
 
     try {
       if (isNewNote) {
+        
         const created = await createNote(notePayload);
         if (onSave) onSave(created);
 
@@ -757,27 +874,122 @@ const isReadOnly = () => {
             isItalic,
             textAlign,
             ranges: formattedRanges
-          }
+          },
+          version: note?.version ?? 1,
+          lastChangedBy:note?.lastChangedBy // concurrency control: send current version
         });
 
-        const updated = await updateNote(note?.id, updatePayload);
-        if (onSave) {
-          if (updated === true || updated == null) {
-            onSave({ ...note, ...updatePayload });
-          } else {
-            onSave(updated);
+       
+          const updated = await updateNote(note?.id, updatePayload);
+          if (onSave) {
+            if (updated === true || updated == null) {
+              onSave({ ...note, ...updatePayload });
+            } else {
+              onSave(updated);
+            }
           }
-        }
-        Alert.alert('Success', 'Note created successfully!', [
+        
+        Alert.alert('Success', 'Note saved successfully!', [
           { text: 'OK' }
         ]);
+        
+        
       }
       setUpdatedAt(notePayload.updatedAt);
 
     } catch (err) {
-      Alert.alert('Error', 'There was a problem saving your note: ' + err.message);
+
+      const conflictData=parseConflictError(err)
+      console.log(conflictData);
+      if (conflictData.error === "conflict") {
+        Alert.alert(
+          'Sync Required',
+          'This note has been updated elsewhere. Please sync to get the latest version before saving your changes.',
+          [
+            {
+              text: 'Sync Now',
+              onPress: async () => {
+                setIsSaving(true); // Show loading overlay
+                try {
+                  const resp = await fetchUserInfo();
+                  const curr_id = String(resp.id);
+
+                  const updatePayload = buildNotePayload({
+                    title: noteTitle || 'Untitled Note',
+                    textContents: noteText,
+                    drawings,
+                    checklistItems,
+                    fontSize,
+                    fontFamily,
+                    isBold,
+                    isItalic,
+                    textAlign,
+                    isArchived: note?.isArchived || false,
+                    isPrivate: note?.isPrivate || false,
+                    creatorUserId: note?.creatorUserId,
+                    updatedAt: new Date().toISOString(),
+                    formattedRanges: formattedRanges,
+                    formatting: {
+                      fontSize,
+                      fontFamily,
+                      isBold,
+                      isItalic,
+                      textAlign,
+                      ranges: formattedRanges
+                    },
+                    version: note?.version ?? 1,
+                    lastChangedBy: curr_id // ✅ Fixed: should be current user
+                  });
+
+                  // Fetch the latest note from the backend
+                  const latestNote = await fetchNoteById(note?.id);
+
+                  // Merge local changes with latest note
+                  const mergedNote = await updatedMergePayload(updatePayload, latestNote);
+
+                  // Try saving again with merged note
+                  const updated = await updateNote(note?.id, mergedNote);
+
+                  // ✅ UPDATE ALL LOCAL STATE WITH MERGED DATA
+                  updateLocalStateWithMergedNote(mergedNote, latestNote);
+
+                  // Update parent component
+                  if (onSave) {
+                    if (updated === true || updated == null) {
+                      onSave({ ...latestNote, ...mergedNote });
+                    } else {
+                      onSave(updated);
+                    }
+                  }
+
+                  Alert.alert('Success', 'Note synced and saved successfully!');
+                  
+                } catch (syncErr) {
+                  Alert.alert('Error', 'Failed to sync and save: ' + (syncErr?.message || syncErr));
+                } finally {
+                  setIsSaving(false); // Hide loading overlay
+                  note.version++;
+                  console.log("note version: ",note.version);
+                }
+              }
+            },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          'There was a problem saving your note: ' + ( err),
+          [
+            { text: 'OK' }
+          ]
+        );
+      }
+      
     } finally {
       setIsSaving(false);
+      note.version++;
+      console.log("note version: ",note.version);
     }
   };
 
