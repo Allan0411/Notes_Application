@@ -311,33 +311,41 @@ class reminderService {
   // Delete reminder
   async deleteReminder(reminderId) {
     try {
+      console.log("Deleting reminder with ID:", reminderId);
       const reminders = await this.getAllReminders();
+      console.log("All reminders before delete:", reminders);
+  
       const reminder = reminders.find(r => r.id === reminderId);
-      
       if (!reminder) {
-        throw new Error('Reminder not found');
+        console.warn("Reminder not found:", reminderId);
+        return false;
       }
-
-      // Cancel notification
+  
       if (reminder.notificationId) {
+        console.log("Cancelling notification:", reminder.notificationId);
         await Notifications.cancelScheduledNotificationAsync(reminder.notificationId);
       }
-
-      // Delete calendar event
+  
       if (reminder.calendarEventId) {
-        await Calendar.deleteEventAsync(reminder.calendarEventId);
+        console.log("Deleting calendar event:", reminder.calendarEventId);
+        try {
+          await Calendar.deleteEventAsync(reminder.calendarEventId);
+        } catch (err) {
+          console.warn("Calendar event already gone:", err);
+        }
       }
-
-      // Remove from storage
+  
       const updatedReminders = reminders.filter(r => r.id !== reminderId);
+      console.log("Updated reminders:", updatedReminders);
+  
       await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(updatedReminders));
-      
       return true;
     } catch (error) {
-      console.error('Error deleting reminder:', error);
+      console.error("Error deleting reminder:", error);
       throw error;
     }
   }
+  
 
   // Mark reminder as completed
   async completeReminder(reminderId) {

@@ -9,11 +9,42 @@ import {
   ScrollView,
   Alert,
   Platform,
-  Switch,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import reminderService from '../services/reminderService';
+
+// Helper to open Google Calendar event creation
+const openGoogleCalendar = ({ title, description, startDate, endDate }) => {
+  // Google Calendar expects: YYYYMMDDTHHmmssZ
+  const formatDate = (date) => {
+    // Always use UTC for Google Calendar links
+    const pad = (n) => (n < 10 ? '0' + n : n);
+    return (
+      date.getUTCFullYear().toString() +
+      pad(date.getUTCMonth() + 1) +
+      pad(date.getUTCDate()) +
+      'T' +
+      pad(date.getUTCHours()) +
+      pad(date.getUTCMinutes()) +
+      pad(date.getUTCSeconds()) +
+      'Z'
+    );
+  };
+
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&details=${encodeURIComponent(description)}&dates=${start}/${end}`;
+
+  Linking.openURL(url).catch((err) => {
+    Alert.alert('Error', 'Could not open Google Calendar');
+    console.error('Google Calendar open error:', err);
+  });
+};
 
 const ReminderModal = ({
   visible,
@@ -44,7 +75,7 @@ const ReminderModal = ({
   const checkPermissions = async () => {
     const calendarPermission = await reminderService.isCalendarAvailable();
     const notificationPermission = await reminderService.areNotificationsAvailable();
-    
+
     setCalendarAvailable(calendarPermission);
     setNotificationsAvailable(notificationPermission);
 
@@ -61,7 +92,7 @@ const ReminderModal = ({
     if (visible) {
       const now = new Date();
       const futureDate = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
-      
+
       setReminderDate(futureDate);
       setReminderTime(futureDate);
       setCustomMessage(`Reminder for: ${noteTitle || 'Untitled Note'}`);
@@ -81,6 +112,25 @@ const ReminderModal = ({
     setShowTimePicker(Platform.OS === 'ios');
     if (selectedTime) {
       setReminderTime(selectedTime);
+    }
+  };
+
+  // Add to Google Calendar if reminderType is 'calendar' or 'both'
+  const addToGoogleCalendarIfNeeded = async (reminderDateTime, message) => {
+    // Only do this on web or if user selected calendar/both
+    if (
+      (reminderType === 'calendar' || reminderType === 'both') &&
+      (Platform.OS === 'web' || Platform.OS === 'android' || Platform.OS === 'ios')
+    ) {
+      // Google Calendar event duration: 1 hour by default
+      const endDate = new Date(reminderDateTime.getTime() + 60 * 60 * 1000);
+
+      openGoogleCalendar({
+        title: noteTitle || 'Reminder',
+        description: message,
+        startDate: reminderDateTime,
+        endDate,
+      });
     }
   };
 
@@ -118,7 +168,10 @@ const ReminderModal = ({
       };
 
       const createdReminder = await reminderService.createReminder(reminderData);
-      
+
+      // Add to Google Calendar if needed (works on web, and opens Google Calendar app on mobile)
+      await addToGoogleCalendarIfNeeded(reminderDateTime, customMessage.trim());
+
       if (onReminderCreated) {
         onReminderCreated(createdReminder);
       }
@@ -147,13 +200,13 @@ const ReminderModal = ({
       value: 'calendar',
       label: 'Calendar Only',
       icon: 'calendar',
-      available: calendarAvailable,
+      available: true, // Always allow Google Calendar option (web/mobile)
     },
     {
       value: 'both',
       label: 'Both Notification & Calendar',
       icon: 'sync',
-      available: notificationsAvailable && calendarAvailable,
+      available: notificationsAvailable, // Only allow if notifications are available
     },
   ];
 
@@ -181,7 +234,7 @@ const ReminderModal = ({
       presentationStyle="overFullScreen"
     >
       <View style={[styles.modalOverlay, { backgroundColor: theme.overlay || 'rgba(0,0,0,0.5)' }]}>
-        <View style={[styles.reminderModalContainer, { 
+        <View style={[styles.reminderModalContainer, {
           backgroundColor: theme.surface || theme.background || '#fff',
           maxHeight: '90%',
           marginTop: 'auto',
@@ -190,8 +243,8 @@ const ReminderModal = ({
           paddingTop: 8,
         }]}>
           {/* Header */}
-          <View style={[styles.modalHeader, { 
-            borderBottomWidth: 1, 
+          <View style={[styles.modalHeader, {
+            borderBottomWidth: 1,
             borderBottomColor: theme.border || '#e2e8f0',
             paddingHorizontal: 20,
             paddingVertical: 15,
@@ -199,10 +252,10 @@ const ReminderModal = ({
             justifyContent: 'space-between',
             alignItems: 'center',
           }]}>
-            <Text style={[styles.modalTitle, { 
-              fontSize: 20, 
-              fontWeight: '600', 
-              color: theme.text || '#333' 
+            <Text style={[styles.modalTitle, {
+              fontSize: 20,
+              fontWeight: '600',
+              color: theme.text || '#333'
             }]}>Set Reminder</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color={theme.textSecondary || '#666'} />
@@ -211,11 +264,11 @@ const ReminderModal = ({
 
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             {/* Note Info */}
-            <View style={[styles.reminderSection, { 
+            <View style={[styles.reminderSection, {
               paddingHorizontal: 20,
               paddingVertical: 15,
               borderBottomWidth: 1,
-              borderBottomColor: theme.border || '#f0f0f0' 
+              borderBottomColor: theme.border || '#f0f0f0'
             }]}>
               <Text style={[styles.reminderSectionTitle, {
                 fontSize: 16,
@@ -243,14 +296,14 @@ const ReminderModal = ({
                 marginBottom: 10,
                 color: theme.text || '#333',
               }]}>Date & Time</Text>
-              
+
               <View style={[styles.dateTimeRow, {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
               }]}>
                 <TouchableOpacity
-                  style={[styles.dateTimeButton, { 
-                    flex: 1, 
+                  style={[styles.dateTimeButton, {
+                    flex: 1,
                     marginRight: 10,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -271,7 +324,7 @@ const ReminderModal = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.dateTimeButton, { 
+                  style={[styles.dateTimeButton, {
                     flex: 1,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -323,11 +376,11 @@ const ReminderModal = ({
                 multiline
                 maxLength={200}
               />
-              <Text style={[styles.characterCount, { 
+              <Text style={[styles.characterCount, {
                 textAlign: 'right',
                 fontSize: 12,
                 marginTop: 4,
-                color: theme.textMuted || '#999' 
+                color: theme.textMuted || '#999'
               }]}>
                 {customMessage.length}/200
               </Text>
@@ -344,7 +397,7 @@ const ReminderModal = ({
                 marginBottom: 10,
                 color: theme.text || '#333',
               }]}>Reminder Type</Text>
-              
+
               {reminderTypeOptions.map((option) => (
                 <TouchableOpacity
                   key={option.value}
@@ -383,7 +436,7 @@ const ReminderModal = ({
                       <Text
                         style={[
                           styles.reminderTypeLabel,
-                          { 
+                          {
                             fontSize: 16,
                             fontWeight: '500',
                             color: reminderType === option.value ? (theme.accent || '#3182ce') : (theme.text || '#333')
@@ -393,10 +446,10 @@ const ReminderModal = ({
                         {option.label}
                       </Text>
                       {!option.available && (
-                        <Text style={[styles.unavailableText, { 
+                        <Text style={[styles.unavailableText, {
                           fontSize: 12,
                           marginTop: 2,
-                          color: theme.textMuted || '#999' 
+                          color: theme.textMuted || '#999'
                         }]}>
                           Permission required
                         </Text>
@@ -437,7 +490,7 @@ const ReminderModal = ({
                 marginBottom: 10,
                 color: theme.text || '#333',
               }]}>Repeat</Text>
-              
+
               <View style={[styles.repeatOptionsContainer, {
                 flexDirection: 'row',
                 flexWrap: 'wrap',
@@ -478,7 +531,7 @@ const ReminderModal = ({
           </ScrollView>
 
           {/* Actions */}
-          <View style={[styles.modalActions, { 
+          <View style={[styles.modalActions, {
             flexDirection: 'row',
             justifyContent: 'space-between',
             paddingHorizontal: 20,
@@ -522,7 +575,7 @@ const ReminderModal = ({
                 letterSpacing: 0.3,
               }]}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.reminderCreateButton,
@@ -533,8 +586,8 @@ const ReminderModal = ({
                   borderRadius: 14,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: isCreating 
-                    ? (theme.textMuted || '#94a3b8') 
+                  backgroundColor: isCreating
+                    ? (theme.textMuted || '#94a3b8')
                     : (theme.accent || '#3b82f6'),
                   shadowColor: theme.accent || '#3b82f6',
                   shadowOffset: {
@@ -550,10 +603,10 @@ const ReminderModal = ({
               disabled={isCreating}
               activeOpacity={0.8}
             >
-              <View style={{ 
-                flexDirection: 'row', 
+              <View style={{
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center' 
+                justifyContent: 'center'
               }}>
                 {isCreating && (
                   <View style={{
@@ -561,10 +614,10 @@ const ReminderModal = ({
                     width: 16,
                     height: 16,
                   }}>
-                    <Ionicons 
-                      name="hourglass" 
-                      size={16} 
-                      color={isCreating ? '#f1f5f9' : '#fff'} 
+                    <Ionicons
+                      name="hourglass"
+                      size={16}
+                      color={isCreating ? '#f1f5f9' : '#fff'}
                     />
                   </View>
                 )}
