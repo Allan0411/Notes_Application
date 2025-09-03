@@ -338,7 +338,7 @@ export default function HomeScreen({ navigation }) {
     if (checklistItems.length > 0) {
       textToRead += 'Checklist items: ';
       checklistItems.forEach((item, index) => {
-        textToRead += `${item.isCompleted ? 'Completed' : 'Not completed'}: ${item.text || item.title}. `;
+        textToRead += `${item.checked ? 'Completed' : 'Not completed'}: ${item.text || item.title}. `;
       });
     }
     if (note.drawings && (
@@ -347,6 +347,7 @@ export default function HomeScreen({ navigation }) {
     )) {
       textToRead += 'This note also contains a drawing.';
     }
+    console.log(textToRead);
     return textToRead.trim();
   };
 
@@ -744,7 +745,7 @@ export default function HomeScreen({ navigation }) {
                 style={localStyles.sortItem}
                 onPress={() => handleSortSelection('updatedAt')}
               >
-                <Text style={[localStyles.sortText, { color: colors.text }]}>Date Modified</Text>
+                <Text style={[localStyles.sortText, { color: colors.text }]}>Oldest to Newest</Text>
                 {sortOption === 'updatedAt' && (
                   <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
                 )}
@@ -754,7 +755,7 @@ export default function HomeScreen({ navigation }) {
                 style={localStyles.sortItem}
                 onPress={() => handleSortSelection('createdAt')}
               >
-                <Text style={[localStyles.sortText, { color: colors.text }]}>Date Created</Text>
+                <Text style={[localStyles.sortText, { color: colors.text }]}>Newest to Oldest</Text>
                 {sortOption === 'createdAt' && (
                   <Ionicons name="checkmark-circle" size={24} color={colors.accentColor} />
                 )}

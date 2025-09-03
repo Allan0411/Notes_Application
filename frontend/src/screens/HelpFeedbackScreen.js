@@ -112,7 +112,7 @@ Easily share notes with friends, family, or colleagues.
   };
 
   const handleSendFeedback = () => {
-    Linking.openURL('mailto:support@yourcompany.com?subject=Note App Feedback&body=Dear Support, ').catch(err => {
+    Linking.openURL('mailto:allan04dasilva@gmail.com?subject=Note App Feedback&body=Dear Support, ').catch(err => {
       Alert.alert("Error", "Could not open the email app. Please ensure you have one installed.");
       console.error('An error occurred', err);
     });

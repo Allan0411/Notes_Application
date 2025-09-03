@@ -1,6 +1,6 @@
  import { getAttachments as fetchAttachments } from '../services/attachmentService';
 import React, { useState, useRef, useContext, useEffect } from 'react';
-import {generateImageFromSketch, uploadImageToCloudinary} from '../services/cloudinaryUpload';
+import {generateImageFromSketch} from '../services/cloudinaryUpload';
 import { addAttachment } from '../services/attachmentService';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
@@ -1472,21 +1472,19 @@ useEffect(() => {
     return stats;
   };
 
- 
   const captureCanvas = async () => {
     closeAiMenu();
     setIsAiProcessing(true); // Show overlay while processing
     try {
       // Capture the canvas with a white background
-      // Ensure the background is white by using backgroundColor: '#ffffff'
       const uri = await captureRef(canvasRef, {
         format: 'png',
         quality: 1,
         result: 'tmpfile',
-        backgroundColor: '#ffffff' // Use full white hex code for clarity
+        backgroundColor: '#ffffff'
       });
       console.log('Local canvas URI:', uri);
-
+  
       // Build FormData directly with the local file
       const formData = new FormData();
       formData.append("file", {
@@ -1494,25 +1492,11 @@ useEffect(() => {
         type: "image/png",
         name: "canvas.png"
       });
-
-      // Upload to your FastAPI endpoint
-      const response = await fetch("https://7560c2bc2fcb.ngrok-free.app/generate-image-file", {
-        method: "POST",
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const result = await response.json();
-      console.log("Cloudinary upload result:", result);
-      // Use the async/await version of generateImageFromSketch (see file_context_0)
-      const mypicurl = result.cloudinary_url;
-      console.log("mypicurl: ", mypicurl);
-      const sketch_response = await generateImageFromSketch(mypicurl);
-      console.log(sketch_response);
-
+  
+      // 🔥 Send directly to generateImageFromSketch (no extra Cloudinary upload)
+      const sketch_response = await generateImageFromSketch(formData);
+      console.log("Generated image URL:", sketch_response);
+  
       // Add as attachment to the note
       if (note?.id && sketch_response) {
         const attachmentData = {
@@ -1521,28 +1505,26 @@ useEffect(() => {
         };
         try {
           await addAttachment(note.id, attachmentData);
-          
+  
           console.log("Attachment added:", attachmentData); 
-          // Move active tab to 'attachments' after adding
           setActiveTab && setActiveTab('attachments');
-      Alert.alert('Success', 'Successfully generated image.', [
-        {
-          text: 'OK',
-          onPress: async () => {
-            if (getAttachments) {
-              await getAttachments();
+          Alert.alert('Success', 'Successfully generated image.', [
+            {
+              text: 'OK',
+              onPress: async () => {
+                if (getAttachments) {
+                  await getAttachments();
+                }
+              }
             }
-          }
-        }
-      ]);
-   
+          ]);
         } catch (err) {
           console.warn("Failed to add attachment:", err);
         }
       }
-      
+  
       return sketch_response || "";
-
+  
     } catch (e) {
       console.warn("Canvas capture or upload failed", e);
       return null;
@@ -1550,6 +1532,7 @@ useEffect(() => {
       setIsAiProcessing(false); // Hide AI overlay when done
     }
   };
+  
   
 
   return (
