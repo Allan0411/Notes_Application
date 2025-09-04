@@ -855,7 +855,8 @@ const styles = StyleSheet.create({
   },
   previewText: {
     lineHeight: 24,
-    textAlign: 'center',
+    textAlign: 'right',
+    
   },
   fontOptionContent: {
     flex: 1,

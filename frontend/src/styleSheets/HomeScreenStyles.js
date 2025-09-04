@@ -292,6 +292,47 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  // In your stylesheet fil
+  // e
+floatingButton: {
+  position: 'absolute',
+    bottom: 45,
+    left: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  // Use theme color by passing it as a style prop from the component, e.g.:
+  // backgroundColor: colors.headerBackground,
+  // Or leave backgroundColor undefined here and override via props
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 8,
+  shadowColor: '#2D3748',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.25,
+  shadowRadius: 8,
+},
+badge: {
+  position: 'absolute',
+  top: -6,
+  right: -6,
+  minWidth: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: '#FF4757',
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 6,
+  borderWidth: 3,
+  borderColor: 'white', // Or your theme background
+  elevation: 4,
+},
+badgeText: {
+  color: 'white',
+  fontWeight: '800',
+  fontSize: 12,
+  textAlign: 'center',
+},
 });
 
 export default styles;

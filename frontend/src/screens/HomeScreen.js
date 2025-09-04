@@ -19,7 +19,10 @@ import { normalizeNote } from '../utils/normalizeNote';
 import LoginSuccessOverlay from '../utils/LoginSuccessOverlay';
 import reminderService from '../services/reminderService';
 
+
 import { collaboratorService } from '../services/collaboratorService';
+import { collaborationInviteService } from '../services/collaboratorService';
+import PendingInvitesModal from '../components/PendingInvitesModal';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -31,6 +34,11 @@ export default function HomeScreen({ navigation }) {
   const themedStyles = buildThemedStyles(theme, styles);
   const colors = activeTheme === 'dark' ? darkColors : lightColors;
 
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [isInviteModalVisible, setInviteModalVisible] = useState(false);
+  const [isLoadingInvites, setIsLoadingInvites] = useState(true);
+  const [isRespondingToInvite, setIsRespondingToInvite] = useState(false);
+  
   const route = useRoute();
   const [collaboratedNotes, setCollaboratedNotes] = useState([]);
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
@@ -85,7 +93,56 @@ export default function HomeScreen({ navigation }) {
       console.error('Error saving deleted notes:', error);
     }
   };
+// Inside your HomeScreen component
 
+const loadPendingInvites = async () => {
+  setIsLoadingInvites(true);
+  try {
+      const invites = await collaborationInviteService.getPendingInvites();
+      setPendingInvites(invites);
+      if (invites.length > 0) {
+          setInviteModalVisible(true); // Automatically show invites on load
+      }
+  } catch (err) {
+      console.error('Error loading pending invites:', err);
+  } finally {
+      setIsLoadingInvites(false);
+  }
+};
+
+const handleAcceptInvite = async (inviteId) => {
+  setIsRespondingToInvite(true);
+  try {
+      await collaborationInviteService.respondToInvite(inviteId, true);
+      setInviteModalVisible(false);
+      // After a short delay, refresh everything
+      setTimeout(() => {
+          loadPendingInvites();
+          // ❗️ IMPORTANT: Call your main note fetching function here!
+          // Example: fetchUserAndNotes(); 
+          setIsRespondingToInvite(false);
+      }, 500);
+  } catch (err) {
+      console.error('Failed to accept invite:', err);
+      setIsRespondingToInvite(false);
+  }
+};
+
+const handleDeclineInvite = async (inviteId) => {
+  setIsRespondingToInvite(true);
+  try {
+      await collaborationInviteService.respondToInvite(inviteId, false);
+      setInviteModalVisible(false);
+       // After a short delay, refresh invites
+      setTimeout(() => {
+          loadPendingInvites();
+          setIsRespondingToInvite(false);
+      }, 500);
+  } catch (err) {
+      console.error('Failed to decline invite:', err);
+      setIsRespondingToInvite(false);
+  }
+};
   // Fetch user info every time the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
@@ -161,12 +218,13 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchNotes();
-    }, [])
-  );
 
+useFocusEffect(
+  React.useCallback(() => {
+    fetchNotes();
+    loadPendingInvites();
+  }, [])
+);
   const handleAddNote = () => {
     const newNote = {
       id: null,
@@ -924,17 +982,32 @@ export default function HomeScreen({ navigation }) {
         </>
       )}
 
-      {isFetchingNotes && !hasFetchedOnce && (
-        <LoadingOverlay
-          visible={true}
-          text="Fetching notes..."
-          themedStyles={themedStyles}
-          styles={styles}
-          theme={theme}
-        />
-      )}
+ 
 
-      
+      <TouchableOpacity
+            style={[styles.floatingButton, { backgroundColor: colors.headerBackground }]}
+            onPress={() => setInviteModalVisible(true)}
+            activeOpacity={0.8}
+        >
+            <Ionicons name="mail-outline" size={24} color="white" />
+            {pendingInvites.length > 0 && (
+                <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                        {pendingInvites.length > 99 ? '99+' : pendingInvites.length}
+                    </Text>
+                </View>
+            )}
+        </TouchableOpacity>
+
+        {/* 👇 Add the Pending Invites Modal */}
+        <PendingInvitesModal
+            visible={isInviteModalVisible}
+            onClose={() => setInviteModalVisible(false)}
+            invites={pendingInvites}
+            onAccept={handleAcceptInvite}
+            onDecline={handleDeclineInvite}
+            isAcceptingOrDeclining={isRespondingToInvite}
+        />
     </SafeAreaView>
   );
 }

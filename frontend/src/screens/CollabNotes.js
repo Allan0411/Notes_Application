@@ -7,19 +7,14 @@ import {
     TouchableOpacity,
     Pressable,
     StatusBar,
-    Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../ThemeContext';
 import { lightColors, darkColors } from '../utils/themeColors';
 import styles from '../styleSheets/HomeScreenStyles';
-import LoadingOverlay from '../components/LoadingOverlay';
-import PendingInvitesModal from '../components/PendingInvitesModal';
-
 import { fetchNotes as apiFetchNotes, fetchNoteById } from '../services/noteService';
 import { fetchUserInfo } from '../services/userService';
 import { normalizeNote } from '../utils/normalizeNote';
-import { collaborationInviteService } from '../services/collaboratorService';
 
 import { ReadAloudContext } from '../ReadAloudContext';
 
@@ -33,18 +28,9 @@ export default function CollabNotes({ navigation }) {
     const [isFetchingNotes, setIsFetchingNotes] = useState(false);
     const [userId, setUserId] = useState(null);
     const [speakingNoteId, setSpeakingNoteId] = useState(null);
-    const [isAcceptingOrDeclining, setIsAcceptingOrDeclining] = useState(false);
-
-    // Pending invites states
-    const [pendingInvites, setPendingInvites] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [loadingInvites, setLoadingInvites] = useState(true);
-
-    const slideUpAnim = useRef(new Animated.Value(500)).current;
 
     useEffect(() => {
         fetchUserAndNotes();
-        loadPendingInvites();
 
         return () => {
             try {
@@ -69,53 +55,6 @@ export default function CollabNotes({ navigation }) {
             console.error('Error fetching collaborated notes: ', err);
         } finally {
             setIsFetchingNotes(false);
-        }
-    };
-
-    const loadPendingInvites = async () => {
-        setLoadingInvites(true);
-        try {
-            const invites = await collaborationInviteService.getPendingInvites();
-            setPendingInvites(invites);
-            if (invites.length > 0) setModalVisible(true);
-        } catch (err) {
-            console.error('Error loading pending invites:', err);
-        } finally {
-            setLoadingInvites(false);
-        }
-    };
-
-    const handleAccept = async (inviteId) => {
-        setIsAcceptingOrDeclining(true);
-        try {
-            await collaborationInviteService.respondToInvite(inviteId, true);
-            setModalVisible(false); // Close the modal immediately
-            // Reload the notes after a short delay
-            setTimeout(async () => {
-                await loadPendingInvites();
-                await fetchUserAndNotes();
-                setIsAcceptingOrDeclining(false);
-            }, 500); // 500ms delay for UI feedback
-        } catch (err) {
-            console.error('Failed to accept invite:', err);
-            setIsAcceptingOrDeclining(false);
-        }
-    };
-
-    const handleDecline = async (inviteId) => {
-        setIsAcceptingOrDeclining(true);
-        try {
-            await collaborationInviteService.respondToInvite(inviteId, false);
-            setModalVisible(false); // Close the modal immediately
-            // Reload the notes after a short delay
-            setTimeout(async () => {
-                await loadPendingInvites();
-                await fetchUserAndNotes();
-                setIsAcceptingOrDeclining(false);
-            }, 500); // 500ms delay for UI feedback
-        } catch (err) {
-            console.error('Failed to decline invite:', err);
-            setIsAcceptingOrDeclining(false);
         }
     };
 
@@ -185,7 +124,6 @@ export default function CollabNotes({ navigation }) {
         });
     };
 
-    // New helper function to combine all readable content
     const getTextToSpeak = (note) => {
         let textToRead = '';
 
@@ -381,25 +319,6 @@ export default function CollabNotes({ navigation }) {
                 showsVerticalScrollIndicator={false}
             />
 
-            {/* Floating Action Button */}
-            <TouchableOpacity
-                style={[collabNotesStyles.floatingButton, {
-                    backgroundColor: activeTheme === 'dark' ? '#4A5568' : '#718096',
-                    shadowColor: activeTheme === 'dark' ? '#000' : '#2D3748',
-                }]}
-                onPress={() => setModalVisible(true)}
-                activeOpacity={0.8}
-            >
-                <Ionicons name="mail-outline" size={24} color="white" />
-                {pendingInvites.length > 0 && (
-                    <View style={collabNotesStyles.badge}>
-                        <Text style={collabNotesStyles.badgeText}>
-                            {pendingInvites.length > 99 ? '99+' : pendingInvites.length.toString()}
-                        </Text>
-                    </View>
-                )}
-            </TouchableOpacity>
-
             {/* Loading Overlays */}
             {isFetchingNotes && (
                 <View style={collabNotesStyles.loadingOverlay}>
@@ -422,16 +341,6 @@ export default function CollabNotes({ navigation }) {
                     </View>
                 </View>
             )}
-
-            {/* Pending Invites Modal */}
-            <PendingInvitesModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                invites={pendingInvites}
-                onAccept={handleAccept}
-                onDecline={handleDecline}
-                isAcceptingOrDeclining={isAcceptingOrDeclining}
-            />
         </SafeAreaView>
     );
 }
@@ -576,44 +485,6 @@ const collabNotesStyles = {
         textAlign: 'center',
         lineHeight: 24,
         paddingHorizontal: 32,
-    },
-    floatingButton: {
-        position: 'absolute',
-        bottom: 30,
-        right: 20,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 8,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.25,
-        shadowRadius: 14,
-    },
-    badge: {
-        position: 'absolute',
-        top: -6,
-        right: -6,
-        minWidth: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: '#FF4757',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 6,
-        borderWidth: 3,
-        borderColor: 'white',
-        elevation: 4,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-    },
-    badgeText: {
-        color: 'white',
-        fontWeight: '800',
-        fontSize: 12,
-        textAlign: 'center',
     },
     loadingOverlay: {
         position: 'absolute',

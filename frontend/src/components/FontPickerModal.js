@@ -39,7 +39,7 @@ export default function FontPickerModal({
   const getPreviewStyle = (fontValue) => ({
     fontFamily: getAndroidFontFamily(fontValue),
     fontSize: 16,
-    color: theme.text
+    color: 'green'
   });
 
   return (

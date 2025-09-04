@@ -46,6 +46,7 @@ export default function NoteDetailScreen({ route, navigation }) {
   const theme = themes[activeTheme] || themes.light;
   const themedStyles = buildThemedStyles(theme, styles);
   const canvasRef=useRef(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   //persomisionf for collab
   const [currentUserRole, setCurrentUserRole] = useState('viewer');
@@ -353,19 +354,7 @@ const isReadOnly = () => {
       return;
     }
 
-    useFocusEffect(
-      React.useCallback(() => {
-        // This function is run when the screen comes into focus.
-        // We don't need to do anything here.
-    
-        // The function returned here is the cleanup function.
-        // It runs when the screen goes out of focus (e.g., user presses back).
-        return () => {
-          setDrawingMode(false);
-          setToolsModalVisible(false);
-        };
-      }, []) // Empty dependency array ensures this effect doesn't re-run unnecessarily
-    );
+   
     const start = Math.min(selectionStart, selectionEnd);
     const end = Math.max(selectionStart, selectionEnd);
 
@@ -1027,18 +1016,20 @@ const updateLocalStateWithMergedNote = (mergedNote, latestNote) => {
           text: "Move",
           style: "destructive",
           onPress: async () => {
-            setIsSaving(true);
+            setIsDeleting(true);
             try {
               await updateNoteIsPrivate(note.id, true);
-              if (onSave) onSave({ ...note, isPrivate: true });
+              if (onSave) {
+                onSave({ ...note, isPrivate: true });
+              }
+              setIsDeleting(false);
               Alert.alert('Success', 'Note moved to trash.', [
                 { text: 'OK', onPress: () => navigation.goBack() }
               ]);
             } catch (error) {
+              setIsDeleting(false);
               console.error('Error moving note to trash:', error);
               Alert.alert('Error', 'Failed to move note to trash.');
-            } finally {
-              setIsSaving(false);
             }
           }
         }
@@ -1819,8 +1810,6 @@ useEffect(() => {
           </TouchableOpacity>
 
           
-          
-
           <TouchableOpacity style={styles.toolButton} onPress={() => setShowFontModal(true)}>
             <Ionicons name="text" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -1980,6 +1969,15 @@ useEffect(() => {
         styles={styles}
         theme={theme}
       />
+
+      <LoadingOverlay
+        visible={isDeleting}
+        text=" Moving the note to bin..."
+        themedStyles={themedStyles}
+        styles={styles}
+        theme={theme}
+      />
+
       <LoadingOverlay
         visible={isAiProcessing}
         text="AI is doing it's work"
