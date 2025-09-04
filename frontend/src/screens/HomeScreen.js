@@ -127,41 +127,31 @@ export default function HomeScreen({ navigation }) {
           deletedAt: note.deletedAt || new Date().toISOString()
         }));
 
-                // To check if this works, you can temporarily log the results:
-                const notesWithCollabStatus = await Promise.all(
+                // Combine both hasMultipleCollaborators and hasReminder into each note
+                const notesWithCollabAndReminders = await Promise.all(
                   activeNotes.map(async (note) => {
+                    let hasMultipleCollaborators = false;
+                    let hasReminder = false;
                     try {
-                      // Use checkCollaboratorCount to determine if there are multiple collaborators
-                      const hasMultipleCollaborators = await collaboratorService.checkCollaboratorCount(note.id);
-                      // Log for debugging
-                      console.log(`Note ${note.id} hasMultipleCollaborators:`, hasMultipleCollaborators);
-                      return { ...note, hasMultipleCollaborators };
+                      hasMultipleCollaborators = await collaboratorService.checkCollaboratorCount(note.id);
                     } catch (error) {
                       console.error(`Error checking collaborator count for note ${note.id}:`, error);
-                      return { ...note, hasMultipleCollaborators: false };
                     }
+                    try {
+                      const reminders = await reminderService.getRemindersForNote(note.id);
+                      hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending');
+                    } catch (error) {
+                      console.error(`Error fetching reminders for note ${note.id}:`, error);
+                    }
+                    // Log for debugging
+                    console.log(`Note ${note.id} hasMultipleCollaborators:`, hasMultipleCollaborators, 'hasReminder:', hasReminder);
+                    return { ...note, hasMultipleCollaborators, hasReminder };
                   })
-                  
                 );
 
-        
-        const notesWithReminders = await Promise.all(
-          activeNotes.map(async (note) => {
-            try {
-              const reminders = await reminderService.getRemindersForNote(note.id);
-              const hasReminder = reminders.some(r => r.status === 'active' || r.status === 'pending');
-              return { ...note, hasReminder };
-            } catch (error) {
-              console.error(`Error fetching reminders forf  note ${note.id}:`, error);
-              return { ...note, hasReminder: false };
-            }
-          })
-        );
-
-        setNotesList(notesWithReminders);
-        setNotesList(notesWithCollabStatus);
-        setDeletedNotes(binNotes);
-        await saveDeletedNotes(binNotes);
+                setNotesList(notesWithCollabAndReminders);
+                setDeletedNotes(binNotes);
+                await saveDeletedNotes(binNotes);
       }
     } catch (error) {
       console.error('Fetch Notes error: ', error);

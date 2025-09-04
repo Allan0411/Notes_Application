@@ -1,5 +1,5 @@
  import { getAttachments as fetchAttachments } from '../services/attachmentService';
-import React, { useState, useRef, useContext, useEffect } from 'react';
+import React, { useState, useRef, useContext, useEffect,useFocusEffect } from 'react';
 import {generateImageFromSketch} from '../services/cloudinaryUpload';
 import { addAttachment } from '../services/attachmentService';
 import {
@@ -62,7 +62,8 @@ export default function NoteDetailScreen({ route, navigation }) {
   const [noteReminders, setNoteReminders] = useState([]);
   // Attachments state
   const [attachmentsList, setAttachmentsList] = useState(note?.attachments || []);
-
+// Add this with your other state variables
+const [isToolsModalVisible, setToolsModalVisible] = useState(false);
   // Function to fetch attachments (images) for the note
   // Fetch attachments from the backend using the attachmentService
  
@@ -352,6 +353,19 @@ const isReadOnly = () => {
       return;
     }
 
+    useFocusEffect(
+      React.useCallback(() => {
+        // This function is run when the screen comes into focus.
+        // We don't need to do anything here.
+    
+        // The function returned here is the cleanup function.
+        // It runs when the screen goes out of focus (e.g., user presses back).
+        return () => {
+          setDrawingMode(false);
+          setToolsModalVisible(false);
+        };
+      }, []) // Empty dependency array ensures this effect doesn't re-run unnecessarily
+    );
     const start = Math.min(selectionStart, selectionEnd);
     const end = Math.max(selectionStart, selectionEnd);
 
@@ -1559,7 +1573,15 @@ useEffect(() => {
     }
   };
   
-  
+  const handleDrawingToolPress = () => {
+    // If we are already in drawing mode...
+    setToolsModalVisible(true);
+    if(!drawingMode) {
+      // Otherwise, enter drawing mode as before.
+      setActiveTab('text');
+      toggleDrawingMode(); // Or whatever function you use to set drawingMode to true
+    }
+  };
 
   return (
     <>
@@ -1783,6 +1805,13 @@ useEffect(() => {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.toolButton, drawingMode && themedStyles.activeToolButton]}
+            onPress={handleDrawingToolPress} // Use the new handler here
+          >
+            <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : theme.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.toolButton, activeTab === 'checklist' && themedStyles.activeToolButton]}
             onPress={() => setActiveTab('checklist')}
           >
@@ -1790,16 +1819,7 @@ useEffect(() => {
           </TouchableOpacity>
 
           
-          <TouchableOpacity
-            style={[styles.toolButton, drawingMode && themedStyles.activeToolButton]}
-            onPress={() => {
-              setActiveTab('text');
-                toggleDrawingMode();
-            
-            }}
-          >
-            <Ionicons name="brush" size={20} color={drawingMode ? '#fff' : theme.textSecondary} />
-          </TouchableOpacity>
+          
 
           <TouchableOpacity style={styles.toolButton} onPress={() => setShowFontModal(true)}>
             <Ionicons name="text" size={20} color={theme.textSecondary} />
@@ -1913,8 +1933,8 @@ useEffect(() => {
         />
 
         <DrawingToolsModal
-          visible={showDrawingModal}
-          onClose={() => setShowDrawingModal(false)}
+          visible={isToolsModalVisible}
+          onClose={() => setToolsModalVisible(false)}
           themedStyles={themedStyles}
           styles={styles}
           theme={theme}
