@@ -78,6 +78,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   icon: {
+    color: '#939ab3ff', // Blue color
     marginBottom: 15,
   },
   popupText: {
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   popupOkButton: {
-    backgroundColor: '#2E7D32', // Solid green background
+    backgroundColor: '#939ab3ff', // Solid green background
     borderRadius: 25, // Very rounded corners
     paddingVertical: 12, // Vertical padding
     paddingHorizontal: 60, // Wider horizontal padding

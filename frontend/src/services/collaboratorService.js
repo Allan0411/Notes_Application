@@ -8,6 +8,28 @@ async function getAuthToken() {
 
 
 export const collaboratorService = {
+  // Frontend example (React/JS)
+ async checkCollaboratorCount(noteId) {
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/NotesUser/${noteId}/collaborators`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      // If not found or error, just return false, don't throw
+      return false;
+    }
+    const collaborators = await response.json();
+    if (!collaborators || !Array.isArray(collaborators)) {
+      return false;
+    }
+    return collaborators.length > 1;
+  } catch (error) {
+    // Don't throw, just return false
+    return false;
+  }
+},
+
   async getNoteCollaborators(noteId) {
     try {
       console.log('Fetching collaborators for note:', noteId);
@@ -31,6 +53,7 @@ export const collaboratorService = {
       throw error;
     }
   },
+
 
   async addCollaborator(noteId, userId, role = 'editor') {
     // Your backend expects UserId in request body (not email), so use userId instead
@@ -143,6 +166,7 @@ export const collaboratorService = {
 
 //invites
 export const collaborationInviteService = {
+
   async sendInvite(noteId, invitedUserId, role = 'editor') {
     const token = await AsyncStorage.getItem('authToken');
     const response = await fetch(`${API_BASE_URL}/CollaborationInvites`, {
@@ -161,9 +185,25 @@ export const collaborationInviteService = {
     return await response.json();
   },
 
+
   async getPendingInvites() {
     const token = await AsyncStorage.getItem('authToken');
     const response = await fetch(`${API_BASE_URL}/CollaborationInvites/pending`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    console.log('invites: ',response );
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pending invites: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  async getPendingSentInvites(){
+    const token = await AsyncStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/CollaborationInvites/sentInvites`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

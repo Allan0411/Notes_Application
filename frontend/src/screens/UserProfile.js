@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
 import styles from '../styleSheets/UserProfileStyles'; // Import styles from the stylesheet
-import { changeName } from '../services/userService';
+import { changeName,changePassword } from '../services/userService';
 
 // Import a simple loading overlay (inline, since not in context)
 function LoadingOverlay({ visible, message }) {
@@ -51,7 +51,8 @@ export default function UserProfile({ navigation }) {
       accent: '#4a5568',
       input: '#fff',
       overlay: 'rgba(0, 0, 0, 0.5)',
-      disabled: '#cbd5e0',
+      disabled: '#a0aec0', // Changed to a more grayed out color
+      disabledBackground: '#f7fafc', //
     },
     dark: {
       background: '#1a202c',
@@ -62,7 +63,7 @@ export default function UserProfile({ navigation }) {
       accent: '#899aaaff',
       input: '#4a5568',
       overlay: 'rgba(255, 255, 255, 0.1)',
-      disabled: '#4a5568',
+      disabled: '#718096'
     },
   };
 
@@ -78,6 +79,7 @@ export default function UserProfile({ navigation }) {
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
+  const [changingPass,setChangingPass]=useState(false);
 
   // Use AsyncStorage to get username and email
   useEffect(() => {
@@ -132,7 +134,7 @@ export default function UserProfile({ navigation }) {
     setEditMode(false);
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordData;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -150,19 +152,28 @@ export default function UserProfile({ navigation }) {
       return;
     }
 
-    Alert.alert('Success', 'Password changed successfully!', [
-      {
-        text: 'OK',
-        onPress: () => {
-          setPasswordModalVisible(false);
-          setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-          });
+    try {
+      setChangingPass(true);
+      await changePassword(currentPassword, newPassword);
+      Alert.alert('Success', 'Password changed successfully!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setPasswordModalVisible(false);
+            setPasswordData({
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: '',
+            });
+          },
         },
-      },
-    ]);
+      ]);
+    } catch (err) {
+      console.error('Failed to change password:', err);
+      Alert.alert('Error', 'Failed to change password. Please check your current password and try again.');
+    } finally {
+      setChangingPass(false);
+    }
   };
 
   return (
@@ -170,8 +181,9 @@ export default function UserProfile({ navigation }) {
       <StatusBar barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={themeColors.accent} />
 
       {/* Loading overlay for changing name */}
-      <LoadingOverlay visible={loading} message="changing name..." />
+      <LoadingOverlay visible={loading} message="Changing Name..." />
 
+      <LoadingOverlay visible={changingPass} message="Changing Password...."/>
       <View style={[styles.header, { backgroundColor: themeColors.accent }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -228,7 +240,7 @@ export default function UserProfile({ navigation }) {
                 style={[
                   styles.infoInput,
                   {
-                    backgroundColor: themeColors.input,
+                    backgroundColor: '#f0f1f4', // light grey hex
                     color: themeColors.disabled,
                     borderColor: themeColors.border,
                   }
@@ -256,7 +268,7 @@ export default function UserProfile({ navigation }) {
               <TouchableOpacity style={[styles.cancelButton, { backgroundColor: themeColors.accent }]} onPress={handleCancelEdit}>
                 <Text style={[styles.cancelButtonText]}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={[styles.saveButton, { backgroundColor: themeColors.accent }]} onPress={handleSaveProfile}>
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
@@ -322,6 +334,7 @@ export default function UserProfile({ navigation }) {
               <TouchableOpacity style={styles.modalCancelButton} onPress={() => setPasswordModalVisible(false)}>
                 <Text style={[styles.modalCancelText, { color: themeColors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
+              
               <TouchableOpacity style={[styles.modalSaveButton, { backgroundColor: themeColors.accent }]} onPress={handleChangePassword}>
                 <Text style={styles.modalSaveText}>Change Password</Text>
               </TouchableOpacity>

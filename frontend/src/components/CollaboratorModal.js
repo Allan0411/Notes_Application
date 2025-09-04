@@ -24,6 +24,9 @@ export default function CollaboratorModal({
   const [inviteRole, setInviteRole] = useState('Editor');
   const [inviting, setInviting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState(null);
+  const [showInvitesModal, setShowInvitesModal] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
 
   const roles = ['Viewer', 'Editor', 'Admin'];
 
@@ -77,6 +80,27 @@ export default function CollaboratorModal({
     }
   };
 
+  const fetchPendingInvites = async () => {
+    setLoadingInvites(true);
+    try {
+      const allInvites = await collaborationInviteService.getPendingSentInvites();
+      const invitesForThisNote = allInvites.filter(invite => invite.noteId === noteId);
+      console.log(invitesForThisNote);
+      const invitesWithUserInfo = await Promise.all(
+        invitesForThisNote.map(async (invite) => {
+          const user = await getUserById(invite.invitedUserId);
+          
+          return { ...invite, user };
+        })
+      );
+      setPendingInvites(invitesWithUserInfo);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch pending invites: ' + error.message);
+    } finally {
+      setLoadingInvites(false);
+    }
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
       Alert.alert('Error', 'Please enter an email address');
@@ -127,6 +151,29 @@ export default function CollaboratorModal({
               fetchCollaborators();
             } catch (error) {
               Alert.alert('Error', 'Failed to remove collaborator: ' + error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelInvite = (inviteId) => {
+    Alert.alert(
+      'Cancel Invitation',
+      'Are you sure you want to cancel this invitation?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await collaborationInviteService.cancelInvite(inviteId);
+              Alert.alert('Success', 'Invitation canceled.');
+              fetchPendingInvites();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to cancel invitation: ' + error.message);
             }
           }
         }
@@ -209,6 +256,27 @@ export default function CollaboratorModal({
           <Ionicons name="trash-outline" size={20} color={theme.error || '#ef4444'} />
         </TouchableOpacity>
       )}
+    </View>
+  );
+
+  const renderInvite = ({ item }) => (
+    <View style={[styles.collaboratorItem, { borderBottomColor: theme.border }]}>
+      <View style={styles.collaboratorInfo}>
+        <Text style={[styles.collaboratorName, { color: theme.text }]}>
+          {item.user?.username || item.user?.email || 'Unknown User'}
+        </Text>
+        {item.user?.email && (
+          <Text style={[styles.collaboratorEmail, { color: theme.textSecondary }]}>
+            {item.user.email}
+          </Text>
+        )}
+        <Text style={[styles.roleText, { color: theme.accent, marginTop: 4 }]}>
+          Role: {item.role}
+        </Text>
+      </View>
+      <TouchableOpacity onPress={() => handleCancelInvite(item.id)} style={styles.removeButton}>
+        <Ionicons name="close-circle-outline" size={24} color={theme.error || '#ef4444'} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -306,9 +374,23 @@ export default function CollaboratorModal({
 
           {/* Current Collaborators */}
           <View style={styles.collaboratorsSection}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Current Collaborators ({collaborators.length})
-            </Text>
+            <View style={[styles.sectionHeader, { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                Current Collaborators ({collaborators.length})
+              </Text>
+              {canModify && (
+                <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                  <TouchableOpacity
+                    onPress={() => { fetchPendingInvites(); setShowInvitesModal(true); }}
+                    style={[styles.invitesButton, { marginRight: 8 }]}
+                  >
+                    <Ionicons name="mail-unread-outline" size={24} color={theme.accent} />
+                  </TouchableOpacity>
+                </View>
+              )}
+              
+              
+            </View>
 
             {loading ? (
               <View style={styles.loadingContainer}>
@@ -339,6 +421,44 @@ export default function CollaboratorModal({
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Pending Invites Modal */}
+      <Modal visible={showInvitesModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={[styles.collaboratorModalContainer, { backgroundColor: theme.background }]}>
+          <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
+          <View style={[styles.collaboratorModalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.collaboratorModalTitle, { color: theme.text }]}>
+              Pending Invitations
+            </Text>
+            <TouchableOpacity onPress={() => setShowInvitesModal(false)}>
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.collaboratorModalContent}>
+            {loadingInvites ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.accent} />
+                <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+                  Loading invitations...
+                </Text>
+              </View>
+            ) : pendingInvites.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="mail-open-outline" size={48} color={theme.textSecondary} />
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                  No pending invitations
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={pendingInvites}
+                renderItem={renderInvite}
+                keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </Modal>
   );
 };

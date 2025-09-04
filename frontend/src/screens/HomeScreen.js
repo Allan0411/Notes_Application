@@ -19,6 +19,8 @@ import { normalizeNote } from '../utils/normalizeNote';
 import LoginSuccessOverlay from '../utils/LoginSuccessOverlay';
 import reminderService from '../services/reminderService';
 
+import { collaboratorService } from '../services/collaboratorService';
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -125,6 +127,24 @@ export default function HomeScreen({ navigation }) {
           deletedAt: note.deletedAt || new Date().toISOString()
         }));
 
+                // To check if this works, you can temporarily log the results:
+                const notesWithCollabStatus = await Promise.all(
+                  activeNotes.map(async (note) => {
+                    try {
+                      // Use checkCollaboratorCount to determine if there are multiple collaborators
+                      const hasMultipleCollaborators = await collaboratorService.checkCollaboratorCount(note.id);
+                      // Log for debugging
+                      console.log(`Note ${note.id} hasMultipleCollaborators:`, hasMultipleCollaborators);
+                      return { ...note, hasMultipleCollaborators };
+                    } catch (error) {
+                      console.error(`Error checking collaborator count for note ${note.id}:`, error);
+                      return { ...note, hasMultipleCollaborators: false };
+                    }
+                  })
+                  
+                );
+
+        
         const notesWithReminders = await Promise.all(
           activeNotes.map(async (note) => {
             try {
@@ -139,6 +159,7 @@ export default function HomeScreen({ navigation }) {
         );
 
         setNotesList(notesWithReminders);
+        setNotesList(notesWithCollabStatus);
         setDeletedNotes(binNotes);
         await saveDeletedNotes(binNotes);
       }
@@ -589,6 +610,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         }
         renderItem={({ item: [month, notes] }) => (
+          
           <View key={month} style={{ width: '100%' }}>
             <Text style={[styles.monthHeader, { color: colors.subText }, isGridView && gridItemStyles.monthHeader]}>{month}</Text>
             
@@ -607,6 +629,7 @@ export default function HomeScreen({ navigation }) {
                     (Array.isArray(note.drawings) && note.drawings.length > 0) ||
                     (typeof note.drawings === 'string' && note.drawings.trim() !== '' && note.drawings !== '[]')
                   ));
+                 
                   
                   const isSelected = selectedNotes.includes(note.id);
                   
@@ -669,6 +692,13 @@ export default function HomeScreen({ navigation }) {
                                 <Ionicons name="alarm-outline" size={18} color={'#008000'} />
                               </Pressable>
                             )}
+
+                            {note.hasMultipleCollaborators && (
+                                <Pressable style={styles.actionButton}>
+                                  <Ionicons name="people" size={18} color="#90ee90" />
+                                </Pressable>
+                            )}
+                           
                             <Pressable
                               onPress={() => handleDeleteNote(note.id)}
                               style={styles.actionButton}
@@ -685,6 +715,7 @@ export default function HomeScreen({ navigation }) {
                                 color={colors.iconColor}
                               />
                             </Pressable>
+                           
                           </View>
                         )}
                       </View>
@@ -913,11 +944,7 @@ export default function HomeScreen({ navigation }) {
         />
       )}
 
-      <LoginSuccessOverlay
-        isVisible={showSuccessOverlay}
-        onDismiss={() => setShowSuccessOverlay(false)}
-        colors={colors}
-      />
+      
     </SafeAreaView>
   );
 }

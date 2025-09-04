@@ -94,3 +94,29 @@ export async function changeName(newUsername) {
     throw err;
   }
 }
+
+export async function changePassword(oldPassword, newPassword) {
+  const token = await getAuthToken();
+  if (!token) throw new Error("No auth token found");
+  if (!oldPassword || !newPassword) {
+    throw new Error("Both oldPassword and newPassword are required");
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/Users/changePassword`, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Change password failed: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error changing password:', err);
+    throw err;
+  }
+}

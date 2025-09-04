@@ -16,11 +16,17 @@ import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styleSheets/LoginScreenStyles';
 import { getUserByEmail } from '../services/userService';
+import LoginSuccessOverlay from '../utils/LoginSuccessOverlay'; // Adjust path as needed
+import { lightColors, darkColors } from '../utils/themeColors'; // Adjust path as needed
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+    // ADD COLORS (or get from your theme context if you have one)
+    const colors = lightColors; // or use your theme system
 
     const storeUserId = async (id) => {
         try {
@@ -29,7 +35,10 @@ export default function LoginScreen({ navigation }) {
             console.error('Failed to save userId', e);
         }
     };
-
+    const handleSuccessOverlayDismiss = () => {
+        setShowSuccessOverlay(false);
+        navigation.navigate('Home', { showLoginSuccess: true });
+    };
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert("Error", "Please enter both email and password");
@@ -59,7 +68,7 @@ export default function LoginScreen({ navigation }) {
                     console.log("userId:", user.id);
                 }
                 
-                navigation.navigate('Home', { showLoginSuccess: true });
+                setShowSuccessOverlay(true);
 
             } else {
                 console.error("Login error:", data);
@@ -154,6 +163,11 @@ export default function LoginScreen({ navigation }) {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+            <LoginSuccessOverlay
+                isVisible={showSuccessOverlay}
+                onDismiss={handleSuccessOverlayDismiss}
+                colors={colors}
+            />
         </LinearGradient>
     );
 }

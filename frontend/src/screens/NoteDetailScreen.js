@@ -16,7 +16,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import styles from '../styleSheets/NoteDetailScreenStyles';
 import { requestAIAction } from '../services/aiService';
-
+import Toast from 'react-native-simple-toast';
 import { parseChecklistItems } from '../utils/parseChecklistItems';
 import { noteDetailsthemes as themes } from '../utils/themeColors';
 
@@ -48,8 +48,10 @@ export default function NoteDetailScreen({ route, navigation }) {
   const canvasRef=useRef(null);
 
   //persomisionf for collab
-  const [currentUserRole, setCurrentUserRole] = useState('owner'); // Default to owner
+  const [currentUserRole, setCurrentUserRole] = useState('viewer');
+  const [isCheckingPermissions, setIsCheckingPermissions] = useState(true); // Default to owner
   const [noteCollaborators, setNoteCollaborators] = useState([]);
+  
 
   // Navigation/params/state
   const { note, onSave, isNewNote } = route.params;
@@ -1361,39 +1363,63 @@ const updateLocalStateWithMergedNote = (mergedNote, latestNote) => {
 
   //for permissoin
   // Much simpler version since user must be a collaborator to access the note
+// Replace your existing permission-fetching useEffect with this one
+
 useEffect(() => {
   const fetchUserPermissions = async () => {
-    if (note?.id) {
-      try {
-        // Use your existing collaborator service
-        const data = await collaboratorService.getNoteCollaborators(note.id);
-        
-        // Get current logged-in user id
-        const loggedInUserId = await AsyncStorage.getItem('userId');
-        
-        // Find current user's role among collaborators (they MUST exist)
-        const currentUser = data.find(c => c.userId.toString() === loggedInUserId);
-        
-        if (currentUser) {
-          setCurrentUserRole(currentUser.role.toLowerCase());
-          setNoteCollaborators(data);
-          console.log('User role:', currentUser.role.toLowerCase());
-        } else {
-          // This shouldn't happen if user can access the note, but fallback to owner
-          console.warn('User not found in collaborators but can access note - defaulting to owner');
+    // For a brand new note, the user is automatically the owner.
+    if (isNewNote || !note?.id) {
+      setCurrentUserRole('owner');
+      setIsCheckingPermissions(false); // Permissions are known, hide loader.
+      // No toast needed here, as the action is instant.
+      return;
+    }
+
+    // For existing notes, start the check.
+    setIsCheckingPermissions(true);
+    // Show a toast when the permission check begins.
+    Toast.show('Checking permissions...', Toast.SHORT);
+
+    try {
+      const loggedInUserId = await AsyncStorage.getItem('userId');
+      
+      // First, check if the current user is the original creator.
+      if (note.creatorUserId?.toString() === loggedInUserId) {
           setCurrentUserRole('owner');
-        }
-        
-      } catch (error) {
-        console.error('Failed to fetch permissions:', error);
-        // Fallback to owner if fetch fails
-        setCurrentUserRole('owner');
+          // Show a success toast when the user is identified as the owner.
+          Toast.show('Permissions loaded.', Toast.SHORT);
+      } else {
+          // If not the owner, they must be a collaborator to have access.
+          const collaborators = await collaboratorService.getNoteCollaborators(note.id);
+          const currentUser = collaborators.find(c => c.userId.toString() === loggedInUserId);
+          
+          if (currentUser) {
+              setCurrentUserRole(currentUser.role.toLowerCase());
+              // Show a toast for collaborator access.
+              Toast.show(`You have ${currentUser.role.toLowerCase()} access.`, Toast.SHORT);
+          } else {
+              // This is a fallback case, shouldn't typically be reached.
+              console.warn('User is not the owner and not in collaborators list. Defaulting to viewer.');
+              setCurrentUserRole('viewer');
+              // Show a toast for the fallback case.
+              Toast.show('Could not verify permissions. Limited access.', Toast.LONG);
+          }
+          setNoteCollaborators(collaborators);
       }
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+      // Fallback to a restrictive role on any error
+      setCurrentUserRole('viewer');
+      // Show an error toast if anything goes wrong.
+      Toast.show('Failed to load permissions.', Toast.LONG);
+    } finally {
+      // Always hide the loader when the process is finished.
+      setIsCheckingPermissions(false);
     }
   };
   
   fetchUserPermissions();
-}, [note?.id]);
+}, [note?.id, isNewNote]);
 
 
   const clearDrawing = () => {

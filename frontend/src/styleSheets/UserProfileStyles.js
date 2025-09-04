@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     marginTop: 4 
   },
   profileEmail: { 
+    
     fontSize: 14, 
     marginBottom: 8 
   },
